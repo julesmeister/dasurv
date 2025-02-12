@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
+import React, { useEffect, useState } from 'react';
+import { fetchActiveServices } from './lib/firebase'; // Adjust the import based on your setup
+import { Service } from './models/service'; // Adjust the import based on your setup
 
 const ServicesButton = () => {
   const scrollToServices = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -28,6 +31,21 @@ const ServicesButton = () => {
 };
 
 export default function Home() {
+  const [services, setServices] = useState<Service[]>([]);
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const activeServices = await fetchActiveServices();
+        setServices(activeServices);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+      }
+    };
+
+    loadServices();
+  }, []);
+
   return (
     <div className="bg-white">
       <div className="relative isolate px-6 pt-14 lg:px-8">
@@ -99,37 +117,12 @@ export default function Home() {
           </div>
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
             <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
-              {[
-                { 
-                  name: 'Swedish Massage',
-                  icon: '/icons/swedish.svg',
-                  description: 'Gentle, relaxing massage using long strokes and kneading. Perfect for first-time clients and those seeking stress relief.',
-                  duration: '60 mins'
-                },
-                { 
-                  name: 'Deep Tissue Massage',
-                  icon: '/icons/deep-tissue.svg',
-                  description: 'Targets deep muscle layers to release chronic tension. Ideal for those with specific muscle problems or chronic pain.',
-                  duration: '60 mins'
-                },
-                { 
-                  name: 'Sports Massage',
-                  icon: '/icons/sports.svg',
-                  description: 'Focused on muscle recovery and injury prevention. Great for athletes and active individuals.',
-                  duration: ' '
-                },
-                { 
-                  name: 'Therapeutic Massage',
-                  icon: '/icons/therapeutic.svg',
-                  description: 'Customized massage targeting specific areas of concern. Tailored to your unique needs and preferences.',
-                  duration: '60 mins'
-                }
-              ].map((service) => (
-                <div key={service.name} className="relative pl-16">
+              {services.map(service => (
+                <div key={service.id} className="relative pl-16">
                   <dt className="text-base font-semibold leading-7 text-gray-900">
                     <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg">
                       <Image
-                        src={service.icon}
+                        src={service.icon ?? '/path/to/default/icon.png'}
                         alt={service.name}
                         width={40}
                         height={40}
