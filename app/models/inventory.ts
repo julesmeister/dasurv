@@ -20,7 +20,7 @@ const COLLECTION_NAME = 'inventory';
 
 export const fetchInventoryItems = async (pageLimit?: number, startAfterDoc?: QueryDocumentSnapshot<DocumentData>): Promise<{
   items: InventoryItem[],
-  lastDoc: QueryDocumentSnapshot<DocumentData> | null,
+  lastDoc: QueryDocumentSnapshot<DocumentData> | undefined,
   totalCount: number
 }> => {
   try {
@@ -43,7 +43,7 @@ export const fetchInventoryItems = async (pageLimit?: number, startAfterDoc?: Qu
     }
 
     const querySnapshot = await getDocs(q);
-    const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+    const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || undefined;
     
     const items = querySnapshot.docs.map(doc => ({ 
       ...doc.data(),

@@ -13,7 +13,7 @@ export default function InventoryTable() {
   const [openRow, setOpenRow] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null | undefined>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const itemsPerPage = 10;
 
