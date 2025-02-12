@@ -1,7 +1,13 @@
 {
   "build": {
     "command": "npm run build",
-    "output": "out",
+    "output": "public",
     "publicPath": "/"
-  }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }
