@@ -1,5 +1,5 @@
 import { db } from '@/app/lib/firebase';
-import { collection, getDocs, query, orderBy, limit, startAfter, getCountFromServer, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, startAfter, getCountFromServer, DocumentData, QueryDocumentSnapshot, where } from 'firebase/firestore';
 
 export interface Booking {
   id?: string; // Optional ID for Firestore document IDs
@@ -74,4 +74,28 @@ export const fetchBookingsFromFirestore = async (): Promise<Booking[]> => {
   const bookingsCollection = collection(db, 'bookings');
   const bookingSnapshot = await getDocs(bookingsCollection);
   return bookingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
+};
+
+export const getTodayConfirmedBookingsCount = async (): Promise<number> => {
+  const bookingsCollection = collection(db, 'bookings');
+  
+  // Get today's date at midnight
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Get tomorrow's date at midnight
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // Create a query for confirmed bookings for today
+  const q = query(
+    bookingsCollection,
+    where('status', '==', 'confirmed'),
+    where('date', '>=', today.toISOString().split('T')[0]),
+    where('date', '<', tomorrow.toISOString().split('T')[0])
+  );
+
+  // Get the count
+  const snapshot = await getCountFromServer(q);
+  return snapshot.data().count;
 };

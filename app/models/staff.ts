@@ -1,5 +1,5 @@
 import { db } from '@/app/lib/firebase';
-import { collection, getDocs, addDoc, query, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDoc, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDoc, where, getCountFromServer } from 'firebase/firestore';
 
 export interface Staff {
   id?: string;
@@ -118,45 +118,12 @@ export const updateStaff = async (staffId: string, staffData: Partial<Staff>): P
   }
 };
 
-export const seedStaffData: Omit<Staff, 'id'>[] = [
-  {
-    name: 'Sarah Chen',
-    specialties: ['Deep Tissue Massage', 'Sports Therapy', 'Rehabilitation'],
-    availability: 'Full-time',
-    email: 'sarah.chen@example.com',
-    phone: '+1 (555) 123-4567',
-    active: true,
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15')
-  },
-  {
-    name: 'Michael Rodriguez',
-    specialties: ['Swedish Massage', 'Aromatherapy', 'Hot Stone Therapy'],
-    availability: 'Part-time',
-    email: 'michael.r@example.com',
-    phone: '+1 (555) 234-5678',
-    active: true,
-    createdAt: new Date('2024-01-20'),
-    updatedAt: new Date('2024-01-20')
-  },
-  {
-    name: 'Emma Thompson',
-    specialties: ['Thai Massage', 'Reflexology', 'Prenatal Massage'],
-    availability: 'Full-time',
-    email: 'emma.t@example.com',
-    phone: '+1 (555) 345-6789',
-    active: true,
-    createdAt: new Date('2024-02-01'),
-    updatedAt: new Date('2024-02-01')
-  },
-  {
-    name: 'David Kim',
-    specialties: ['Shiatsu', 'Acupressure', 'Sports Massage'],
-    availability: 'Full-time',
-    email: 'david.kim@example.com',
-    phone: '+1 (555) 456-7890',
-    active: true,
-    createdAt: new Date('2024-02-05'),
-    updatedAt: new Date('2024-02-05')
-  }
-];
+export const getActiveTherapistsCount = async (): Promise<number> => {
+  const q = query(
+    staffsCollection,
+    where('active', '==', true)
+  );
+
+  const snapshot = await getCountFromServer(q);
+  return snapshot.data().count;
+};

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   CalendarIcon,
   UserGroupIcon,
@@ -16,16 +16,13 @@ import AppointmentTable from './components/Bookings/AppointmentTable';
 import StaffTable from './components/Staff/StaffTable';
 import ServiceTable from './components/Services/ServiceTable';
 import { Service } from '../models/service';
+import { getTodayConfirmedBookingsCount } from '../models/booking';
+import { getActiveTherapistsCount } from '../models/staff';
 
 // Mock data - replace with actual data fetching
 const lowStockItems = [
   { id: 1, name: 'Massage Oil', current: 5, minimum: 10 },
   { id: 2, name: 'Towels', current: 15, minimum: 20 },
-];
-
-const therapists = [
-  { id: 1, name: 'Sarah Smith', specialties: ['Swedish', 'Deep Tissue'], availability: 'Full-time' },
-  { id: 2, name: 'Mike Johnson', specialties: ['Sports', 'Therapeutic'], availability: 'Part-time' },
 ];
 
 interface AdminDashboardProps {
@@ -41,11 +38,29 @@ interface AdminDashboardProps {
 export default function AdminDashboard({
 }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [todayBookings, setTodayBookings] = useState(0);
+  const [activeTherapists, setActiveTherapists] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [services, setServices] = useState<Service[]>([
-    { id: '1', name: 'Swedish Massage', duration: '60 min', price: '$80', status: 'active' },
-    { id: '2', name: 'Deep Tissue', duration: '90 min', price: '$120', status: 'active' },
+    
   ]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [bookingsCount, therapistsCount] = await Promise.all([
+          getTodayConfirmedBookingsCount(),
+          getActiveTherapistsCount()
+        ]);
+        setTodayBookings(bookingsCount);
+        setActiveTherapists(therapistsCount);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: ChartBarIcon },
@@ -76,9 +91,10 @@ export default function AdminDashboard({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'overview' && (
           <Overview
-            lowStockCount={lowStockItems.length}
-            appointmentCount={2}
-            therapistCount={therapists.length}
+            lowStockItems={lowStockItems}
+            therapistCount={activeTherapists}
+            appointmentCount={todayBookings}
+            revenue={1500}
           />
         )}
 
