@@ -1,28 +1,11 @@
 #!/bin/bash
 echo "Starting deployment..."
 
-# Ensure we're in the right directory
-pwd
-echo "Current directory contents:"
-ls -la
+# Copy the out directory contents to the root
+cp -r out/* .
 
-# Check if out directory exists
-if [ ! -d "out" ]; then
-    echo "Error: 'out' directory not found!"
-    exit 1
-fi
-
-echo "Contents of out directory:"
-ls -la out/
-
-echo "Copying files..."
-# Create a public directory if it doesn't exist
-mkdir -p public
-
-# Copy all files from out to public
-cp -rv out/* public/
-
-echo "Contents of public directory:"
-ls -la public/
+# Copy the worker and routes
+cp _worker.js .
+cp _routes.json .
 
 echo "Deployment complete!"

@@ -1,5 +1,13 @@
 {
   "version": 1,
-  "include": ["/*"],
-  "exclude": []
+  "include": [
+    "/*",
+    "/",
+    "/_next/*",
+    "/admin/*",
+    "/book/*",
+    "/api/*"
+  ],
+  "exclude": [],
+  "platform": "node"
 }
