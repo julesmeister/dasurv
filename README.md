@@ -1,4 +1,4 @@
-# DaSurv - Spa Management System
+# Dasurv - Spa Management System
 
 A comprehensive spa management system built with Next.js 13+, featuring both client-facing booking interfaces and powerful admin tools for efficient spa operations management.
 

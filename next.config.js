@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export', // Required for static site generation
+  output: 'standalone',
   images: {
-    unoptimized: true, // Required for static site generation
-    domains: ['firebasestorage.googleapis.com'], // Add your image domains here
+    unoptimized: true,
+    domains: ['firebasestorage.googleapis.com'],
   }
 }
 

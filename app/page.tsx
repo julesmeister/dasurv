@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 
+// Configure the runtime and specify that this is a client component
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <div className="bg-white">
