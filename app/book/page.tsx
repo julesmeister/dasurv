@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { addDoc, collection } from 'firebase/firestore';
+import { useState, useRef, useEffect } from 'react';
+import { addDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { format, addDays, isSameDay } from 'date-fns';
 import { 
@@ -13,6 +13,8 @@ import {
 } from '@heroicons/react/24/solid';
 import { CheckIcon } from '@heroicons/react/20/solid';
 import { RadioGroup } from '@headlessui/react';
+import { toast } from 'react-hot-toast';
+import { Service } from '../models/service';
 
 // Predefined time slots
 const timeSlots = [
@@ -33,6 +35,8 @@ const timeSlots = [
   { time: '00:00', label: '12:00 AM' },
   { time: '01:00', label: '1:00 AM' }
 ];
+
+
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -63,6 +67,24 @@ export default function BookingPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const dateRange = generateDateRange();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  
+  useEffect(() => {
+    const fetchServices = async () => {
+      const servicesCollection = collection(db, 'services');
+      const servicesSnapshot = await getDocs(servicesCollection);
+      const servicesList = servicesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name,
+          description: doc.data().description,
+          duration: doc.data().duration,
+          price: doc.data().price,
+          status: doc.data().status
+        }));
+      setServices(servicesList);
+    };
+    fetchServices();
+  }, []);
 
   const handleScroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -84,7 +106,14 @@ export default function BookingPage() {
         updatedAt: new Date()
       };
 
-      await addDoc(collection(db, 'reservations'), reservation);
+      await addDoc(collection(db, 'bookings'), reservation).then((docRef) => {
+        // Cache the booking ID in localStorage
+        const existingBookings = JSON.parse(localStorage.getItem('bookingIds') || '[]');
+        if (!existingBookings.includes(docRef.id)) {
+          existingBookings.push(docRef.id);
+        }
+        localStorage.setItem('bookingIds', JSON.stringify(existingBookings));
+      });
       
       // Reset form and show success message
       setFormData({
@@ -97,8 +126,10 @@ export default function BookingPage() {
         notes: ''
       });
       setSubmitStatus('success');
+      toast.success('Booking submitted successfully!');
     } catch (error) {
       console.error('Error submitting reservation:', error);
+      toast.error('Error submitting booking. Please try again.');
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -206,32 +237,7 @@ export default function BookingPage() {
                   className="mt-2"
                 >
                   <div className="grid grid-cols-1 gap-3">
-                    {[
-                      { 
-                        id: 'swedish', 
-                        name: 'Swedish Massage', 
-                        description: 'Gentle, relaxing massage using long strokes and kneading',
-                        duration: '60 mins'
-                      },
-                      { 
-                        id: 'deep-tissue', 
-                        name: 'Deep Tissue Massage', 
-                        description: 'Targets deep muscle layers to release chronic tension',
-                        duration: '60 mins'
-                      },
-                      { 
-                        id: 'sports', 
-                        name: 'Sports Massage', 
-                        description: 'Focused on muscle recovery and injury prevention',
-                        duration: '60 mins'
-                      },
-                      { 
-                        id: 'therapeutic', 
-                        name: 'Therapeutic Massage', 
-                        description: 'Customized massage targeting specific areas of concern',
-                        duration: '60 mins'
-                      },
-                    ].map((service) => (
+                    {services.map((service) => (
                       <RadioGroup.Option
                         key={service.id}
                         value={service.id}
@@ -259,7 +265,7 @@ export default function BookingPage() {
                                   className={`inline ${checked ? 'text-indigo-100' : 'text-gray-500'}`}
                                 >
                                   <span className="block">{service.description}</span>
-                                  <span className="block font-medium mt-1">{service.duration}</span>
+                                  <span className="block font-medium mt-1">{service.duration} - &#x20B1;{service.price}</span>
                                 </RadioGroup.Description>
                               </div>
                             </div>
