@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Staff, fetchStaffs } from '@/app/models/staff';
 import StaffDialog from './StaffDialog';
-import { UserPlusIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { UserPlusIcon, ChevronLeftIcon, ChevronRightIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
@@ -14,6 +15,7 @@ const StaffTable = () => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [editingStaff, setEditingStaff] = useState<Staff | undefined>(undefined);
   const itemsPerPage = 10;
 
   const loadPage = useCallback(async (page: number) => {
@@ -68,12 +70,13 @@ const StaffTable = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialties</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Availability</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {loading ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-4 text-center">
+                          <td colSpan={6} className="px-6 py-4 text-center">
                             <div className="flex justify-center">
                               <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -84,7 +87,7 @@ const StaffTable = () => {
                         </tr>
                       ) : staffs.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                          <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
                             No staff members found
                           </td>
                         </tr>
@@ -103,6 +106,14 @@ const StaffTable = () => {
                               }`}>
                                 {staff.availability}
                               </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <button
+                                onClick={() => setEditingStaff(staff)}
+                                className="text-indigo-600 hover:text-indigo-900"
+                              >
+                                <PencilIcon className="h-5 w-5 mx-auto" aria-hidden="true" />
+                              </button>
                             </td>
                           </tr>
                         ))
@@ -185,14 +196,25 @@ const StaffTable = () => {
       </div>
 
       <StaffDialog
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
+        isOpen={isAddDialogOpen || !!editingStaff}
+        onClose={() => {
+          setIsAddDialogOpen(false);
+          setEditingStaff(undefined);
+        }}
         onStaffAdded={async () => {
           setLoading(true);
-          await loadPage(1);
+          await loadPage(currentPage);
           setLoading(false);
           setIsAddDialogOpen(false);
+          setEditingStaff(undefined);
         }}
+        onStaffDeleted={async () => {
+          setLoading(true);
+          await loadPage(currentPage);
+          setLoading(false);
+          setEditingStaff(undefined);
+        }}
+        staff={editingStaff}
       />
     </div>
   );

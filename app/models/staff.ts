@@ -1,5 +1,5 @@
 import { db } from '@/app/lib/firebase';
-import { collection, getDocs, addDoc, query, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
 
 export interface Staff {
   id?: string;
@@ -8,6 +8,7 @@ export interface Staff {
   availability: 'Full-time' | 'Part-time';
   email: string;
   phone: string;
+  active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,20 +19,21 @@ export interface StaffQueryResult {
   totalCount: number;
 }
 
+export const staffsCollection = collection(db, 'staffs');
+
 export const fetchStaffs = async (
   itemsPerPage: number = 10,
   lastDocument: QueryDocumentSnapshot<DocumentData> | null = null
 ): Promise<StaffQueryResult> => {
   try {
     console.log('Fetching staffs with params:', { itemsPerPage, hasLastDoc: !!lastDocument });
-    const staffsRef = collection(db, 'staffs');
-    let q = query(staffsRef, orderBy('createdAt', 'desc'), limit(itemsPerPage));
+    let q = query(staffsCollection, orderBy('createdAt', 'desc'), limit(itemsPerPage));
 
     if (lastDocument) {
-      q = query(staffsRef, orderBy('createdAt', 'desc'), startAfter(lastDocument), limit(itemsPerPage));
+      q = query(staffsCollection, orderBy('createdAt', 'desc'), startAfter(lastDocument), limit(itemsPerPage));
     }
 
-    const totalQuery = await getDocs(collection(db, 'staffs'));
+    const totalQuery = await getDocs(staffsCollection);
     console.log('Total staff count:', totalQuery.size);
 
     const querySnapshot = await getDocs(q);
@@ -60,9 +62,8 @@ export const fetchStaffs = async (
 
 export const addStaff = async (staffData: Omit<Staff, 'id' | 'createdAt' | 'updatedAt'>): Promise<Staff> => {
   const now = new Date();
-  const staffRef = collection(db, 'staffs');
   
-  const docRef = await addDoc(staffRef, {
+  const docRef = await addDoc(staffsCollection, {
     ...staffData,
     createdAt: now,
     updatedAt: now
@@ -76,6 +77,32 @@ export const addStaff = async (staffData: Omit<Staff, 'id' | 'createdAt' | 'upda
   };
 };
 
+export const deleteStaff = async (staffId: string): Promise<void> => {
+  try {
+    const staffRef = doc(staffsCollection, staffId);
+    await deleteDoc(staffRef);
+  } catch (error) {
+    console.error('Error deleting staff:', error);
+    throw error;
+  }
+};
+
+export const updateStaff = async (staffId: string, staffData: Partial<Staff>): Promise<void> => {
+  try {
+    const staffRef = doc(staffsCollection, staffId);
+    const docSnapshot = await getDoc(staffRef);
+    
+    if (docSnapshot.exists()) {
+      await updateDoc(staffRef, staffData);
+    } else {
+      throw new Error('Staff member not found');
+    }
+  } catch (error) {
+    console.error('Error updating staff:', error);
+    throw error;
+  }
+};
+
 export const seedStaffData: Omit<Staff, 'id'>[] = [
   {
     name: 'Sarah Chen',
@@ -83,6 +110,7 @@ export const seedStaffData: Omit<Staff, 'id'>[] = [
     availability: 'Full-time',
     email: 'sarah.chen@example.com',
     phone: '+1 (555) 123-4567',
+    active: true,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15')
   },
@@ -92,6 +120,7 @@ export const seedStaffData: Omit<Staff, 'id'>[] = [
     availability: 'Part-time',
     email: 'michael.r@example.com',
     phone: '+1 (555) 234-5678',
+    active: true,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-01-20')
   },
@@ -101,6 +130,7 @@ export const seedStaffData: Omit<Staff, 'id'>[] = [
     availability: 'Full-time',
     email: 'emma.t@example.com',
     phone: '+1 (555) 345-6789',
+    active: true,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-02-01')
   },
@@ -110,6 +140,7 @@ export const seedStaffData: Omit<Staff, 'id'>[] = [
     availability: 'Full-time',
     email: 'david.kim@example.com',
     phone: '+1 (555) 456-7890',
+    active: true,
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-02-05')
   }

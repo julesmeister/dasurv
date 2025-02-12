@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Staff, addStaff } from '@/app/models/staff';
+import { Staff, addStaff, deleteStaff, updateStaff } from '@/app/models/staff';
 import toast from 'react-hot-toast';
 import { classNames } from '@/app/lib/utils';
 
@@ -11,6 +11,7 @@ interface StaffDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onStaffAdded: () => void;
+  onStaffDeleted?: () => void;
   staff?: Staff;
 }
 
@@ -19,11 +20,17 @@ const availabilityOptions = [
   { value: 'Part-time', label: 'Part-time', color: 'bg-yellow-500' },
 ];
 
-export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: StaffDialogProps) {
+const statusOptions = [
+  { value: true, label: 'Active', color: 'bg-green-500' },
+  { value: false, label: 'Inactive', color: 'bg-gray-500' },
+];
+
+const StaffDialog: React.FC<StaffDialogProps> = ({ isOpen, onClose, onStaffAdded, onStaffDeleted, staff }) => {
   const [formData, setFormData] = useState<Omit<Staff, 'id' | 'createdAt' | 'updatedAt'>>({
     name: '',
     email: '',
     phone: '',
+    active: true,
     specialties: [],
     availability: 'Full-time'
   });
@@ -35,6 +42,7 @@ export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: St
         name: staff.name,
         email: staff.email,
         phone: staff.phone,
+        active: staff.active,
         specialties: staff.specialties,
         availability: staff.availability
       });
@@ -43,6 +51,7 @@ export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: St
         name: '',
         email: '',
         phone: '',
+        active: true,
         specialties: [],
         availability: 'Full-time'
       });
@@ -53,15 +62,39 @@ export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: St
     e.preventDefault();
     setLoading(true);
     try {
-      await addStaff(formData);
-      toast.success('Staff member added successfully');
+      if (staff?.id) {
+        // Update existing staff
+        await updateStaff(staff.id, {
+          ...formData,
+          updatedAt: new Date()
+        });
+        toast.success('Staff member updated successfully');
+      } else {
+        // Add new staff
+        await addStaff(formData);
+        toast.success('Staff member added successfully');
+      }
       onStaffAdded();
       onClose();
     } catch (error) {
-      console.error('Error adding staff:', error);
-      toast.error('Failed to add staff member');
+      console.error('Error saving staff:', error);
+      toast.error('Failed to save staff member');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!staff?.id) return;
+    
+    try {
+      await deleteStaff(staff.id);
+      toast.success('Staff member deleted successfully');
+      onStaffDeleted?.();
+      onClose();
+    } catch (error) {
+      console.error('Error deleting staff:', error);
+      toast.error('Failed to delete staff member');
     }
   };
 
@@ -181,6 +214,31 @@ export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: St
 
                               <div>
                                 <label className="block text-sm font-medium text-gray-700">
+                                  Status
+                                </label>
+                                <RadioGroup value={formData.active} onChange={(value) => setFormData({ ...formData, active: value })} className="mt-2">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    {statusOptions.map((option) => (
+                                      <RadioGroup.Option
+                                        key={String(option.value)}
+                                        value={option.value}
+                                        className={({ active, checked }) =>
+                                          classNames(
+                                            active ? 'ring-1' : '',
+                                            checked ? `${option.color} border-transparent text-white` : 'bg-white border-gray-200 text-gray-900',
+                                            'border rounded-md py-3 px-3 flex items-center justify-center text-sm font-medium uppercase sm:flex-1 cursor-pointer focus:outline-none'
+                                          )
+                                        }
+                                      >
+                                        <RadioGroup.Label as="span">{option.label}</RadioGroup.Label>
+                                      </RadioGroup.Option>
+                                    ))}
+                                  </div>
+                                </RadioGroup>
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">
                                   Availability
                                 </label>
                                 <RadioGroup value={formData.availability} onChange={(value) => setFormData({ ...formData, availability: value })} className="mt-2">
@@ -208,7 +266,16 @@ export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: St
                         </div>
 
                         <div className="mt-8 flex justify-end space-x-3">
-                          <button
+                        {staff && (
+                            <button
+                              type="button"
+                              className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-1 focus:ring-offset-2"
+                              onClick={handleDelete}
+                            >
+                              Delete Staff
+                            </button>
+                          )}
+                           <button
                             type="button"
                             onClick={onClose}
                             className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-offset-2"
@@ -220,8 +287,10 @@ export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: St
                             disabled={loading}
                             className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-1 focus:ring-offset-2"
                           >
-                            {loading ? 'Adding...' : (staff ? 'Save Changes' : 'Add Staff')}
+                            {loading ? 'Saving...' : (staff ? 'Save Changes' : 'Add Staff')}
                           </button>
+                         
+                          
                         </div>
                       </form>
                     </div>
@@ -234,4 +303,6 @@ export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: St
       </Dialog>
     </Transition.Root>
   );
-}
+};
+
+export default StaffDialog;
