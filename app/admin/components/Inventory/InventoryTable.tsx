@@ -47,7 +47,7 @@ export default function InventoryTable() {
     setEditingItem(undefined);
   };
 
-  const handleSave = async (item: InventoryItem) => {
+  const handleSave = async () => {
     await loadPage(currentPage); // Refresh the current page
     handleCloseDialog();
   };

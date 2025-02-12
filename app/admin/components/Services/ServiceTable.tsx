@@ -5,6 +5,7 @@ import { getDocs } from 'firebase/firestore';
 import { servicesCollection } from '@/app/lib/firebase';
 import { Service } from '@/app/models/service';
 import ServiceDialog from './ServiceDialog';
+import Image from 'next/image';
 
 interface ServiceTableProps {
   services: Service[];
@@ -12,7 +13,6 @@ interface ServiceTableProps {
   onEditService: (id: string) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function ServiceTable({ onAddService, onEditService }: ServiceTableProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -107,7 +107,14 @@ export default function ServiceTable({ onAddService, onEditService }: ServiceTab
                         <td className="px-3 py-4 text-sm text-gray-900">{service.description}</td>
                         <td className="px-3 py-4 text-sm text-gray-900">{service.duration}</td>
                         <td className="px-3 py-4 text-sm text-gray-900">{service.price}</td>
-                        <td className="px-3 py-4 text-sm text-gray-900"><img src={service.icon} alt={service.name} className="h-6 w-6" /></td>
+                        <td className="px-3 py-4 text-sm text-gray-900">
+                          <Image 
+                            src={service.icon} 
+                            alt={service.name} 
+                            width={24} 
+                            height={24} 
+                          />
+                        </td>
                         <td className="px-3 py-4 text-sm text-gray-900">{service.status}</td>
                         <td className="relative py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <button onClick={() => handleEdit(service)} className="text-indigo-600 hover:text-indigo-900">Edit</button>

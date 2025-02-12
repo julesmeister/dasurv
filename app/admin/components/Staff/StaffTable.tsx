@@ -43,7 +43,7 @@ const StaffTable: React.FC = () => {
 
   useEffect(() => {
     loadPage(1);
-  }, [activeTab]); // Reload when activeTab changes
+  }, [activeTab, loadPage]);
 
   const handlePageChange = async (page: number) => {
     setLoading(true);
