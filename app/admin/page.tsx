@@ -22,18 +22,7 @@ import { getTodayConfirmedBookingsCount } from '../models/booking';
 import { getActiveTherapistsCount } from '../models/staff';
 import { fetchLowStockCount } from '../models/inventory';
 
-export interface AdminDashboardProps {
-  bookings: {
-    id: number;
-    client: string;
-    service: string;
-    time: string;
-    therapist: string;
-  }[];
-}
-
-export default function AdminDashboard({
-}: AdminDashboardProps) {
+export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [todayBookings, setTodayBookings] = useState(0);
   const [activeTherapists, setActiveTherapists] = useState(0);
