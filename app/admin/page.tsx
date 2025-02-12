@@ -7,6 +7,7 @@ import {
   CubeIcon,
   WrenchScrewdriverIcon,
   ChartBarIcon,
+  TruckIcon
 } from '@heroicons/react/24/outline';
 
 import TabNavigation from './components/Navigation/TabNavigation';
@@ -18,6 +19,7 @@ import ServiceTable from './components/Services/ServiceTable';
 import { Service } from '../models/service';
 import { getTodayConfirmedBookingsCount } from '../models/booking';
 import { getActiveTherapistsCount } from '../models/staff';
+import SuppliersTable from './components/Suppliers/SuppliersTable';
 
 // Mock data - replace with actual data fetching
 const lowStockItems = [
@@ -68,6 +70,7 @@ export default function AdminDashboard({
     { id: 'bookings', name: 'Bookings', icon: CalendarIcon },
     { id: 'staff', name: 'Staff', icon: UserGroupIcon },
     { id: 'services', name: 'Services', icon: WrenchScrewdriverIcon },
+    { id: 'suppliers', name: 'Suppliers', icon: TruckIcon },
   ];
 
   const handleAddService = () => {
@@ -99,7 +102,7 @@ export default function AdminDashboard({
         )}
 
         {activeTab === 'inventory' && (
-          <InventoryTable items={lowStockItems} />
+          <InventoryTable />
         )}
 
         {activeTab === 'bookings' && (
@@ -116,6 +119,10 @@ export default function AdminDashboard({
             onAddService={handleAddService}
             onEditService={handleEditService}
           />
+        )}
+
+        {activeTab === 'suppliers' && (
+          <SuppliersTable />
         )}
       </div>
     </div>
