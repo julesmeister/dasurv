@@ -6,18 +6,10 @@
       "serve": "/_next/static/*"
     },
     {
-      "pattern": "/_next/data/*",
-      "serve": "/_next/data/*"
-    },
-    {
-      "pattern": "/api/*",
-      "serve": "/api/*"
-    },
-    {
       "pattern": "/*",
       "serve": "/*"
     }
   ],
   "exclude": [],
-  "platform": "edge"
+  "platform": "pages"
 }
