@@ -2,7 +2,6 @@
   "version": 1,
   "include": [
     "/*",
-    "/",
     "/_next/*",
     "/admin/*",
     "/book/*",
