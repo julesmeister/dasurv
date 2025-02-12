@@ -11,7 +11,7 @@ const SuppliersTable: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
-  const [supplierToEdit, setSupplierToEdit] = useState<Supplier | null>(null);
+  const [supplierToEdit, setSupplierToEdit] = useState<Supplier | undefined>(undefined);
 
   const loadSuppliers = useCallback(async () => {
     setLoading(true);
@@ -38,11 +38,12 @@ const SuppliersTable: React.FC = () => {
 
   const handleDialogClose = () => {
     setDialogOpen(false);
-    setSupplierToEdit(null);
+    setSupplierToEdit(undefined);
   };
 
-  const handleSupplierAdded = (supplier: Supplier) => {
-    // Logic to handle the added supplier
+  const handleSupplierAdded = (newSupplier: Supplier) => {
+    setSuppliers(prevSuppliers => [...prevSuppliers, newSupplier]);
+    setTotalCount(prevCount => prevCount + 1);
   };
 
   const handleEditSupplier = (supplier: Supplier) => {
@@ -51,7 +52,7 @@ const SuppliersTable: React.FC = () => {
   };
 
   const handleAddSupplier = () => {
-    setSupplierToEdit(null);
+    setSupplierToEdit(undefined);
     setDialogOpen(true);
   };
 
@@ -194,7 +195,7 @@ const SuppliersTable: React.FC = () => {
         isOpen={isDialogOpen}
         onClose={handleDialogClose}
         onSupplierAdded={handleSupplierAdded}
-        supplierToEdit={supplierToEdit}
+        supplier={supplierToEdit}
       />
     </div>
   );

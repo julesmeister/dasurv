@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 interface SuppliersDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSupplierAdded: () => void;
+  onSupplierAdded: (supplier: Supplier) => void;
   supplier?: Supplier;
 }
 
@@ -38,7 +38,7 @@ const SuppliersDialog: React.FC<SuppliersDialogProps> = ({ isOpen, onClose, onSu
         await addSupplier(newSupplier);
       }
       toast.success('Supplier saved successfully!');
-      onSupplierAdded();
+      onSupplierAdded(newSupplier);
       onClose();
     } catch (error) {
       toast.error('Failed to save supplier.');
