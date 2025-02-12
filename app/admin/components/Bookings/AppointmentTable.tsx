@@ -9,6 +9,8 @@ import { db } from '@/app/lib/firebase';
 import toast from 'react-hot-toast';
 import { format, parse } from 'date-fns';
 import { UserPlusIcon } from '@heroicons/react/24/outline';
+import { Staff } from '@/app/models/staff';
+import TherapistSelectionDialog from './TherapistSelectionDialog';
 
 interface AppointmentTableProps {
   initialBookings: Booking[];
@@ -22,6 +24,8 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isTherapistDialogOpen, setIsTherapistDialogOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const itemsPerPage = 10;
 
   const formatFirebaseTimestamp = (timestamp: any) => {
@@ -95,6 +99,11 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
     );
   };
 
+  const updateBooking = async (bookingId: string, data: any) => {
+    const bookingRef = doc(db, 'bookings', bookingId);
+    await updateDoc(bookingRef, data);
+  };
+
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
@@ -141,7 +150,15 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 justify-center">
                                 {booking.therapist ? booking.therapist : (
                                   <div className="flex justify-center">
-                                    <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                    <button
+                                      onClick={() => {
+                                        setSelectedBooking(booking);
+                                        setIsTherapistDialogOpen(true);
+                                      }}
+                                      className="hover:text-blue-500"
+                                    >
+                                      <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                    </button>
                                   </div>
                                 )}
                               </td>
@@ -288,6 +305,30 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
           </div>
         </div>
       </div>
+      {isTherapistDialogOpen && selectedBooking && (
+        <TherapistSelectionDialog
+          isOpen={isTherapistDialogOpen}
+          onClose={() => {
+            setIsTherapistDialogOpen(false);
+            setSelectedBooking(null);
+          }}
+          onSelect={async (therapist: Staff) => {
+            try {
+              await updateBooking(selectedBooking.id, { therapist: therapist.name });
+              // Update the local state
+              setBookings(bookings.map(b => 
+                b.id === selectedBooking.id 
+                  ? { ...b, therapist: therapist.name }
+                  : b
+              ));
+              setIsTherapistDialogOpen(false);
+              setSelectedBooking(null);
+            } catch (error) {
+              console.error('Error updating therapist:', error);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

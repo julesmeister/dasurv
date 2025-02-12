@@ -16,18 +16,13 @@ import InventoryTable from './components/Inventory/InventoryTable';
 import AppointmentTable from './components/Bookings/AppointmentTable';
 import StaffTable from './components/Staff/StaffTable';
 import ServiceTable from './components/Services/ServiceTable';
+import SuppliersTable from './components/Suppliers/SuppliersTable';
 import { Service } from '../models/service';
 import { getTodayConfirmedBookingsCount } from '../models/booking';
 import { getActiveTherapistsCount } from '../models/staff';
-import SuppliersTable from './components/Suppliers/SuppliersTable';
+import { fetchLowStockCount } from '../models/inventory';
 
-// Mock data - replace with actual data fetching
-const lowStockItems = [
-  { id: 1, name: 'Massage Oil', current: 5, minimum: 10 },
-  { id: 2, name: 'Towels', current: 15, minimum: 20 },
-];
-
-interface AdminDashboardProps {
+export interface AdminDashboardProps {
   bookings: {
     id: number;
     client: string;
@@ -42,6 +37,7 @@ export default function AdminDashboard({
   const [activeTab, setActiveTab] = useState('overview');
   const [todayBookings, setTodayBookings] = useState(0);
   const [activeTherapists, setActiveTherapists] = useState(0);
+  const [lowStockCount, setLowStockCount] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [services, setServices] = useState<Service[]>([
     
@@ -50,12 +46,15 @@ export default function AdminDashboard({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [bookingsCount, therapistsCount] = await Promise.all([
+        const [bookings, therapists, lowStock] = await Promise.all([
           getTodayConfirmedBookingsCount(),
-          getActiveTherapistsCount()
+          getActiveTherapistsCount(),
+          fetchLowStockCount()
         ]);
-        setTodayBookings(bookingsCount);
-        setActiveTherapists(therapistsCount);
+        
+        setTodayBookings(bookings);
+        setActiveTherapists(therapists);
+        setLowStockCount(lowStock);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
@@ -94,10 +93,9 @@ export default function AdminDashboard({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'overview' && (
           <Overview
-            lowStockItems={lowStockItems}
+            lowStockCount={lowStockCount}
             therapistCount={activeTherapists}
             appointmentCount={todayBookings}
-            revenue={1500}
           />
         )}
 
