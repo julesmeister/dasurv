@@ -1,8 +1,31 @@
-import Link from 'next/link';
-import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
+'use client';
 
-// Remove edge runtime for static export
-export const dynamic = 'force-static';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowRightIcon } from '@heroicons/react/24/solid';
+
+const ServicesButton = () => {
+  const scrollToServices = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const element = document.getElementById('services');
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  return (
+    <Link 
+      href="#services"
+      onClick={scrollToServices}
+      className="rounded-md bg-gray-900 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+    >
+      View Services <ArrowRightIcon className="ml-2 inline-block h-4 w-4" />
+    </Link>
+  );
+};
 
 export default function Home() {
   return (
@@ -19,13 +42,23 @@ export default function Home() {
             }}
           />
         </div>
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+        <div className="mx-auto max-w-2xl lg:mt-10 lg:mb-56 mb-32 sm:mb-48">
           <div className="text-center">
+            <div className="mb-8 flex justify-center">
+              <Image
+                src="/icons/brand.png"
+                alt="Dasurv"
+                width={400}
+                height={160}
+                priority
+                style={{ transform: "rotate(0deg)" }}
+              />
+            </div>
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
               Experience Ultimate Relaxation
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Discover premium spa services tailored to your wellness journey. Book your transformative experience today.
+              Discover professional massage therapy tailored to your needs. From Swedish relaxation to deep tissue therapy, our expert therapists are dedicated to your well-being and comfort.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link 
@@ -35,12 +68,7 @@ export default function Home() {
                 Book Now
                 <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Link>
-              <Link 
-                href="/services" 
-                className="text-sm font-semibold leading-6 text-gray-900 flex items-center"
-              >
-                View Services <span aria-hidden="true">→</span>
-              </Link>
+              <ServicesButton />
             </div>
           </div>
         </div>
@@ -58,47 +86,69 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-      <div className="bg-gray-50 py-24 sm:py-32">
+      <div id="services" className="bg-gray-50 py-24 sm:py-32 scroll-mt-30">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-indigo-600">Luxury Treatments</h2>
+            <h2 className="text-base font-semibold leading-7 text-indigo-600">Our Services</h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Transformative Spa Experiences
+              Professional Massage Therapy
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Elevate your wellness with our curated selection of premium spa services designed to rejuvenate mind, body, and spirit.
+              Choose from our range of specialized massage treatments, each designed to provide specific benefits for your well-being.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
             <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
               {[
-                { name: 'Massage Therapy', description: 'Personalized massage techniques to release tension and promote deep relaxation.' },
-                { name: 'Facial Treatments', description: 'Advanced skincare solutions tailored to your unique skin needs and goals.' },
-                { name: 'Body Treatments', description: 'Holistic body treatments that detoxify, nourish, and restore your natural glow.' },
-                { name: 'Wellness Packages', description: 'Comprehensive wellness experiences designed for complete mind-body rejuvenation.' }
-              ].map((feature) => (
-                <div key={feature.name} className="relative pl-16">
+                { 
+                  name: 'Swedish Massage',
+                  icon: '/icons/swedish.svg',
+                  description: 'Gentle, relaxing massage using long strokes and kneading. Perfect for first-time clients and those seeking stress relief.',
+                  duration: '60 mins'
+                },
+                { 
+                  name: 'Deep Tissue Massage',
+                  icon: '/icons/deep-tissue.svg',
+                  description: 'Targets deep muscle layers to release chronic tension. Ideal for those with specific muscle problems or chronic pain.',
+                  duration: '60 mins'
+                },
+                { 
+                  name: 'Sports Massage',
+                  icon: '/icons/sports.svg',
+                  description: 'Focused on muscle recovery and injury prevention. Great for athletes and active individuals.',
+                  duration: '60 mins'
+                },
+                { 
+                  name: 'Therapeutic Massage',
+                  icon: '/icons/therapeutic.svg',
+                  description: 'Customized massage targeting specific areas of concern. Tailored to your unique needs and preferences.',
+                  duration: '60 mins'
+                }
+              ].map((service) => (
+                <div key={service.name} className="relative pl-16">
                   <dt className="text-base font-semibold leading-7 text-gray-900">
-                    <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
-                      <StarIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                    <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg">
+                      <Image
+                        src={service.icon}
+                        alt={service.name}
+                        width={40}
+                        height={40}
+                        className="filter"
+                      />
                     </div>
-                    {feature.name}
+                    {service.name}
+                    <span className="ml-2 text-sm font-normal text-gray-500">
+                      {service.duration}
+                    </span>
                   </dt>
-                  <dd className="mt-2 text-base leading-7 text-gray-600">{feature.description}</dd>
+                  <dd className="mt-2 text-base leading-7 text-gray-600">{service.description}</dd>
                 </div>
               ))}
             </dl>
           </div>
         </div>
       </div>
-      <div className="absolute bottom-2 right-2">
-        <Link 
-          href="/admin" 
-          className="text-[10px] text-gray-300 hover:text-gray-400 transition-colors"
-        >
-          Admin
-        </Link>
-      </div>
+      
     </div>
   );
 }

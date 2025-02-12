@@ -8,12 +8,11 @@ import {
   UserIcon, 
   EnvelopeIcon, 
   PhoneIcon, 
-  ClipboardDocumentListIcon,
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/solid';
+import { CheckIcon } from '@heroicons/react/20/solid';
 import { RadioGroup } from '@headlessui/react';
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
 // Predefined time slots
 const timeSlots = [
@@ -24,7 +23,15 @@ const timeSlots = [
   { time: '14:00', label: '2:00 PM' },
   { time: '15:00', label: '3:00 PM' },
   { time: '16:00', label: '4:00 PM' },
-  { time: '17:00', label: '5:00 PM' }
+  { time: '17:00', label: '5:00 PM' },
+  { time: '18:00', label: '6:00 PM' },
+  { time: '19:00', label: '7:00 PM' },
+  { time: '20:00', label: '8:00 PM' },
+  { time: '21:00', label: '9:00 PM' },
+  { time: '22:00', label: '10:00 PM' },
+  { time: '23:00', label: '11:00 PM' },
+  { time: '00:00', label: '12:00 AM' },
+  { time: '01:00', label: '1:00 AM' }
 ];
 
 function classNames(...classes: string[]) {
@@ -107,7 +114,7 @@ export default function BookingPage() {
   };
 
   return (
-    <div className="relative isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
+    <div className="relative isolate bg-white px-6">
       <div 
         className="absolute inset-x-0 top-[-10rem] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[-20rem]" 
         aria-hidden="true"
@@ -119,14 +126,14 @@ export default function BookingPage() {
           }}
         />
       </div>
-      <div className="mx-auto max-w-2xl text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Book Your Wellness Journey</h1>
-        <p className="mt-6 text-lg leading-8 text-gray-600">
-          Personalize your spa experience. Select your preferred service, date, and time.
+      <div className="mx-auto max-w-2xl text-left">
+        <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Book Your Wellness Journey</h2>
+        <p className=" text-base leading-7 text-gray-600">
+          Select your preferred service, date, and time.
         </p>
       </div>
-      <div className="mx-auto mt-16 max-w-xl sm:mt-20">
-        <div className="bg-white/80 shadow-lg ring-1 ring-gray-900/5 sm:rounded-xl">
+      <div className="mx-auto mt-4 max-w-2xl sm:mt-4">
+        <div className="bg-white/80 ring-1 ring-gray-900/5 sm:rounded-xl">
           <form onSubmit={handleSubmit} className="px-6 py-8 sm:p-10">
             {submitStatus === 'success' && (
               <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-md">
@@ -188,29 +195,85 @@ export default function BookingPage() {
                 />
               </div>
 
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <ClipboardDocumentListIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <select
-                  name="service"
-                  id="service"
-                  required
-                  value={formData.service}
-                  onChange={handleChange}
-                  className="block w-full rounded-md border-0 py-2 pl-10 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 appearance-none"
+              {/* Service Selection */}
+              <div>
+                <label htmlFor="service" className="block text-sm font-medium leading-6 text-gray-900">
+                  Select Massage Type
+                </label>
+                <RadioGroup 
+                  value={formData.service} 
+                  onChange={(value) => setFormData(prev => ({ ...prev, service: value }))}
+                  className="mt-2"
                 >
-                  <option value="">Select a service</option>
-                  <option value="massage">Massage Therapy</option>
-                  <option value="facial">Facial Treatment</option>
-                  <option value="body">Body Treatment</option>
-                  <option value="wellness">Wellness Package</option>
-                </select>
+                  <div className="grid grid-cols-1 gap-3">
+                    {[
+                      { 
+                        id: 'swedish', 
+                        name: 'Swedish Massage', 
+                        description: 'Gentle, relaxing massage using long strokes and kneading',
+                        duration: '60 mins'
+                      },
+                      { 
+                        id: 'deep-tissue', 
+                        name: 'Deep Tissue Massage', 
+                        description: 'Targets deep muscle layers to release chronic tension',
+                        duration: '60 mins'
+                      },
+                      { 
+                        id: 'sports', 
+                        name: 'Sports Massage', 
+                        description: 'Focused on muscle recovery and injury prevention',
+                        duration: '60 mins'
+                      },
+                      { 
+                        id: 'therapeutic', 
+                        name: 'Therapeutic Massage', 
+                        description: 'Customized massage targeting specific areas of concern',
+                        duration: '60 mins'
+                      },
+                    ].map((service) => (
+                      <RadioGroup.Option
+                        key={service.id}
+                        value={service.id}
+                        className={({ active, checked }) =>
+                          `${active ? 'ring-2 ring-indigo-600 ring-offset-2' : ''}
+                          ${checked ? 'bg-indigo-600 border-transparent' : 'bg-white border-gray-200'}
+                          relative flex cursor-pointer rounded-lg px-5 py-4 border-2 focus:outline-none hover:border-indigo-200 transition-colors`
+                        }
+                      >
+                        
+                        {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        ({ active, checked }) => (
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="text-sm">
+                                <RadioGroup.Label
+                                  as="p"
+                                  className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}
+                                >
+                                  {service.name}
+                                </RadioGroup.Label>
+                                <RadioGroup.Description
+                                  as="span"
+                                  className={`inline ${checked ? 'text-indigo-100' : 'text-gray-500'}`}
+                                >
+                                  <span className="block">{service.description}</span>
+                                  <span className="block font-medium mt-1">{service.duration}</span>
+                                </RadioGroup.Description>
+                              </div>
+                            </div>
+                            {checked && (
+                              <div className="shrink-0 text-white">
+                                <CheckIcon className="h-6 w-6" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </RadioGroup.Option>
+                    ))}
+                  </div>
+                </RadioGroup>
               </div>
 
               <div className="relative">
@@ -294,7 +357,7 @@ export default function BookingPage() {
                               <span
                                 className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2"
                               >
-                                <CheckCircleIcon className="h-5 w-5 text-white" aria-hidden="true" />
+                                <CheckIcon className="h-5 w-5 text-white" aria-hidden="true" />
                               </span>
                             )}
                           </>
