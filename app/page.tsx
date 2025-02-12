@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 
-// Configure the runtime and specify that this is a client component
-export const runtime = 'edge';
-export const dynamic = 'force-dynamic';
+// Remove edge runtime for static export
+export const dynamic = 'force-static';
 
 export default function Home() {
   return (
