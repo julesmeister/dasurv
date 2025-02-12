@@ -240,7 +240,7 @@ export default function BookingPage() {
                     {services.map((service) => (
                       <RadioGroup.Option
                         key={service.id}
-                        value={service.id}
+                        value={service.name}
                         className={({ active, checked }) =>
                           `${active ? 'ring-2 ring-indigo-600 ring-offset-2' : ''}
                           ${checked ? 'bg-indigo-600 border-transparent' : 'bg-white border-gray-200'}
