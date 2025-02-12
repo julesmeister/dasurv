@@ -1,11 +1,26 @@
 {
   "version": 1,
   "include": [
-    "/*",
-    "/_next/*",
-    "/admin/*",
-    "/book/*",
-    "/api/*"
+    {
+      "pattern": "/_next/*",
+      "serve": "/_next/*"
+    },
+    {
+      "pattern": "/admin/*",
+      "serve": "/admin/*"
+    },
+    {
+      "pattern": "/book/*",
+      "serve": "/book/*"
+    },
+    {
+      "pattern": "/api/*",
+      "serve": "/api/*"
+    },
+    {
+      "pattern": "/*",
+      "serve": "/*"
+    }
   ],
   "exclude": [],
   "platform": "node"
