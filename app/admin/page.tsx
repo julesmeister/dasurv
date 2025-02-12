@@ -15,6 +15,7 @@ import InventoryTable from './components/Inventory/InventoryTable';
 import AppointmentTable from './components/Bookings/AppointmentTable';
 import StaffTable from './components/Staff/StaffTable';
 import ServiceTable from './components/Services/ServiceTable';
+import { Service } from '../models/service';
 
 // Mock data - replace with actual data fetching
 const lowStockItems = [
@@ -32,15 +33,13 @@ const therapists = [
   { id: 2, name: 'Mike Johnson', specialties: ['Sports', 'Therapeutic'], availability: 'Part-time' },
 ];
 
-const services = [
-  { id: 1, name: 'Swedish Massage', duration: '60 mins', price: '$80', status: 'Active' },
-  { id: 2, name: 'Deep Tissue Massage', duration: '60 mins', price: '$100', status: 'Active' },
-  { id: 3, name: 'Sports Massage', duration: '60 mins', price: '$90', status: 'Active' },
-  { id: 4, name: 'Therapeutic Massage', duration: '60 mins', price: '$95', status: 'Active' },
-];
-
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [services, setServices] = useState<Service[]>([
+    { id: '1', name: 'Swedish Massage', duration: '60 min', price: '$80', status: 'active' },
+    { id: '2', name: 'Deep Tissue', duration: '90 min', price: '$120', status: 'active' },
+  ]);
 
   const tabs = [
     { id: 'overview', name: 'Overview', icon: ChartBarIcon },
@@ -51,13 +50,13 @@ export default function AdminDashboard() {
   ];
 
   const handleAddService = () => {
-    // Implement add service functionality
-    console.log('Add service clicked');
+    console.log('Service added');
+    // You would typically make an API call here to save the service
   };
 
-  const handleEditService = (id: number) => {
-    // Implement edit service functionality
-    console.log('Edit service clicked', id);
+  const handleEditService = (id: string) => {
+    console.log('Service edited:', id);
+    // You would typically make an API call here to update the service
   };
 
   return (

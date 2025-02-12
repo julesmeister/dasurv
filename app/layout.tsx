@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Great_Vibes } from "next/font/google";
 import Link from 'next/link';
 import Image from 'next/image';
+import { Toaster } from 'react-hot-toast';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -72,6 +73,7 @@ export default function RootLayout({
         <main className="pt-24">
           {children}
         </main>
+        <Toaster position="top-right" />
       </body>
     </html>
   );

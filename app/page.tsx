@@ -116,7 +116,7 @@ export default function Home() {
                   name: 'Sports Massage',
                   icon: '/icons/sports.svg',
                   description: 'Focused on muscle recovery and injury prevention. Great for athletes and active individuals.',
-                  duration: '60 mins'
+                  duration: ' '
                 },
                 { 
                   name: 'Therapeutic Massage',

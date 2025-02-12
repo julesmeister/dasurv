@@ -1,33 +1,68 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getDocs } from 'firebase/firestore';
+import { servicesCollection } from '@/app/lib/firebase';
+import { Service } from '@/app/models/service';
 import ServiceDialog from './ServiceDialog';
-
-interface Service {
-  id: number;
-  name: string;
-  duration: string;
-  price: string;
-  status: string;
-}
 
 interface ServiceTableProps {
   services: Service[];
-  onSaveService: (service: Omit<Service, 'id'> & { id?: number }) => void;
+  onAddService: () => void;
+  onEditService: (id: string) => void;
 }
 
-export default function ServiceTable({ services, onSaveService }: ServiceTableProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function ServiceTable({ onAddService, onEditService }: ServiceTableProps) {
+  const [services, setServices] = useState<Service[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<Service | undefined>();
+  const [selectedService, setSelectedService] = useState<Service | undefined>(undefined);
 
-  const handleAddService = () => {
+  useEffect(() => {
+    const fetchServices = async () => {
+      const serviceSnapshot = await getDocs(servicesCollection);
+      const serviceList = serviceSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || '', // Provide a default value if necessary
+          icon: data.icon || '', // Provide a default value if necessary
+          description: data.description || '', // Provide a default value if necessary
+          duration: data.duration || 0, // Provide a default value if necessary
+          price: data.price || 0, // Provide a default value if necessary
+          status: data.status || '' // Provide a default value if necessary
+        };
+      });
+      setServices(serviceList);
+    };
+    fetchServices();
+  }, []);
+
+  const handleEdit = (service: Service) => {
+    setSelectedService(service);
+    setIsDialogOpen(true);
+  };
+
+  const handleAdd = () => {
     setSelectedService(undefined);
     setIsDialogOpen(true);
   };
 
-  const handleEditService = (service: Service) => {
-    setSelectedService(service);
-    setIsDialogOpen(true);
+  const fetchServices = async () => {
+    const serviceSnapshot = await getDocs(servicesCollection);
+    const serviceList = serviceSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name || '', // Provide a default value if necessary
+        icon: data.icon || '', // Provide a default value if necessary
+        description: data.description || '', // Provide a default value if necessary
+        duration: data.duration || 0, // Provide a default value if necessary
+        price: data.price || 0, // Provide a default value if necessary
+        status: data.status || '' // Provide a default value if necessary
+      };
+    });
+    setServices(serviceList);
   };
 
   return (
@@ -40,7 +75,7 @@ export default function ServiceTable({ services, onSaveService }: ServiceTablePr
           <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
             <button
               type="button"
-              onClick={handleAddService}
+              onClick={handleAdd}
               className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
             >
               Add Service
@@ -55,8 +90,10 @@ export default function ServiceTable({ services, onSaveService }: ServiceTablePr
                   <thead className="bg-gray-50">
                     <tr>
                       <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Service</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Description</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Duration</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Price</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Icon</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
                       <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                         <span className="sr-only">Edit</span>
@@ -64,27 +101,16 @@ export default function ServiceTable({ services, onSaveService }: ServiceTablePr
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {services.map((service) => (
+                    {services.map(service => (
                       <tr key={service.id}>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {service.name}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{service.duration}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{service.price}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                            service.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {service.status}
-                          </span>
-                        </td>
-                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                          <button
-                            onClick={() => handleEditService(service)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            Edit<span className="sr-only">, {service.name}</span>
-                          </button>
+                        <td className="py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">{service.name}</td>
+                        <td className="px-3 py-4 text-sm text-gray-900">{service.description}</td>
+                        <td className="px-3 py-4 text-sm text-gray-900">{service.duration}</td>
+                        <td className="px-3 py-4 text-sm text-gray-900">{service.price}</td>
+                        <td className="px-3 py-4 text-sm text-gray-900"><img src={service.icon} alt={service.name} className="h-6 w-6" /></td>
+                        <td className="px-3 py-4 text-sm text-gray-900">{service.status}</td>
+                        <td className="relative py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                          <button onClick={() => handleEdit(service)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
                         </td>
                       </tr>
                     ))}
@@ -98,8 +124,21 @@ export default function ServiceTable({ services, onSaveService }: ServiceTablePr
 
       <ServiceDialog
         isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSave={onSaveService}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedService(undefined);
+        }}
+        onSave={async (service: Service) => {
+          if (service.id) {
+            await onEditService(service.id);
+          } else {
+            await onAddService();
+          }
+          await fetchServices(); // Refresh the services after saving
+          setIsDialogOpen(false);
+          setSelectedService(undefined);
+        }}
+        fetchServices={fetchServices}
         service={selectedService}
       />
     </div>
