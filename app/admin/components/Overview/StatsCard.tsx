@@ -1,11 +1,12 @@
 'use client';
 
-import { HeroIcon } from '@heroicons/react/24/outline';
+import type { ComponentType } from 'react';
+import type { SVGProps } from 'react';
 
 interface StatsCardProps {
   title: string;
   value: number;
-  icon: HeroIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   iconColor: string;
   linkText: string;
   linkHref: string;
