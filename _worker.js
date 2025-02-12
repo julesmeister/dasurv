@@ -1,4 +1,4 @@
-export default {
+const worker = {
   async fetch(request, env) {
     const url = new URL(request.url);
     
@@ -15,9 +15,12 @@ export default {
         return env.ASSETS.fetch(`${url.origin}/index.html`);
       }
       return response;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       // If there's an error, serve index.html
       return env.ASSETS.fetch(`${url.origin}/index.html`);
     }
   }
 }
+
+export default worker;
