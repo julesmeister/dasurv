@@ -1,5 +1,5 @@
 import { db } from '@/app/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, startAfter, getCountFromServer, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 
 export interface Booking {
   id?: string; // Optional ID for Firestore document IDs
@@ -17,12 +17,57 @@ export interface Booking {
   updatedAt: Date; // Required timestamp for last update
 }
 
+export interface BookingPaginationResult {
+  bookings: Booking[];
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+  totalCount: number;
+}
 
-
-export const fetchBookings = async (): Promise<Booking[]> => {
+export const fetchBookings = async (
+  pageSize: number = 10,
+  lastDoc?: QueryDocumentSnapshot<DocumentData> | null
+): Promise<BookingPaginationResult> => {
   const bookingsCollection = collection(db, 'bookings');
-  const bookingSnapshot = await getDocs(bookingsCollection);
-  return bookingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
+  
+  // Get total count
+  const snapshot = await getCountFromServer(bookingsCollection);
+  const totalCount = snapshot.data().count;
+
+  console.log('Total count:', totalCount);
+
+  // Build query
+  let q = query(
+    bookingsCollection,
+    orderBy('createdAt', 'desc'),
+    limit(pageSize)
+  );
+
+  // If we have a last document, start after it
+  if (lastDoc) {
+    q = query(q, startAfter(lastDoc));
+  }
+
+  const bookingSnapshot = await getDocs(q);
+  const lastVisible = bookingSnapshot.docs[bookingSnapshot.docs.length - 1] || null;
+
+  const bookings = bookingSnapshot.docs.map(doc => {
+    const data = doc.data();
+    // Convert Firestore Timestamps to Date objects
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate(),
+      updatedAt: data.updatedAt?.toDate()
+    };
+  }) as Booking[];
+
+  console.log('Fetched bookings:', bookings);
+
+  return {
+    bookings,
+    lastDoc: lastVisible,
+    totalCount
+  };
 };
 
 export const fetchBookingsFromFirestore = async (): Promise<Booking[]> => {

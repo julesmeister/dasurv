@@ -91,7 +91,7 @@ export default function AdminDashboard({
         )}
 
         {activeTab === 'staff' && (
-          <StaffTable therapists={therapists} />
+          <StaffTable />
         )}
 
         {activeTab === 'services' && (

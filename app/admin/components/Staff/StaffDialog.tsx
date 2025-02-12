@@ -3,83 +3,65 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Service } from '@/app/models/service';
-import { addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { servicesCollection } from '@/app/lib/firebase';
-import { classNames } from '@/app/lib/utils';
+import { Staff, addStaff } from '@/app/models/staff';
 import toast from 'react-hot-toast';
+import { classNames } from '@/app/lib/utils';
 
-interface ServiceDialogProps {
+interface StaffDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (service: Service) => void;
-  fetchServices: () => Promise<void>;
-  service?: Service;
+  onStaffAdded: () => void;
+  staff?: Staff;
 }
 
-const statuses = [
-  { value: 'active', label: 'Active', color: 'bg-green-500' },
-  { value: 'inactive', label: 'Inactive', color: 'bg-white' },
+const availabilityOptions = [
+  { value: 'Full-time', label: 'Full-time', color: 'bg-green-500' },
+  { value: 'Part-time', label: 'Part-time', color: 'bg-yellow-500' },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, service }: ServiceDialogProps) {  const [formData, setFormData] = useState<Service>({
+export default function StaffDialog({ isOpen, onClose, onStaffAdded, staff }: StaffDialogProps) {
+  const [formData, setFormData] = useState<Omit<Staff, 'id' | 'createdAt' | 'updatedAt'>>({
     name: '',
-    icon: '',
-    description: '',
-    duration: '',
-    price: '',
-    status: 'active'
+    email: '',
+    phone: '',
+    specialties: [],
+    availability: 'Full-time'
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (service) {
-      setFormData(service);
+    if (staff) {
+      setFormData({
+        name: staff.name,
+        email: staff.email,
+        phone: staff.phone,
+        specialties: staff.specialties,
+        availability: staff.availability
+      });
     } else {
       setFormData({
         name: '',
-        icon: '',
-        description: '',
-        duration: '',
-        price: '',
-        status: 'active'
+        email: '',
+        phone: '',
+        specialties: [],
+        availability: 'Full-time'
       });
     }
-  }, [service]);
+  }, [staff]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      if (service?.id) {
-        // Update existing service
-        const serviceRef = doc(servicesCollection, service.id);
-        const updateData: Partial<Service> = {};
-        if (formData.name) updateData.name = formData.name;
-        if (formData.duration) updateData.duration = formData.duration;
-        if (formData.price) updateData.price = formData.price;
-        if (formData.status) updateData.status = formData.status;
-        if (formData.icon !== undefined) updateData.icon = formData.icon;
-        if (formData.description !== undefined) updateData.description = formData.description;
-
-        const docSnapshot = await getDoc(serviceRef);
-        if (docSnapshot.exists()) {
-          await updateDoc(serviceRef, updateData);
-          toast.success('Service updated successfully');
-        } else {
-          // Create a new document if it doesn't exist
-          await addDoc(servicesCollection, { ...formData, id: service.id });
-          toast.success('Service created successfully');
-        }
-      } else {
-        // Add new service
-        await addDoc(servicesCollection, formData);
-        toast.success('Service added successfully');
-      }
-      onSave(formData);
+      await addStaff(formData);
+      toast.success('Staff member added successfully');
+      onStaffAdded();
       onClose();
     } catch (error) {
-      console.error('Error saving service:', error);
-      toast.error(error instanceof Error ? error.message : 'An error occurred while saving the service');
+      console.error('Error adding staff:', error);
+      toast.error('Failed to add staff member');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,7 +106,7 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
                   <div className="sm:flex sm:items-start w-full">
                     <div className="w-full">
                       <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900 mb-5">
-                        {service ? 'Edit Service' : 'Add New Service'}
+                        {staff ? 'Edit Staff Member' : 'Add New Staff Member'}
                       </Dialog.Title>
                       <form onSubmit={handleSubmit}>
                         <div className="grid grid-cols-2 gap-x-8 gap-y-6">
@@ -147,29 +129,30 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
                               </div>
 
                               <div>
-                                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                                  Description
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                  Email
                                 </label>
-                                <textarea
-                                  name="description"
-                                  id="description"
-                                  rows={4}
-                                  value={formData.description}
-                                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                <input
+                                  type="email"
+                                  name="email"
+                                  id="email"
+                                  value={formData.email}
+                                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                   className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+                                  required
                                 />
                               </div>
 
                               <div>
-                                <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
-                                  Duration
+                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                                  Phone
                                 </label>
                                 <input
-                                  type="text"
-                                  name="duration"
-                                  id="duration"
-                                  value={formData.duration}
-                                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                  type="tel"
+                                  name="phone"
+                                  id="phone"
+                                  value={formData.phone}
+                                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                   className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
                                   required
                                 />
@@ -181,54 +164,40 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
                           <div>
                             <div className="space-y-6">
                               <div>
-                                <label htmlFor="icon" className="block text-sm font-medium text-gray-700">
-                                  Icon
+                                <label htmlFor="specialties" className="block text-sm font-medium text-gray-700">
+                                  Specialties (comma-separated)
                                 </label>
                                 <input
                                   type="text"
-                                  name="icon"
-                                  id="icon"
-                                  value={formData.icon}
-                                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                                  name="specialties"
+                                  id="specialties"
+                                  value={formData.specialties.join(', ')}
+                                  onChange={(e) => setFormData({ ...formData, specialties: e.target.value.split(',').map(s => s.trim()) })}
                                   className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
-                                />
-                              </div>
-
-                              <div>
-                                <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                                  Price
-                                </label>
-                                <input
-                                  type="text"
-                                  name="price"
-                                  id="price"
-                                  value={formData.price}
-                                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                  className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+                                  placeholder="e.g., Massage, Therapy, Rehabilitation"
                                   required
                                 />
                               </div>
 
                               <div>
                                 <label className="block text-sm font-medium text-gray-700">
-                                  Status
+                                  Availability
                                 </label>
-                                <RadioGroup value={formData.status} onChange={(value) => setFormData({ ...formData, status: value })} className="mt-2">
-                                  <RadioGroup.Label className="sr-only">Choose a status</RadioGroup.Label>
+                                <RadioGroup value={formData.availability} onChange={(value) => setFormData({ ...formData, availability: value })} className="mt-2">
                                   <div className="grid grid-cols-2 gap-3">
-                                    {statuses.map((status) => (
+                                    {availabilityOptions.map((option) => (
                                       <RadioGroup.Option
-                                        key={status.value}
-                                        value={status.value}
+                                        key={option.value}
+                                        value={option.value}
                                         className={({ active, checked }) =>
                                           classNames(
                                             active ? 'ring-1' : '',
-                                            checked ? `${status.color} border-transparent text-white` : 'bg-white border-gray-200 text-gray-900',
+                                            checked ? `${option.color} border-transparent text-white` : 'bg-white border-gray-200 text-gray-900',
                                             'border rounded-md py-3 px-3 flex items-center justify-center text-sm font-medium uppercase sm:flex-1 cursor-pointer focus:outline-none'
                                           )
                                         }
                                       >
-                                        <RadioGroup.Label as="span">{status.label}</RadioGroup.Label>
+                                        <RadioGroup.Label as="span">{option.label}</RadioGroup.Label>
                                       </RadioGroup.Option>
                                     ))}
                                   </div>
@@ -238,19 +207,20 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
                           </div>
                         </div>
 
-                        <div className="mt-8 sm:flex sm:flex-row-reverse">
-                          <button
-                            type="submit"
-                            className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
-                          >
-                            {service ? 'Save Changes' : 'Add Service'}
-                          </button>
+                        <div className="mt-8 flex justify-end space-x-3">
                           <button
                             type="button"
-                            className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
                             onClick={onClose}
+                            className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-offset-2"
                           >
                             Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={loading}
+                            className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-1 focus:ring-offset-2"
+                          >
+                            {loading ? 'Adding...' : (staff ? 'Save Changes' : 'Add Staff')}
                           </button>
                         </div>
                       </form>
