@@ -148,7 +148,20 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
                                 {format(parse(booking.time, 'HH:mm', new Date()), 'h:mm a')}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 justify-center">
-                                {booking.therapist ? booking.therapist : (
+                                {booking.therapist ? (
+                                  <div className="group relative flex justify-between items-center">
+                                    <span>{booking.therapist}</span>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedBooking(booking);
+                                        setIsTherapistDialogOpen(true);
+                                      }}
+                                      className="invisible group-hover:visible hover:text-blue-500 ml-2"
+                                    >
+                                      <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                    </button>
+                                  </div>
+                                ) : (
                                   <div className="flex justify-center">
                                     <button
                                       onClick={() => {
@@ -314,7 +327,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
           }}
           onSelect={async (therapist: Staff) => {
             try {
-              await updateBooking(selectedBooking.id, { therapist: therapist.name });
+              await updateBooking(selectedBooking.id!, { therapist: therapist.name });
               // Update the local state
               setBookings(bookings.map(b => 
                 b.id === selectedBooking.id 
