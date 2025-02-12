@@ -23,17 +23,23 @@ const lowStockItems = [
   { id: 2, name: 'Towels', current: 15, minimum: 20 },
 ];
 
-const upcomingAppointments = [
-  { id: 1, client: 'John Doe', service: 'Swedish Massage', time: '2:00 PM', therapist: 'Sarah Smith' },
-  { id: 2, client: 'Jane Smith', service: 'Deep Tissue', time: '3:30 PM', therapist: 'Mike Johnson' },
-];
-
 const therapists = [
   { id: 1, name: 'Sarah Smith', specialties: ['Swedish', 'Deep Tissue'], availability: 'Full-time' },
   { id: 2, name: 'Mike Johnson', specialties: ['Sports', 'Therapeutic'], availability: 'Part-time' },
 ];
 
-export default function AdminDashboard() {
+interface AdminDashboardProps {
+  bookings: {
+    id: number;
+    client: string;
+    service: string;
+    time: string;
+    therapist: string;
+  }[];
+}
+
+export default function AdminDashboard({
+}: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [services, setServices] = useState<Service[]>([
@@ -71,7 +77,7 @@ export default function AdminDashboard() {
         {activeTab === 'overview' && (
           <Overview
             lowStockCount={lowStockItems.length}
-            appointmentCount={upcomingAppointments.length}
+            appointmentCount={2}
             therapistCount={therapists.length}
           />
         )}
@@ -81,7 +87,7 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'bookings' && (
-          <AppointmentTable appointments={upcomingAppointments} />
+          <AppointmentTable />
         )}
 
         {activeTab === 'staff' && (
