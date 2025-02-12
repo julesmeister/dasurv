@@ -1,5 +1,5 @@
 import { db } from '@/app/lib/firebase';
-import { collection, getDocs, addDoc, query, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDoc, where } from 'firebase/firestore';
 
 export interface Staff {
   id?: string;
@@ -23,39 +23,54 @@ export const staffsCollection = collection(db, 'staffs');
 
 export const fetchStaffs = async (
   itemsPerPage: number = 10,
-  lastDocument: QueryDocumentSnapshot<DocumentData> | null = null
+  lastDocument: QueryDocumentSnapshot<DocumentData> | null = null,
+  activeFilter?: boolean
 ): Promise<StaffQueryResult> => {
   try {
-    console.log('Fetching staffs with params:', { itemsPerPage, hasLastDoc: !!lastDocument });
-    let q = query(staffsCollection, orderBy('createdAt', 'desc'), limit(itemsPerPage));
-
-    if (lastDocument) {
-      q = query(staffsCollection, orderBy('createdAt', 'desc'), startAfter(lastDocument), limit(itemsPerPage));
+    console.log('Fetching staffs with params:', { itemsPerPage, hasLastDoc: !!lastDocument, activeFilter });
+    
+    // Create the base query first with where clause if needed
+    let baseQuery = query(staffsCollection);
+    
+    if (activeFilter !== undefined) {
+      baseQuery = query(baseQuery, where('active', '==', activeFilter));
     }
 
-    const totalQuery = await getDocs(staffsCollection);
-    console.log('Total staff count:', totalQuery.size);
+    // Add orderBy after where clause
+    baseQuery = query(baseQuery, orderBy('createdAt', 'desc'));
+
+    // Create the final query with pagination
+    let q = query(baseQuery, limit(itemsPerPage));
+
+    if (lastDocument) {
+      q = query(baseQuery, startAfter(lastDocument), limit(itemsPerPage));
+    }
+
+    // For total count, use the same constraints except for ordering and pagination
+    const totalQueryConstraints = activeFilter !== undefined ? [where('active', '==', activeFilter)] : [];
+    const totalQuery = query(staffsCollection, ...totalQueryConstraints);
+    const totalSnapshot = await getDocs(totalQuery);
+    console.log('Total staff count:', totalSnapshot.size);
 
     const querySnapshot = await getDocs(q);
-    console.log('Fetched staff count:', querySnapshot.docs.length);
-    
-    const staffs = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate()
-    })) as Staff[];
+    const staffs: Staff[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      staffs.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt.toDate(),
+        updatedAt: data.updatedAt.toDate(),
+      } as Staff);
+    });
 
-    const result = {
+    return {
       staffs,
       lastDoc: querySnapshot.docs[querySnapshot.docs.length - 1] || null,
-      totalCount: totalQuery.size
+      totalCount: totalSnapshot.size,
     };
-
-    console.log('Returning staff result:', result);
-    return result;
   } catch (error) {
-    console.error('Error in fetchStaffs:', error);
+    console.error('Error fetching staffs:', error);
     throw error;
   }
 };
