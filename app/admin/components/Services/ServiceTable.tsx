@@ -108,12 +108,16 @@ export default function ServiceTable({ onAddService, onEditService }: ServiceTab
                         <td className="px-3 py-4 text-sm text-gray-900">{service.duration}</td>
                         <td className="px-3 py-4 text-sm text-gray-900">{service.price}</td>
                         <td className="px-3 py-4 text-sm text-gray-900">
-                          <Image 
-                            src={service.icon} 
-                            alt={service.name} 
-                            width={24} 
-                            height={24} 
-                          />
+                          {service.icon ? (
+                            <Image 
+                              src={service.icon}
+                              alt={service.name}
+                              width={24}
+                              height={24}
+                            />
+                          ) : (
+                            <div className="w-6 h-6 bg-gray-200 rounded-full" />
+                          )}
                         </td>
                         <td className="px-3 py-4 text-sm text-gray-900">{service.status}</td>
                         <td className="relative py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
