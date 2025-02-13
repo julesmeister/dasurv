@@ -49,8 +49,8 @@ export const fetchStaffs = async (
     // For total count, use the same constraints except for ordering and pagination
     const totalQueryConstraints = activeFilter !== undefined ? [where('active', '==', activeFilter)] : [];
     const totalQuery = query(staffsCollection, ...totalQueryConstraints);
-    const totalSnapshot = await getDocs(totalQuery);
-    console.log('Total staff count:', totalSnapshot.size);
+    const countSnapshot = await getCountFromServer(totalQuery);
+    console.log('Total staff count:', countSnapshot.data().count);
 
     const querySnapshot = await getDocs(q);
     const staffs: Staff[] = [];
@@ -67,7 +67,7 @@ export const fetchStaffs = async (
     return {
       staffs,
       lastDoc: querySnapshot.docs[querySnapshot.docs.length - 1] || null,
-      totalCount: totalSnapshot.size,
+      totalCount: countSnapshot.data().count,
     };
   } catch (error) {
     console.error('Error fetching staffs:', error);

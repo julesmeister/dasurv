@@ -24,31 +24,34 @@ const StaffTable: React.FC = () => {
   const [counts, setCounts] = useState({ active: 0, inactive: 0 });
   const itemsPerPage = 10;
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   const loadPage = useCallback(async (page: number) => {
     try {
       setLoading(true);
+      console.log('Loading page:', page, 'lastDoc:', lastDoc);
       const result = await fetchStaffs(itemsPerPage, page === 1 ? null : lastDoc, activeTab);
+      console.log('Fetched staffs:', result);
       setStaffs(result.staffs);
       setLastDoc(result.lastDoc);
       setCounts(prev => ({
         ...prev,
         [activeTab ? 'active' : 'inactive']: result.totalCount
       }));
+      setCurrentPage(page);
     } catch (error) {
       console.error('Error loading staff:', error);
     } finally {
       setLoading(false);
     }
-  }, [lastDoc, activeTab]);
+  }, [itemsPerPage, activeTab]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     loadPage(1);
   }, [activeTab, loadPage]);
 
-  const handlePageChange = async (page: number) => {
-    setLoading(true);
-    await loadPage(page);
-    setLoading(false);
+  const handlePageChange = (page: number) => {
+    loadPage(page);
   };
 
   return (
