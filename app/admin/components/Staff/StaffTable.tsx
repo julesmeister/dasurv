@@ -5,7 +5,6 @@ import { Staff, fetchStaffs } from '@/app/models/staff';
 import StaffDialog from './StaffDialog';
 import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { classNames } from '@/app/lib/utils';
-import { PencilIcon as EditIcon } from '@heroicons/react/24/outline';
 
 const tabs = [
   { name: 'Active', value: true },
@@ -15,7 +14,6 @@ const tabs = [
 const StaffTable: React.FC = () => {
   const [staffs, setStaffs] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentPage, setCurrentPage] = useState(1);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [editingStaff, setEditingStaff] = useState<Staff | undefined>(undefined);
@@ -44,7 +42,6 @@ const StaffTable: React.FC = () => {
       setLoading(false);
     }
   }, [itemsPerPage, activeTab]);
-  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     loadPage(1);
@@ -166,12 +163,12 @@ const StaffTable: React.FC = () => {
                           {staff.availability}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <button
                           onClick={() => setEditingStaff(staff)}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className="text-yellow-500 hover:text-yellow-900"
                         >
-                          <EditIcon className="h-5 w-5 mx-auto" />
+                          Edit
                         </button>
                       </td>
                     </tr>

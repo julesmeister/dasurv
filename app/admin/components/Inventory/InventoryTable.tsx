@@ -136,7 +136,7 @@ export default function InventoryTable() {
                               </button>
                               <button
                                 onClick={() => setEditingItem(item)}
-                                className="text-blue-500 hover:text-blue-900"
+                                className="text-yellow-500 hover:text-yellow-900"
                               >
                                 Edit
                               </button>

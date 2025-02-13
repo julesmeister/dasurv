@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
@@ -19,7 +20,7 @@ interface ServiceDialogProps {
 
 const statuses = [
   { value: 'active', label: 'Active', color: 'bg-green-500' },
-  { value: 'inactive', label: 'Inactive', color: 'bg-white' },
+  { value: 'inactive', label: 'Inactive', color: 'bg-gray-500' },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -213,22 +214,48 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
                                 <label className="block text-sm font-medium text-gray-700">
                                   Status
                                 </label>
-                                <RadioGroup value={formData.status} onChange={(value) => setFormData({ ...formData, status: value })} className="mt-2">
+                                <RadioGroup value={formData.status} onChange={(value) => setFormData({ ...formData, status: value })} className="mt-4">
                                   <RadioGroup.Label className="sr-only">Choose a status</RadioGroup.Label>
-                                  <div className="grid grid-cols-2 gap-3">
+                                  <div className="grid grid-cols-2 gap-4">
                                     {statuses.map((status) => (
                                       <RadioGroup.Option
-                                        key={status.value}
+                                        key={String(status.value)}
                                         value={status.value}
                                         className={({ active, checked }) =>
                                           classNames(
-                                            active ? 'ring-1' : '',
-                                            checked ? `${status.color} border-transparent text-white` : 'bg-white border-gray-200 text-gray-900',
-                                            'border rounded-md py-3 px-3 flex items-center justify-center text-sm font-medium uppercase sm:flex-1 cursor-pointer focus:outline-none'
+                                            'relative flex cursor-pointer rounded-lg px-5 py-4 border focus:outline-none',
+                                            active && 'ring-2 ring-offset-2 ring-offset-white ring-indigo-500',
+                                            checked ? `${status.color} border-transparent text-white` : 'bg-white border-gray-200',
+                                            'transition-all duration-200 ease-in-out transform hover:scale-[1.02]'
                                           )
                                         }
                                       >
-                                        <RadioGroup.Label as="span">{status.label}</RadioGroup.Label>
+                                        {({ active, checked }) => (
+                                          <>
+                                            <div className="flex w-full items-center justify-between">
+                                              <div className="flex items-center">
+                                                <div className="text-sm">
+                                                  <RadioGroup.Label
+                                                    as="p"
+                                                    className={`font-medium ${
+                                                      checked ? 'text-white' : 'text-gray-900'
+                                                    }`}
+                                                  >
+                                                    {status.label}
+                                                  </RadioGroup.Label>
+                                                </div>
+                                              </div>
+                                              {checked && (
+                                                <div className="shrink-0 text-white">
+                                                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="12" fill="white" fillOpacity="0.2" />
+                                                    <path d="M7 13l3 3 7-7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                  </svg>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </>
+                                        )}
                                       </RadioGroup.Option>
                                     ))}
                                   </div>
