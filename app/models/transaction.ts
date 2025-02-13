@@ -133,8 +133,50 @@ export const fetchTransactions = async (
   }
 };
 
-export const fetchTransactionData = async () => {
-  const transactionsQuery = query(transactionsCollection, orderBy('date', 'desc'), limit(10));
+export const fetchTransactionData = async (filter: string) => {
+  let transactionsQuery;
+
+  const now = new Date();
+
+  switch (filter) {
+    case 'lastWeek':
+      const lastWeek = new Date(now);
+      lastWeek.setDate(now.getDate() - 7);
+      transactionsQuery = query(
+        transactionsCollection,
+        where('date', '>=', lastWeek),
+        orderBy('date', 'desc'),
+        limit(10)
+      );
+      break;
+    case 'last6Months':
+      const last6Months = new Date(now);
+      last6Months.setMonth(now.getMonth() - 6);
+      transactionsQuery = query(
+        transactionsCollection,
+        where('date', '>=', last6Months),
+        orderBy('date', 'desc'),
+        limit(10)
+      );
+      break;
+    case 'lastYear':
+      const lastYear = new Date(now);
+      lastYear.setFullYear(now.getFullYear() - 1);
+      transactionsQuery = query(
+        transactionsCollection,
+        where('date', '>=', lastYear),
+        orderBy('date', 'desc'),
+        limit(10)
+      );
+      break;
+    case 'yearly':
+      // Implement logic for yearly data if needed
+      transactionsQuery = query(transactionsCollection, orderBy('date', 'desc'), limit(10));
+      break;
+    default:
+      transactionsQuery = query(transactionsCollection, orderBy('date', 'desc'), limit(10));
+      break;
+  }
   const querySnapshot = await getDocs(transactionsQuery);
   const transactions = querySnapshot.docs.map((doc) => ({
     id: doc.id,

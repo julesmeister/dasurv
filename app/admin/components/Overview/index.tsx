@@ -35,7 +35,7 @@ export default function Overview({ lowStockCount, appointmentCount, therapistCou
     datasets: [],
   });
 
-  const [selectedFilter, setSelectedFilter] = useState<string>('');
+  const [selectedFilter, setSelectedFilter] = useState('lastWeek');
 
   const handleFilterChange = (filter: string) => {
     setSelectedFilter(filter);
@@ -43,7 +43,7 @@ export default function Overview({ lowStockCount, appointmentCount, therapistCou
 
   useEffect(() => {
     const getData = async () => {
-      const data = await fetchTransactionData(); // Fetch your transaction data
+      const data = await fetchTransactionData(selectedFilter); // Fetch your transaction data
       setChartData({
         labels: data.labels, // Assuming your data has labels
         datasets: [
@@ -65,6 +65,8 @@ export default function Overview({ lowStockCount, appointmentCount, therapistCou
     if (!chartData.datasets.length) return;
     let filteredData: number[] = [];
     const now = new Date();
+    const lastWeek = new Date(now);
+    lastWeek.setDate(now.getDate() - 7);
     switch (selectedFilter) {
       case 'lastWeek':
         const lastWeek = new Date(now);
@@ -131,34 +133,50 @@ export default function Overview({ lowStockCount, appointmentCount, therapistCou
         linkHref="#staff"
       />
        <div className="flex gap-3 mb-4 w-full col-span-3">
-         <button
-           onClick={() => handleFilterChange('lastWeek')}
-           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out
-             ${selectedFilter === 'lastWeek' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-200 text-gray-700 border border-gray-300 hover:bg-blue-300'}`}
-         >
-           Last Week
-         </button>
-         <button
-           onClick={() => handleFilterChange('last6Months')}
-           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out
-             ${selectedFilter === 'last6Months' ? 'bg-green-600 text-white shadow-md' : 'bg-green-200 text-gray-700 border border-gray-300 hover:bg-green-300'}`}
-         >
-           Last 6 Months
-         </button>
-         <button
-           onClick={() => handleFilterChange('lastYear')}
-           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out
-             ${selectedFilter === 'lastYear' ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-200 text-gray-700 border border-gray-300 hover:bg-yellow-300'}`}
-         >
-           Last Year
-         </button>
-         <button
-           onClick={() => handleFilterChange('yearly')}
-           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out
-             ${selectedFilter === 'yearly' ? 'bg-red-600 text-white shadow-md' : 'bg-red-200 text-gray-700 border border-gray-300 hover:bg-red-300'}`}
-         >
-           Yearly Chart
-         </button>
+   <button
+     onClick={() => handleFilterChange('lastWeek')}
+     className={`px-4 py-2 text-sm font-medium border-b-2 ${
+       selectedFilter === 'lastWeek' 
+       ? 'text-blue-600 border-blue-600' 
+       : 'text-gray-600 border-transparent hover:text-blue-600 hover:border-blue-600'
+     }`}
+     aria-label="Filter by Last Week"
+   >
+     Last Week
+   </button>
+   <button
+     onClick={() => handleFilterChange('last6Months')}
+     className={`px-4 py-2 text-sm font-medium border-b-2 ${
+       selectedFilter === 'last6Months'
+       ? 'text-blue-600 border-blue-600'
+       : 'text-gray-600 border-transparent hover:text-blue-600 hover:border-blue-600'
+     }`}
+     aria-label="Filter by Last 6 Months"
+   >
+     Last 6 Months
+   </button>
+   <button
+     onClick={() => handleFilterChange('lastYear')}
+     className={`px-4 py-2 text-sm font-medium border-b-2 ${
+       selectedFilter === 'lastYear'
+       ? 'text-blue-600 border-blue-600'
+       : 'text-gray-600 border-transparent hover:text-blue-600 hover:border-blue-600'
+     }`}
+     aria-label="Filter by Last Year"
+   >
+     Last Year
+   </button>
+   <button
+     onClick={() => handleFilterChange('yearly')}
+     className={`px-4 py-2 text-sm font-medium border-b-2 ${
+       selectedFilter === 'yearly'
+       ? 'text-blue-600 border-blue-600'
+       : 'text-gray-600 border-transparent hover:text-blue-600 hover:border-blue-600'
+     }`}
+     aria-label="View Yearly Chart"
+   >
+     Yearly Chart
+   </button>
        </div>
       {/* Line Graph Below Stats Cards */}
       <div className="col-span-1 sm:col-span-2 lg:col-span-3">
