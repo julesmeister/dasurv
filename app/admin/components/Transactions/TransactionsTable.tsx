@@ -22,9 +22,7 @@ const TransactionsTable: React.FC = () => {
   const itemsPerPage = 10;
 
   const formatFirebaseTimestamp = (timestamp: Timestamp | null) => {
-    console.log('Timestamp received:', timestamp);
     if (!timestamp || typeof timestamp.seconds !== 'number' || isNaN(timestamp.seconds)) {
-      console.error('Invalid timestamp:', timestamp);
       return "";
     }
     const date = timestamp.toDate();
@@ -37,6 +35,8 @@ const TransactionsTable: React.FC = () => {
         try {
           setLoading(true);
           const { transactions: newTransactions, totalCount: newTotal } = await fetchTransactions(itemsPerPage);
+          console.log('Fetched transactions:', newTransactions);
+          console.log('Transactions:', newTransactions);
           setTransactions(newTransactions);
           setTotalCount(newTotal);
           toast.success('Data refreshed successfully');
@@ -47,7 +47,7 @@ const TransactionsTable: React.FC = () => {
           setLoading(false);
         }
       }
-      toast.success(`Transaction status updated to ${newStatus}`);
+        toast.success(`Transaction status updated to ${newStatus}`);
     } catch (error) {
       toast.error("Failed to update transaction status");
     }
@@ -58,12 +58,13 @@ const TransactionsTable: React.FC = () => {
       header: "Date",
       accessor: "date",
       render: (value: Timestamp) => {
-        const date = value?.toDate();
-        const timestamp = date?.getTime();
-        if (isNaN(timestamp)) {
-          console.error('Invalid timestamp:', value);
+        console.log('Value passed to render:', value);
+        console.log('Type of value:', typeof value);
+        console.log('Value structure:', JSON.stringify(value));
+        if (!value || typeof value.seconds !== 'number' || isNaN(value.seconds)) {
           return 'N/A';
         }
+        const date = value.toDate();
         return format(date, "MMM d, yyyy h:mm a");
       },
     },
@@ -82,7 +83,7 @@ const TransactionsTable: React.FC = () => {
     },
     {
       header: "Payment Method",
-      accessor: "paymentMethod",
+      accessor: "paymentMethod",  
     },
     {
       header: "Status",
@@ -147,28 +148,35 @@ const TransactionsTable: React.FC = () => {
   );
 
   useEffect(() => {
+    let mounted = true;
+    
     const loadTransactions = async () => {
       try {
         const result = await fetchTransactions(itemsPerPage, null);
-        setTransactions(result.transactions);
-        setTotalCount(result.totalCount);
+        if (mounted) {
+          setTransactions(result.transactions);
+          setTotalCount(result.totalCount);
+        }
       } catch (error) {
         console.error("Error loading transactions:", error);
-        toast.error("Failed to load transactions");
+        if (mounted) {
+          toast.error("Failed to load transactions");
+        }
       }
     };
 
     loadTransactions();
-  }, [itemsPerPage]);
+    
+    return () => {
+      mounted = false;
+    };
+  }, []); // Only run on mount
 
   return (
     <Table
-      title="Transactions"
-      description="A list of all transactions including their date, customer, service, amount, and status."
-      data={transactions}
       columns={columns}
+      data={transactions}
       initialTotalCount={totalCount}
-      itemsPerPage={itemsPerPage}
       fetchData={async (pageSize, lastDoc) => {
         const result = await fetchTransactions(pageSize, lastDoc);
 
@@ -178,14 +186,17 @@ const TransactionsTable: React.FC = () => {
           totalCount: result.totalCount,
         };
       }}
-      expandableContent={expandableContent}
-      rowActions={rowActions}
+      loading={loading}
+      title="Transactions"
+      description="A list of all transactions including their date, customer, service, amount, and status."
       actions={
         <button
           onClick={async () => {
             try {
               setLoading(true);
               const { transactions: newTransactions, totalCount: newTotal } = await fetchTransactions(itemsPerPage);
+              console.log('Fetched transactions:', newTransactions);
+              console.log('Transactions:', newTransactions);
               setTransactions(newTransactions);
               setTotalCount(newTotal);
               toast.success('Data refreshed successfully');
@@ -204,6 +215,9 @@ const TransactionsTable: React.FC = () => {
           Refresh
         </button>
       }
+      expandableContent={expandableContent}
+      rowActions={rowActions}
+      itemsPerPage={itemsPerPage}
     />
   );
 };

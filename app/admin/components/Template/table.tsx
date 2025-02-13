@@ -79,7 +79,7 @@ const Table = <T extends {}>({
       setLoading(false);
       setHasInitialized(true);
     }
-  }, [itemsPerPage, lastDoc, fetchData, loading, externalLoading]);
+  }, [fetchData, externalLoading]);
 
   useEffect(() => {
     if (!hasInitialized) {

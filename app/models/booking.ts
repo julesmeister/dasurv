@@ -28,7 +28,7 @@ export interface BookingPaginationResult {
   fromCache?: boolean;
 }
 
-const getTotalCount = async (tab: 'upcoming' | 'history') => {
+const getTotalCount = async (tab: 'upcoming' | 'history' | 'calendar' | '') => {
   const bookingsCollection = collection(firebaseDb, 'bookings');
   const now = new Date().toISOString().split('T')[0];
   const q = query(bookingsCollection, where('date', tab === 'upcoming' ? '>=' : '<', now));
@@ -39,7 +39,7 @@ const getTotalCount = async (tab: 'upcoming' | 'history') => {
 export const fetchBookings = async (
   pageSize: number = 10,
   lastDoc?: QueryDocumentSnapshot<DocumentData> | null,
-  tab: 'upcoming' | 'history' = 'upcoming'
+  tab: 'upcoming' | 'history' | 'calendar' = 'upcoming'
 ): Promise<BookingPaginationResult> => {
   try {
     // Try to get cached count first

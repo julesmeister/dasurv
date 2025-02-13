@@ -37,16 +37,30 @@ export const fetchTransactions = async (
       .above(now - CACHE_DURATION)
       .first();
 
-    if (cachedTransactions.length > 0 && cachedCount) {
+    if (cachedTransactions.length > 0) {
+      console.log('Using cached transactions from Dexie.');
+      console.log('Cached transaction dates:', cachedTransactions.map(t => t.date));
       return {
-        transactions: cachedTransactions.map(t => ({
-          ...t,
-          date: new Timestamp(typeof t.date === 'number' ? Math.floor(t.date / 1000) : Math.floor(Number(t.date) / 1000), 0)
-        })) as Transaction[],
-        totalCount: cachedCount.count,
+        transactions: cachedTransactions.map(t => {
+          const currentDate = Timestamp.now();
+          if (typeof t.date === 'number' && !isNaN(t.date)) {
+            const transformedDate = new Timestamp(Math.floor(t.date / 1000), 0);
+            return {
+              ...t,
+              date: transformedDate
+            };
+          } else {
+            return {
+              ...t,
+              date: currentDate
+            };
+          }
+        }) as Transaction[],
+        totalCount: cachedCount && cachedCount.count ? cachedCount.count : 0,
         lastDoc: null // Reset pagination when using cache
       };
     }
+    console.log('Fetching transactions from Firestore.');
 
     // If no cache, fetch from Firestore
     const transactionsRef = transactionsCollection;
@@ -63,17 +77,37 @@ export const fetchTransactions = async (
     }
 
     const snapshot = await getDocs(q);
-    const transactions = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      date: doc.data().date || Timestamp.now()
-    })) as Transaction[];
+    console.log('Raw data fetched from Firestore:', snapshot.docs.map(doc => doc.data()));
+    console.log('Raw data fetched from Firestore (with IDs):', snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const transactions = snapshot.docs.map(doc => {
+      const fetchedDate = doc.data().date;
+      const currentDate = Timestamp.now();
+      console.log('Fetched date:', fetchedDate);
+      console.log('Current date (Timestamp.now()):', currentDate);
+      if (fetchedDate instanceof Timestamp) {
+        return {
+          id: doc.id,
+          ...doc.data(),
+          date: fetchedDate
+        };
+      } else {
+        console.error('Invalid date fetched from Firestore:', fetchedDate);
+        return {
+          id: doc.id,
+          ...doc.data(),
+          date: currentDate
+        };
+      }
+    }) as Transaction[];
 
+    console.log('Transaction date before caching:', transactions.map(transaction => transaction.date));
     // Get total count
     const countSnapshot = await getDocs(query(transactionsRef));
     const totalCount = countSnapshot.size;
 
     // Cache the results
+    console.log('Transactions date coming from Dexie:', transactions.map(transaction => transaction.date));
+    console.log('Caching transactions with dates:', transactions.map(transaction => transaction.date));
     await dexieDb.transactions.bulkPut(
       transactions.map(transaction => ({
         ...transaction,

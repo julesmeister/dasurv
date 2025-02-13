@@ -7,7 +7,7 @@ import { Booking } from '@/app/models/booking';
 import { doc, updateDoc, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import toast from 'react-hot-toast';
-import { format, parse } from 'date-fns';
+import { format, parse, addWeeks, startOfWeek, endOfWeek } from 'date-fns';
 import { UserPlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { Staff } from '@/app/models/staff';
 import TherapistSelectionDialog from './TherapistSelectionDialog';
@@ -17,6 +17,7 @@ import { useFloating, FloatingPortal, offset, shift, Placement, arrow, FloatingA
 import { Tooltip } from '@/app/components/Tooltip';
 import { addDoc } from 'firebase/firestore';
 import { transactionsCollection } from '@/app/models/transaction';
+import WeeklyCalendar from './WeeklyCalendar';
 
 interface AppointmentTableProps {
   initialBookings: Booking[];
@@ -26,6 +27,7 @@ interface AppointmentTableProps {
 const tabs = [
   { name: 'Upcoming', value: 'upcoming' as const },
   { name: 'History', value: 'history' as const },
+  { name: 'Calendar', value: 'calendar' as const }
 ] as const;
 
 const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, initialTotalCount }) => {
@@ -37,9 +39,10 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
   const [loading, setLoading] = useState(false);
   const [isTherapistDialogOpen, setIsTherapistDialogOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
-  const [counts, setCounts] = useState({ upcoming: 0, history: 0 });
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'history' | 'calendar'>('upcoming');
+  const [counts, setCounts] = useState({ upcoming: 0, history: 0, calendar: 0 });
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
   const itemsPerPage = 10;
 
   const formatFirebaseTimestamp = (timestamp: any) => {
@@ -59,12 +62,12 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
   const loadPage = useCallback(async (page: number) => {
     try {
       setLoading(true);
-      const result = await fetchBookings(itemsPerPage, page === 1 ? null : lastDoc, activeTab);
+      const result = await fetchBookings(itemsPerPage, page === 1 ? null : lastDoc, activeTab === 'calendar' ? 'upcoming' : activeTab);
       setBookings(result.bookings);
       setLastDoc(result.lastDoc);
       setCounts(prev => ({
         ...prev,
-        [activeTab]: result.totalCount
+        [activeTab === 'calendar' ? 'upcoming' : activeTab]: result.totalCount
       }));
       setTotalCount(result.totalCount); // Update totalCount with the current tab's count
       setCurrentPage(page);
@@ -186,7 +189,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
                     try {
                       setLoading(true);
                       await clearBookingsCache();
-                      const { bookings: newBookings, totalCount: newTotal } = await fetchBookings(itemsPerPage, null, activeTab);
+                      const { bookings: newBookings, totalCount: newTotal } = await fetchBookings(itemsPerPage, null, activeTab === 'calendar' ? 'upcoming' : activeTab);
                       setBookings(newBookings);
                       setTotalCount(newTotal);
                       setLastDoc(null);
@@ -220,7 +223,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
                 name="tabs"
                 className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                 value={activeTab}
-                onChange={(e) => setActiveTab(e.target.value as 'upcoming' | 'history')}
+                onChange={(e) => setActiveTab(e.target.value as 'upcoming' | 'history' | 'calendar')}
               >
                 {tabs.map((tab) => (
                   <option key={tab.value} value={tab.value}>
@@ -243,7 +246,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
                         'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium'
                       )}
                     >
-                      {tab.name} ({counts[tab.value as keyof typeof counts]})
+                      {tab.value !== 'calendar' ? `${tab.name} (${counts[tab.value as keyof typeof counts]})` : tab.name}
                     </button>
                   ))}
                 </nav>
@@ -251,213 +254,243 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
             </div>
 
             <div className="mt-4">
-              <div className="flex flex-col">
-                <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8" style={{ overscrollBehavior: 'auto' }}>
-                  <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                    <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Therapist</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {loading ? (
+              {activeTab === 'calendar' ? (
+                <div className="mt-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <button
+                      onClick={() => setCurrentDate(addWeeks(currentDate, -1))}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Previous Week
+                    </button>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      {format(startOfWeek(currentDate), 'MMM d')} - {format(endOfWeek(currentDate), 'MMM d, yyyy')}
+                    </h2>
+                    <button
+                      onClick={() => setCurrentDate(addWeeks(currentDate, 1))}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Next Week
+                    </button>
+                  </div>
+                  <WeeklyCalendar
+                    bookings={bookings}
+                    currentDate={currentDate}
+                    onBookingClick={(booking) => {
+                      setSelectedBooking(booking);
+                      setIsTherapistDialogOpen(true);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8" style={{ overscrollBehavior: 'auto' }}>
+                    <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                      <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
                             <tr>
-                              <td colSpan={8} className="px-6 py-4 text-center">
-                                <div className="flex justify-center">
-                                  <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                </div>
-                              </td>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Therapist</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                              <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
-                          ) : (
-                            bookings.map((booking, index) => (
-                              <React.Fragment key={booking.id}>
-                                <tr>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.customerName}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.service}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.date}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {format(parse(booking.time, 'HH:mm', new Date()), 'h:mm a')}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 justify-center">
-                                    {booking.therapist ? (
-                                      <div className="group flex justify-center">
-                                        <span className="group-hover:hidden">{booking.therapist}</span>
-                                        <button
-                                          onClick={() => {
-                                            setSelectedBooking(booking);
-                                            setIsTherapistDialogOpen(true);
-                                          }}
-                                          className="invisible group-hover:visible hover:text-blue-500"
-                                        >
-                                          <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div className="flex justify-center">
-                                        <button
-                                          onClick={() => {
-                                            setSelectedBooking(booking);
-                                            setIsTherapistDialogOpen(true);
-                                          }}
-                                          className="hover:text-blue-500"
-                                        >
-                                          <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                        </button>
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm relative group">
-                                    <span className={`${
-                                      booking.status === 'confirmed' ? 'text-green-600' :
-                                      booking.status === 'pending' ? 'text-yellow-600' :
-                                      'text-red-600'
-                                    }`}>
-                                      {booking.status}
-                                    </span>
-                                    <div className="hidden group-hover:flex absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-lg p-1 z-10">
-                                      <button 
-                                        className="p-1 hover:bg-green-100 rounded-l-lg" 
-                                        title="Confirm"
-                                        onClick={() => handleStatusChange(booking.id!, 'confirmed')}>
-                                        <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      </button>
-                                      <button 
-                                        className="p-1 hover:bg-yellow-100" 
-                                        title="Pending"
-                                        onClick={() => handleStatusChange(booking.id!, 'pending')}>
-                                        <svg className="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                      </button>
-                                      <button 
-                                        className="p-1 hover:bg-red-100 rounded-r-lg" 
-                                        title="Cancel"
-                                        onClick={() => handleStatusChange(booking.id!, 'canceled')}>
-                                        <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                      </button>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <button 
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleRow(index);
-                                      }} 
-                                      className="flex items-center text-blue-500 hover:text-blue-700"
-                                    >
-                                      <svg className="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                      </svg>
-                                      View Details
-                                    </button>
-                                  </td>
-                                </tr>
-                                {openRow === index && (
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {loading ? (
+                              <tr>
+                                <td colSpan={8} className="px-6 py-4 text-center">
+                                  <div className="flex justify-center">
+                                    <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              bookings.map((booking, index) => (
+                                <React.Fragment key={booking.id}>
                                   <tr>
-                                    <td colSpan={8} className="px-6 py-4">
-                                      <div className="bg-gray-100 p-4 rounded">
-                                        <p><strong>Email:</strong> {booking.email}</p>
-                                        <p><strong>Phone:</strong> {booking.phone}</p>
-                                        <p><strong>Notes:</strong> {booking.notes ? booking.notes : 'No notes available'}</p>
-                                        <p><strong>Created At:</strong> {formatFirebaseTimestamp(booking.createdAt)}</p>
-                                        <p><strong>Updated At:</strong> {formatFirebaseTimestamp(booking.updatedAt)}</p>
-                                        <p><strong>Service:</strong> {booking.service}</p>
-                                        <p><strong>Booking ID:</strong> {booking.id}</p>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.customerName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.service}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.date}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      {format(parse(booking.time, 'HH:mm', new Date()), 'h:mm a')}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 justify-center">
+                                      {booking.therapist ? (
+                                        <div className="group flex justify-center">
+                                          <span className="group-hover:hidden">{booking.therapist}</span>
+                                          <button
+                                            onClick={() => {
+                                              setSelectedBooking(booking);
+                                              setIsTherapistDialogOpen(true);
+                                            }}
+                                            className="invisible group-hover:visible hover:text-blue-500"
+                                          >
+                                            <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div className="flex justify-center">
+                                          <button
+                                            onClick={() => {
+                                              setSelectedBooking(booking);
+                                              setIsTherapistDialogOpen(true);
+                                            }}
+                                            className="hover:text-blue-500"
+                                          >
+                                            <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm relative group">
+                                      <span className={`${
+                                        booking.status === 'confirmed' ? 'text-green-600' :
+                                        booking.status === 'pending' ? 'text-yellow-600' :
+                                        'text-red-600'
+                                      }`}>
+                                        {booking.status}
+                                      </span>
+                                      <div className="hidden group-hover:flex absolute -right-2 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-lg p-1 z-10">
+                                        <button 
+                                          className="p-1 hover:bg-green-100 rounded-l-lg" 
+                                          title="Confirm"
+                                          onClick={() => handleStatusChange(booking.id!, 'confirmed')}>
+                                          <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                          </svg>
+                                        </button>
+                                        <button 
+                                          className="p-1 hover:bg-yellow-100" 
+                                          title="Pending"
+                                          onClick={() => handleStatusChange(booking.id!, 'pending')}>
+                                          <svg className="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                          </svg>
+                                        </button>
+                                        <button 
+                                          className="p-1 hover:bg-red-100 rounded-r-lg" 
+                                          title="Cancel"
+                                          onClick={() => handleStatusChange(booking.id!, 'canceled')}>
+                                          <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                          </svg>
+                                        </button>
                                       </div>
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleRow(index);
+                                        }} 
+                                        className="flex items-center text-blue-500 hover:text-blue-700"
+                                      >
+                                        <svg className="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        View Details
+                                      </button>
+                                    </td>
                                   </tr>
-                                )}
-                              </React.Fragment>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                      <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                        <div className="flex-1 flex justify-between sm:hidden">
-                          <button
-                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1 || loading}
-                            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                          >
-                            Previous
-                          </button>
-                          <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage) || loading}
-                            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                          >
-                            Next
-                          </button>
-                        </div>
-                        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-sm text-gray-700">
-                              Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
-                              <span className="font-medium">
-                                {Math.min(currentPage * itemsPerPage, totalCount)}
-                              </span> of{' '}
-                              <span className="font-medium">{totalCount}</span> results
-                            </p>
+                                  {openRow === index && (
+                                    <tr>
+                                      <td colSpan={8} className="px-6 py-4">
+                                        <div className="bg-gray-100 p-4 rounded">
+                                          <p><strong>Email:</strong> {booking.email}</p>
+                                          <p><strong>Phone:</strong> {booking.phone}</p>
+                                          <p><strong>Notes:</strong> {booking.notes ? booking.notes : 'No notes available'}</p>
+                                          <p><strong>Created At:</strong> {formatFirebaseTimestamp(booking.createdAt)}</p>
+                                          <p><strong>Updated At:</strong> {formatFirebaseTimestamp(booking.updatedAt)}</p>
+                                          <p><strong>Service:</strong> {booking.service}</p>
+                                          <p><strong>Booking ID:</strong> {booking.id}</p>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </React.Fragment>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                        <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                          <div className="flex-1 flex justify-between sm:hidden">
+                            <button
+                              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                              disabled={currentPage === 1 || loading}
+                              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              Previous
+                            </button>
+                            <button
+                              onClick={() => handlePageChange(currentPage + 1)}
+                              disabled={currentPage >= Math.ceil(totalCount / itemsPerPage) || loading}
+                              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              Next
+                            </button>
                           </div>
-                          <div>
-                            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                              <button
-                                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                                disabled={currentPage === 1 || loading}
-                                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                              >
-                                <span className="sr-only">Previous</span>
-                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                              {Array.from({ length: Math.min(5, Math.ceil(totalCount / itemsPerPage)) }, (_, i) => (
+                          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-sm text-gray-700">
+                                Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                                <span className="font-medium">
+                                  {Math.min(currentPage * itemsPerPage, totalCount)}
+                                </span> of{' '}
+                                <span className="font-medium">{totalCount}</span> results
+                              </p>
+                            </div>
+                            <div>
+                              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                                 <button
-                                  key={i + 1}
-                                  onClick={() => handlePageChange(i + 1)}
-                                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                    currentPage === i + 1
-                                      ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                  }`}
+                                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                                  disabled={currentPage === 1 || loading}
+                                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                                 >
-                                  {i + 1}
+                                  <span className="sr-only">Previous</span>
+                                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
                                 </button>
-                              ))}
-                              <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage >= Math.ceil(totalCount / itemsPerPage) || loading}
-                                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                              >
-                                <span className="sr-only">Next</span>
-                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            </nav>
+                                {Array.from({ length: Math.min(5, Math.ceil(totalCount / itemsPerPage)) }, (_, i) => (
+                                  <button
+                                    key={i + 1}
+                                    onClick={() => handlePageChange(i + 1)}
+                                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                      currentPage === i + 1
+                                        ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                    }`}
+                                  >
+                                    {i + 1}
+                                  </button>
+                                ))}
+                                <button
+                                  onClick={() => handlePageChange(currentPage + 1)}
+                                  disabled={currentPage >= Math.ceil(totalCount / itemsPerPage) || loading}
+                                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                >
+                                  <span className="sr-only">Next</span>
+                                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              </nav>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

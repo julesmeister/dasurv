@@ -9,7 +9,7 @@ import { Service } from '../models/service';
 
 export class DasurvDatabase extends Dexie {
   appointments!: Table<Booking>;
-  appointmentCounts!: Table<{ type: 'upcoming' | 'history'; count: number; timestamp: number }>;
+  appointmentCounts!: Table<{ type: 'upcoming' | 'history' | 'calendar'; count: number; timestamp: number }>;
   inventory!: Table<InventoryItem & { timestamp: number }>;
   inventoryCounts!: Table<{ count: number; timestamp: number; type: 'total' | 'lowStock' }>;
   staffs!: Table<Staff & { timestamp: number; createdAt: number; updatedAt: number }>;
