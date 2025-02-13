@@ -9,6 +9,7 @@ import { classNames } from '@/app/lib/utils';
 const tabs = [
   { name: 'Active', value: true },
   { name: 'Inactive', value: false },
+  { name: 'Serviced', value: false }
 ];
 
 const StaffTable: React.FC = () => {
@@ -166,7 +167,7 @@ const StaffTable: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <button
                           onClick={() => setEditingStaff(staff)}
-                          className="text-yellow-500 hover:text-yellow-900"
+                          className="text-yellow-600 hover:text-yellow-900"
                         >
                           Edit
                         </button>
