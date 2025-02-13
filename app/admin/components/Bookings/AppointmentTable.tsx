@@ -110,7 +110,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
         <h3 className="text-lg font-medium leading-6 text-gray-900">Upcoming Appointments</h3>
         <div className="mt-4">
           <div className="flex flex-col">
-            <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8" style={{ overscrollBehavior: 'auto' }}>
               <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
                 <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -149,14 +149,14 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 justify-center">
                                 {booking.therapist ? (
-                                  <div className="group relative flex justify-between items-center">
-                                    <span>{booking.therapist}</span>
+                                  <div className="group flex justify-center">
+                                    <span className="group-hover:hidden">{booking.therapist}</span>
                                     <button
                                       onClick={() => {
                                         setSelectedBooking(booking);
                                         setIsTherapistDialogOpen(true);
                                       }}
-                                      className="invisible group-hover:visible hover:text-blue-500 ml-2"
+                                      className="invisible group-hover:visible hover:text-blue-500"
                                     >
                                       <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                                     </button>
