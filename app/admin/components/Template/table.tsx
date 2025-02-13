@@ -196,14 +196,17 @@ const Table = <T extends {}>({
                                     {rowActions && rowActions.map((action, actionIndex) => (
                                       action.showCondition?.(row) !== false && (
                                         <div key={actionIndex} className="group flex justify-center">
-                                          {!action.hideText && (
-                                            <span className="group-hover:hidden">{action.label}</span>
-                                          )}
+                                          
                                           <button
-                                            onClick={() => action.action(row)}
-                                            className={`${action.hideText ? '' : 'invisible group-hover:visible'} hover:text-blue-500`}
+                                            onClick={() => {action.action(row);
+                                              console.log("Action:", action);
+                                            }}
+                                            className="hover:text-blue-500"
                                             title={action.label}
                                           >
+                                            {!action.hideText && (
+                                            <span>{action.label}</span>
+                                          )}
                                             {action.icon}
                                           </button>
                                         </div>
