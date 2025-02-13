@@ -88,14 +88,16 @@ export const fetchTransactions = async (
         return {
           id: doc.id,
           ...doc.data(),
-          date: fetchedDate
+          date: fetchedDate,
+          amount: doc.data().amount // Ensure amount is included
         };
       } else {
         console.error('Invalid date fetched from Firestore:', fetchedDate);
         return {
           id: doc.id,
           ...doc.data(),
-          date: currentDate
+          date: currentDate,
+          amount: doc.data().amount // Ensure amount is included
         };
       }
     }) as Transaction[];
@@ -129,6 +131,22 @@ export const fetchTransactions = async (
     console.error('Error fetching transactions:', error);
     throw error;
   }
+};
+
+export const fetchTransactionData = async () => {
+  const transactionsQuery = query(transactionsCollection, orderBy('date', 'desc'), limit(10));
+  const querySnapshot = await getDocs(transactionsQuery);
+  const transactions = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    date: doc.data().date,
+    amount: doc.data().amount, // Ensure amount is included
+    ...doc.data()
+  }));
+
+  return {
+    labels: transactions.map((transaction) => transaction.date.toDate().toLocaleDateString()),
+    values: transactions.map((transaction) => transaction.amount),
+  };
 };
 
 export const updateTransactionStatus = async (id: string, newStatus: 'completed' | 'pending' | 'failed'): Promise<boolean> => {
