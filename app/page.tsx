@@ -20,7 +20,7 @@ const ServicesButton = () => {
   };
 
   return (
-    <Link 
+    <Link
       href="#services"
       onClick={scrollToServices}
       className="rounded-md bg-gray-900 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
@@ -73,10 +73,10 @@ export default function Home() {
               />
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-              Experience Ultimate Relaxation
+              Experience the Art of Massage
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Discover professional massage therapy tailored to your needs. From Swedish relaxation to deep tissue therapy, our expert therapists are dedicated to your well-being and comfort.
+              You deserve a transformative journey of wellness, carefully crafted to rejuvenate your body, soothe your mind, and uplift your spirit.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link 
@@ -109,10 +109,10 @@ export default function Home() {
           <div className="mx-auto max-w-2xl lg:text-center">
             <h2 className="text-base font-semibold leading-7 text-indigo-600">Our Services</h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Professional Massage Therapy
+              Holistic Wellness Services
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Choose from our range of specialized massage treatments, each designed to provide specific benefits for your well-being.
+              Explore our range of services designed to promote relaxation, rejuvenation, and overall well-being.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">

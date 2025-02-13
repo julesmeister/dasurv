@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getFirestore, collection, query, where, getDocs, QuerySnapshot, DocumentSnapshot } from "firebase/firestore";
 import { Service } from '../models/service';
@@ -24,6 +24,14 @@ if (typeof window !== 'undefined') {
 }
 
 const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    // Existing and future Auth states are now persisted in the current session only.
+  })
+  .catch((error) => {
+    console.error('Error setting persistence:', error);
+  });
+
 export const servicesCollection = collection(db, 'services');
 
 async function fetchActiveServices(): Promise<Service[]> {
