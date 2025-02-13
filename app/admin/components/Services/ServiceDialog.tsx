@@ -23,7 +23,6 @@ const statuses = [
   { value: 'inactive', label: 'Inactive', color: 'bg-gray-500' },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, service }: ServiceDialogProps) {  const [formData, setFormData] = useState<Service>({
     name: '',
     icon: '',
