@@ -79,7 +79,8 @@ export default function BookingPage() {
           description: doc.data().description,
           duration: doc.data().duration,
           price: doc.data().price,
-          status: doc.data().status
+          status: doc.data().status,
+          icon: doc.data().icon || ''
         }));
       setServices(servicesList);
     };

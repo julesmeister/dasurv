@@ -4,9 +4,8 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Service } from '@/app/models/service';
-import { addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { servicesCollection } from '@/app/lib/firebase';
+import { Service, addService, updateService } from '@/app/models/service';
+import { db, servicesCollection } from '@/app/lib/firebase';
 import { classNames } from '@/app/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -18,12 +17,22 @@ interface ServiceDialogProps {
   service?: Service;
 }
 
+interface ServiceFormData {
+  name: string;
+  icon: string;
+  description: string;
+  duration: string;
+  price: string;
+  status: string;
+}
+
 const statuses = [
   { value: 'active', label: 'Active', color: 'bg-green-500' },
   { value: 'inactive', label: 'Inactive', color: 'bg-gray-500' },
 ];
 
-export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, service }: ServiceDialogProps) {  const [formData, setFormData] = useState<Service>({
+export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, service }: ServiceDialogProps) {
+  const [formData, setFormData] = useState<ServiceFormData>({
     name: '',
     icon: '',
     description: '',
@@ -34,7 +43,14 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
 
   useEffect(() => {
     if (service) {
-      setFormData(service);
+      setFormData({
+        name: service.name,
+        icon: service.icon,
+        description: service.description,
+        duration: service.duration.toString(),
+        price: service.price.toString(),
+        status: service.status
+      });
     } else {
       setFormData({
         name: '',
@@ -49,33 +65,36 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Convert string values to numbers for duration and price
+    const serviceData: Service = {
+      name: formData.name,
+      icon: formData.icon,
+      description: formData.description,
+      duration: Number(formData.duration),
+      price: Number(formData.price),
+      status: formData.status
+    };
+
     try {
       if (service?.id) {
         // Update existing service
-        const serviceRef = doc(servicesCollection, service.id);
         const updateData: Partial<Service> = {};
         if (formData.name) updateData.name = formData.name;
-        if (formData.duration) updateData.duration = formData.duration;
-        if (formData.price) updateData.price = formData.price;
+        if (formData.duration) updateData.duration = Number(formData.duration);
+        if (formData.price) updateData.price = Number(formData.price);
         if (formData.status) updateData.status = formData.status;
         if (formData.icon !== undefined) updateData.icon = formData.icon;
         if (formData.description !== undefined) updateData.description = formData.description;
 
-        const docSnapshot = await getDoc(serviceRef);
-        if (docSnapshot.exists()) {
-          await updateDoc(serviceRef, updateData);
-          toast.success('Service updated successfully');
-        } else {
-          // Create a new document if it doesn't exist
-          await addDoc(servicesCollection, { ...formData, id: service.id });
-          toast.success('Service created successfully');
-        }
+        await updateService(service.id.toString(), updateData);
+        toast.success('Service updated successfully');
       } else {
         // Add new service
-        await addDoc(servicesCollection, formData);
+        await addService(serviceData);
         toast.success('Service added successfully');
       }
-      onSave(formData);
+      onSave(serviceData);
       onClose();
     } catch (error) {
       console.error('Error saving service:', error);

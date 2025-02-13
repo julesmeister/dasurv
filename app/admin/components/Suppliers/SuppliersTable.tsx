@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState, useCallback } from 'react';
 import { Supplier, fetchSuppliers } from '@/app/models/supplier';
 import SuppliersDialog from './SuppliersDialog';
 
 const itemsPerPage = 10;
-
 
 const SuppliersTable: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -33,8 +33,6 @@ const SuppliersTable: React.FC = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
-  
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -82,15 +80,17 @@ const SuppliersTable: React.FC = () => {
                     <thead>
                       <tr>
                         <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                        <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
                         <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-                        <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
+                        <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+                        <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                         <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {loading ? (
                         <tr>
-                          <td colSpan={4} className="px-5 py-5 text-center">
+                          <td colSpan={6} className="px-5 py-5 text-center">
                             <div className="flex justify-center">
                               <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -101,7 +101,7 @@ const SuppliersTable: React.FC = () => {
                         </tr>
                       ) : (suppliers && suppliers.length === 0) ? (
                         <tr>
-                          <td colSpan={4} className="px-5 py-5 text-center text-sm text-gray-500">
+                          <td colSpan={6} className="px-5 py-5 text-center text-sm text-gray-500">
                             No suppliers found
                           </td>
                         </tr>
@@ -109,8 +109,20 @@ const SuppliersTable: React.FC = () => {
                         suppliers.map((supplier) => (
                           <tr key={supplier.id}>
                             <td className="px-5 py-5 whitespace-nowrap text-sm font-medium text-gray-900">{supplier.name}</td>
-                            <td className="px-5 py-5 whitespace-nowrap text-sm text-gray-500">{supplier.address}</td>
                             <td className="px-5 py-5 whitespace-nowrap text-sm text-gray-500">{supplier.contact}</td>
+                            <td className="px-5 py-5 whitespace-nowrap text-sm text-gray-500">{supplier.email || '-'}</td>
+                            <td className="px-5 py-5 whitespace-nowrap text-sm text-gray-500">{supplier.category || '-'}</td>
+                            <td className="px-5 py-5 whitespace-nowrap text-sm">
+                              <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                                supplier.status === 'Active' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : supplier.status === 'Inactive'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {supplier.status}
+                              </span>
+                            </td>
                             <td className="px-5 py-5 whitespace-nowrap text-center">
                               <button onClick={() => handleEditSupplier(supplier)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
                             </td>
@@ -192,10 +204,14 @@ const SuppliersTable: React.FC = () => {
         </div>
       </div>
       <SuppliersDialog
-        isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-        onSupplierAdded={handleSupplierAdded}
-        supplier={supplierToEdit}
+        open={isDialogOpen}
+        setOpen={setDialogOpen}
+        title={supplierToEdit ? 'Edit Supplier' : 'Add Supplier'}
+        initialData={supplierToEdit}
+        onSubmit={async (data) => {
+          await handleSupplierAdded(data as Supplier);
+          setDialogOpen(false);
+        }}
       />
     </div>
   );

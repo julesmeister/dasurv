@@ -1,93 +1,145 @@
-import { db } from '@/app/lib/firebase';
+import { db as firebaseDb } from '@/app/lib/firebase';
+import { db as dexieDb } from '@/app/lib/db';
 import { collection, getDocs, query, orderBy, limit, startAfter, getCountFromServer, DocumentData, QueryDocumentSnapshot, where } from 'firebase/firestore';
 
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 export interface Booking {
-  id?: string; // Optional ID for Firestore document IDs
-  service: string; // Required ID of the service being booked
-  customerName: string; // Required name of the customer
-  email: string; // Required email of the customer
-  phone: string; // Required phone number of the customer
-  date: string; // Required date of the booking
-  time: string; // Required time of the booking
-  duration: string; // Required duration of the service
-  notes: string; // Optional notes from the customer
-  status: 'confirmed' | 'pending' | 'canceled'; // Required status of the booking
-  therapist: string; // Required ID of the therapist
-  createdAt: Date; // Required timestamp for creation
-  updatedAt: Date; // Required timestamp for last update
+  id?: string;
+  service: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  date: string;
+  time: string;
+  duration: string;
+  notes: string;
+  status: 'confirmed' | 'pending' | 'canceled' | 'completed';
+  therapist: string;
+  createdAt: Date;
+  updatedAt: Date;
+  type?: 'upcoming' | 'history'; // Added for caching purposes
 }
 
 export interface BookingPaginationResult {
   bookings: Booking[];
   lastDoc: QueryDocumentSnapshot<DocumentData> | null;
   totalCount: number;
+  fromCache?: boolean;
 }
+
+const getTotalCount = async (tab: 'upcoming' | 'history') => {
+  const bookingsCollection = collection(firebaseDb, 'bookings');
+  const now = new Date().toISOString().split('T')[0];
+  const q = query(bookingsCollection, where('date', tab === 'upcoming' ? '>=' : '<', now));
+  const snapshot = await getCountFromServer(q);
+  return snapshot.data().count;
+};
 
 export const fetchBookings = async (
   pageSize: number = 10,
   lastDoc?: QueryDocumentSnapshot<DocumentData> | null,
   tab: 'upcoming' | 'history' = 'upcoming'
 ): Promise<BookingPaginationResult> => {
-  const bookingsCollection = collection(db, 'bookings');
-  
-  // Get total count for the specific tab
-  let baseQuery = query(bookingsCollection);
-  
-  const now = new Date().toISOString().split('T')[0]; // Convert to YYYY-MM-DD format
-  if (tab === 'upcoming') {
-    baseQuery = query(baseQuery, where('date', '>=', now));
-  } else {
-    baseQuery = query(baseQuery, where('date', '<', now));
-  }
-  
-  const snapshot = await getCountFromServer(baseQuery);
-  const totalCount = snapshot.data().count;
+  try {
+    // Try to get cached count first
+    const cachedCount = await dexieDb.appointmentCounts
+      .where('type')
+      .equals(tab)
+      .first();
+    
+    const now = Date.now();
+    let totalCount = 0; // Initialize with a default value
 
-  console.log('Total count:', totalCount);
+    // Check if we have a valid cached count
+    if (cachedCount && (now - cachedCount.timestamp) < CACHE_DURATION) {
+      totalCount = cachedCount.count;
+    }
 
-  // Build query with tab filter
-  let q = query(
-    bookingsCollection,
-    where('date', tab === 'upcoming' ? '>=' : '<', now),
-    orderBy('date', tab === 'upcoming' ? 'asc' : 'desc'),
-    limit(pageSize)
-  );
+    // Try to get cached bookings
+    if (!lastDoc) {
+      const cachedBookings = await dexieDb.appointments
+        .where('type')
+        .equals(tab)
+        .limit(pageSize)
+        .toArray();
 
-  // If we have a last document, start after it
-  if (lastDoc) {
-    q = query(q, startAfter(lastDoc));
-  }
+      if (cachedBookings.length > 0) {
+        totalCount = await getTotalCount(tab);
+        return {
+          bookings: cachedBookings,
+          totalCount,
+          lastDoc: null,
+          fromCache: true
+        };
+      }
+    }
 
-  const bookingSnapshot = await getDocs(q);
-  const lastVisible = bookingSnapshot.docs[bookingSnapshot.docs.length - 1] || null;
+    // If cache miss or pagination, fetch from Firebase
+    const bookingsCollection = collection(firebaseDb, 'bookings');
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    let q = query(
+      bookingsCollection,
+      where('date', tab === 'upcoming' ? '>=' : '<', currentDate),
+      orderBy('date', tab === 'upcoming' ? 'asc' : 'desc'),
+      limit(pageSize)
+    );
 
-  const bookings = bookingSnapshot.docs.map(doc => {
-    const data = doc.data();
+    if (lastDoc) {
+      q = query(q, startAfter(lastDoc));
+    }
+
+    const bookingSnapshot = await getDocs(q);
+    const lastVisible = bookingSnapshot.docs[bookingSnapshot.docs.length - 1] || null;
+
+    const bookings = bookingSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate(),
+        updatedAt: data.updatedAt?.toDate(),
+        type: tab // Add type for caching
+      };
+    }) as Booking[];
+
+    // Get total count if not already cached
+    if (!totalCount) {
+      totalCount = await getTotalCount(tab);
+
+      // Cache the count
+      await dexieDb.appointmentCounts.put({
+        type: tab,
+        count: totalCount,
+        timestamp: now
+      });
+    }
+
+    // Cache the bookings if this is the first page
+    if (!lastDoc) {
+      await dexieDb.appointments.bulkPut(bookings);
+    }
+
     return {
-      id: doc.id,
-      ...data,
-      createdAt: data.createdAt?.toDate(),
-      updatedAt: data.updatedAt?.toDate()
+      bookings,
+      lastDoc: lastVisible,
+      totalCount
     };
-  }) as Booking[];
-
-  console.log('Fetched bookings:', bookings);
-
-  return {
-    bookings,
-    lastDoc: lastVisible,
-    totalCount
-  };
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    throw error;
+  }
 };
 
 export const fetchBookingsFromFirestore = async (): Promise<Booking[]> => {
-  const bookingsCollection = collection(db, 'bookings');
+  const bookingsCollection = collection(firebaseDb, 'bookings');
   const bookingSnapshot = await getDocs(bookingsCollection);
   return bookingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
 };
 
 export const getTodayConfirmedBookingsCount = async (): Promise<number> => {
-  const bookingsCollection = collection(db, 'bookings');
+  const bookingsCollection = collection(firebaseDb, 'bookings');
   
   // Get today's date at midnight
   const today = new Date();
@@ -100,12 +152,17 @@ export const getTodayConfirmedBookingsCount = async (): Promise<number> => {
   // Create a query for confirmed bookings for today
   const q = query(
     bookingsCollection,
-    where('status', '==', 'confirmed'),
     where('date', '>=', today.toISOString().split('T')[0]),
-    where('date', '<', tomorrow.toISOString().split('T')[0])
+    where('date', '<', tomorrow.toISOString().split('T')[0]),
+    where('status', '==', 'confirmed')
   );
 
-  // Get the count
   const snapshot = await getCountFromServer(q);
   return snapshot.data().count;
+};
+
+// Function to clear any cached booking data
+export const clearBookingsCache = async (): Promise<void> => {
+  await dexieDb.appointments.clear();
+  await dexieDb.appointmentCounts.clear();
 };

@@ -16,6 +16,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 let analytics;
 if (typeof window !== 'undefined') {
@@ -23,7 +24,6 @@ if (typeof window !== 'undefined') {
 }
 
 const auth = getAuth(app);
-export const db = getFirestore(app);
 export const servicesCollection = collection(db, 'services');
 
 async function fetchActiveServices(): Promise<Service[]> {
@@ -43,4 +43,4 @@ async function fetchActiveServices(): Promise<Service[]> {
   return services;
 }
 
-export { app, auth, analytics, fetchActiveServices };
+export { app, auth, db, analytics, fetchActiveServices };

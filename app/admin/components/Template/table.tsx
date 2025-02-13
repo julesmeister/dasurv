@@ -35,6 +35,7 @@ interface TableProps<T> {
     showCondition?: (row: T) => boolean;
     hideText?: boolean;
   }[];
+  actions?: React.ReactNode;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -52,7 +53,8 @@ const Table = <T extends {}>({
   expandableContent,
   onStatusChange,
   statusOptions,
-  rowActions
+  rowActions,
+  actions
 }: TableProps<T>) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<T[]>(initialData);
@@ -114,8 +116,17 @@ const Table = <T extends {}>({
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
-        {title && <h3 className="text-lg font-medium leading-6 text-gray-900">{title}</h3>}
-        {description && <p className="mt-2 text-sm text-gray-700">{description}</p>}
+        <div className="sm:flex sm:items-center sm:justify-between">
+          <div>
+            {title && <h3 className="text-lg font-medium leading-6 text-gray-900">{title}</h3>}
+            {description && <p className="mt-2 text-sm text-gray-700">{description}</p>}
+          </div>
+          {actions && (
+            <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+              {actions}
+            </div>
+          )}
+        </div>
         <div className="mt-4">
           <div className="flex flex-col">
             <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8" style={{ overscrollBehavior: 'auto' }}>

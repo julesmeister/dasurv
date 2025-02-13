@@ -2,16 +2,18 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { fetchBookings } from '@/app/models/booking';
+import { fetchBookings, clearBookingsCache } from '@/app/models/booking';
 import { Booking } from '@/app/models/booking';
 import { doc, updateDoc, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import toast from 'react-hot-toast';
 import { format, parse } from 'date-fns';
-import { UserPlusIcon } from '@heroicons/react/24/outline';
+import { UserPlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { Staff } from '@/app/models/staff';
 import TherapistSelectionDialog from './TherapistSelectionDialog';
 import { classNames } from '@/app/lib/utils';
+import { useFloating, FloatingPortal, offset, shift, Placement, arrow, FloatingArrow } from '@floating-ui/react';
+import { Tooltip } from '@/app/components/Tooltip';
 
 interface AppointmentTableProps {
   initialBookings: Booking[];
@@ -119,10 +121,39 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
       <div className="px-4 py-5 sm:p-6">
         <div className="sm:flex sm:items-center">
           <div className="sm:flex-auto">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Appointments or Bookings</h3>
-            <p className="mt-2 text-sm text-gray-700">
-              Manage all your appointments and their status.
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium leading-6 text-gray-900">Appointments or Bookings</h3>
+                <p className="mt-2 text-sm text-gray-700">
+                  Manage all your appointments and their status.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    await clearBookingsCache();
+                    const { bookings: newBookings, totalCount: newTotal } = await fetchBookings(itemsPerPage, null, activeTab);
+                    setBookings(newBookings);
+                    setTotalCount(newTotal);
+                    setLastDoc(null);
+                    setCurrentPage(1);
+                    toast.success('Data refreshed successfully');
+                  } catch (error) {
+                    toast.error('Failed to refresh data');
+                    console.error('Refresh error:', error);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              >
+                <Tooltip content="Update list with latest bookings">
+                  <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+                </Tooltip>
+                Refresh
+              </button>
+            </div>
           </div>
         </div>
 

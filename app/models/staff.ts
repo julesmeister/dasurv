@@ -1,4 +1,5 @@
-import { db } from '@/app/lib/firebase';
+import { db as firebaseDb } from '@/app/lib/firebase';
+import { db as dexieDb, CACHE_DURATION } from '@/app/lib/db';
 import { collection, getDocs, addDoc, query, orderBy, limit, startAfter, DocumentData, QueryDocumentSnapshot, doc, deleteDoc, updateDoc, getDoc, where, getCountFromServer } from 'firebase/firestore';
 
 export interface Staff {
@@ -17,9 +18,10 @@ export interface StaffQueryResult {
   staffs: Staff[];
   lastDoc: QueryDocumentSnapshot<DocumentData> | null;
   totalCount: number;
+  fromCache?: boolean;
 }
 
-export const staffsCollection = collection(db, 'staffs');
+export const staffsCollection = collection(firebaseDb, 'staffs');
 
 export const fetchStaffs = async (
   itemsPerPage: number = 10,
@@ -28,6 +30,65 @@ export const fetchStaffs = async (
 ): Promise<StaffQueryResult> => {
   try {
     console.log('Fetching staffs with params:', { itemsPerPage, hasLastDoc: !!lastDocument, activeFilter });
+    const now = Date.now();
+    let totalCount = 0;
+
+    // Try to get cached count first
+    let cachedCount;
+    if (activeFilter !== undefined) {
+      cachedCount = await dexieDb.staffCounts
+        .where('active')
+        .equals(activeFilter ? 1 : 0)
+        .and(item => (now - item.timestamp) < CACHE_DURATION)
+        .first();
+    } else {
+      cachedCount = await dexieDb.staffCounts
+        .where('timestamp')
+        .above(now - CACHE_DURATION)
+        .first();
+    }
+
+    if (cachedCount) {
+      totalCount = cachedCount.count;
+    } else {
+      // Get total count from Firebase
+      const totalQueryConstraints = activeFilter !== undefined ? [where('active', '==', activeFilter)] : [];
+      const totalQuery = query(staffsCollection, ...totalQueryConstraints);
+      const countSnapshot = await getCountFromServer(totalQuery);
+      totalCount = countSnapshot.data().count;
+
+      // Cache the count
+      await dexieDb.staffCounts.put({
+        count: totalCount,
+        timestamp: now,
+        active: activeFilter ? 1 : 0
+      });
+    }
+
+    // Try to get cached staff if not paginating
+    if (!lastDocument) {
+      const cachedStaffQuery = dexieDb.staffs
+        .orderBy('createdAt')
+        .reverse()
+        .filter(staff => activeFilter === undefined || Boolean(staff.active) === activeFilter);
+
+      const cachedStaffs = await cachedStaffQuery
+        .limit(itemsPerPage)
+        .toArray();
+
+      if (cachedStaffs.length > 0 && (now - cachedStaffs[0].timestamp) < CACHE_DURATION) {
+        return {
+          staffs: cachedStaffs.map(staff => ({
+            ...staff,
+            createdAt: new Date(staff.createdAt),
+            updatedAt: new Date(staff.updatedAt)
+          })),
+          lastDoc: null,
+          totalCount,
+          fromCache: true
+        };
+      }
+    }
     
     // Create the base query first with where clause if needed
     let baseQuery = query(staffsCollection);
@@ -46,12 +107,6 @@ export const fetchStaffs = async (
       q = query(baseQuery, startAfter(lastDocument), limit(itemsPerPage));
     }
 
-    // For total count, use the same constraints except for ordering and pagination
-    const totalQueryConstraints = activeFilter !== undefined ? [where('active', '==', activeFilter)] : [];
-    const totalQuery = query(staffsCollection, ...totalQueryConstraints);
-    const countSnapshot = await getCountFromServer(totalQuery);
-    console.log('Total staff count:', countSnapshot.data().count);
-
     const querySnapshot = await getDocs(q);
     const staffs: Staff[] = [];
     querySnapshot.forEach((doc) => {
@@ -64,10 +119,22 @@ export const fetchStaffs = async (
       } as Staff);
     });
 
+    // Cache the fetched staffs if not paginating
+    if (!lastDocument) {
+      await Promise.all(staffs.map(staff =>
+        dexieDb.staffs.put({
+          ...staff,
+          timestamp: now,
+          createdAt: staff.createdAt.getTime(),
+          updatedAt: staff.updatedAt.getTime()
+        } as Staff & { timestamp: number; createdAt: number; updatedAt: number })
+      ));
+    }
+
     return {
       staffs,
       lastDoc: querySnapshot.docs[querySnapshot.docs.length - 1] || null,
-      totalCount: countSnapshot.data().count,
+      totalCount
     };
   } catch (error) {
     console.error('Error fetching staffs:', error);
@@ -84,18 +151,36 @@ export const addStaff = async (staffData: Omit<Staff, 'id' | 'createdAt' | 'upda
     updatedAt: now
   });
 
-  return {
+  const newStaff = {
     id: docRef.id,
     ...staffData,
     createdAt: now,
     updatedAt: now
   };
+
+  // Update cache
+  await dexieDb.staffs.put({
+    ...newStaff,
+    timestamp: Date.now(),
+    createdAt: newStaff.createdAt.getTime(),
+    updatedAt: newStaff.updatedAt.getTime()
+  } as Staff & { timestamp: number; createdAt: number; updatedAt: number });
+
+  // Invalidate counts cache
+  await dexieDb.staffCounts.clear();
+
+  return newStaff;
 };
 
 export const deleteStaff = async (staffId: string): Promise<void> => {
   try {
     const staffRef = doc(staffsCollection, staffId);
     await deleteDoc(staffRef);
+
+    // Remove from cache
+    await dexieDb.staffs.delete(staffId);
+    // Invalidate counts cache
+    await dexieDb.staffCounts.clear();
   } catch (error) {
     console.error('Error deleting staff:', error);
     throw error;
@@ -109,6 +194,23 @@ export const updateStaff = async (staffId: string, staffData: Partial<Staff>): P
     
     if (docSnapshot.exists()) {
       await updateDoc(staffRef, staffData);
+
+      // Update cache
+      const existingStaff = await dexieDb.staffs.get(staffId);
+      if (existingStaff) {
+        await dexieDb.staffs.put({
+          ...existingStaff,
+          ...staffData,
+          timestamp: Date.now(),
+          createdAt: existingStaff.createdAt.getTime(),
+          updatedAt: staffData.updatedAt ? staffData.updatedAt.getTime() : existingStaff.updatedAt.getTime()
+        } as Staff & { timestamp: number; createdAt: number; updatedAt: number });
+      }
+
+      // Invalidate counts cache if active status changed
+      if ('active' in staffData) {
+        await dexieDb.staffCounts.clear();
+      }
     } else {
       throw new Error('Staff member not found');
     }
@@ -119,11 +221,47 @@ export const updateStaff = async (staffId: string, staffData: Partial<Staff>): P
 };
 
 export const getActiveTherapistsCount = async (): Promise<number> => {
-  const q = query(
-    staffsCollection,
-    where('active', '==', true)
-  );
+  try {
+    const now = Date.now();
 
-  const snapshot = await getCountFromServer(q);
-  return snapshot.data().count;
+    // Try to get cached count first
+    let cachedCount;
+    if (true !== undefined) {
+      cachedCount = await dexieDb.staffCounts
+        .where('active')
+        .equals(true ? 1 : 0)
+        .and(item => (now - item.timestamp) < CACHE_DURATION)
+        .first();
+    } else {
+      cachedCount = await dexieDb.staffCounts
+        .where('timestamp')
+        .above(now - CACHE_DURATION)
+        .first();
+    }
+
+    if (cachedCount) {
+      return cachedCount.count;
+    }
+
+    // If no valid cache, get from Firebase
+    const q = query(
+      staffsCollection,
+      where('active', '==', true)
+    );
+
+    const snapshot = await getCountFromServer(q);
+    const count = snapshot.data().count;
+
+    // Cache the count
+    await dexieDb.staffCounts.put({
+      count,
+      timestamp: now,
+      active: true ? 1 : 0
+    });
+
+    return count;
+  } catch (error) {
+    console.error('Error getting active therapists count:', error);
+    return 0;
+  }
 };

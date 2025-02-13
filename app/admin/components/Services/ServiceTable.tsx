@@ -1,14 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getDocs } from 'firebase/firestore';
-import { servicesCollection } from '@/app/lib/firebase';
+import { getServices, addService, updateService, deleteService } from '@/app/lib/services';
 import { Service } from '@/app/models/service';
 import ServiceDialog from './ServiceDialog';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 
 interface ServiceTableProps {
-  services: Service[];
   onAddService: () => void;
   onEditService: (id: string) => void;
 }
@@ -16,25 +16,19 @@ interface ServiceTableProps {
 export default function ServiceTable({ onAddService, onEditService }: ServiceTableProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<Service | undefined>(undefined);
+  const [selectedService, setSelectedService] = useState<Service>();
+
+  const fetchServices = async () => {
+    try {
+      const serviceList = await getServices();
+      setServices(serviceList);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast.error('Failed to load services');
+    }
+  };
 
   useEffect(() => {
-    const fetchServices = async () => {
-      const serviceSnapshot = await getDocs(servicesCollection);
-      const serviceList = serviceSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name || '', // Provide a default value if necessary
-          icon: data.icon || '', // Provide a default value if necessary
-          description: data.description || '', // Provide a default value if necessary
-          duration: data.duration || 0, // Provide a default value if necessary
-          price: data.price || 0, // Provide a default value if necessary
-          status: data.status || '' // Provide a default value if necessary
-        };
-      });
-      setServices(serviceList);
-    };
     fetchServices();
   }, []);
 
@@ -48,21 +42,33 @@ export default function ServiceTable({ onAddService, onEditService }: ServiceTab
     setIsDialogOpen(true);
   };
 
-  const fetchServices = async () => {
-    const serviceSnapshot = await getDocs(servicesCollection);
-    const serviceList = serviceSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name || '', // Provide a default value if necessary
-        icon: data.icon || '', // Provide a default value if necessary
-        description: data.description || '', // Provide a default value if necessary
-        duration: data.duration || 0, // Provide a default value if necessary
-        price: data.price || 0, // Provide a default value if necessary
-        status: data.status || '' // Provide a default value if necessary
-      };
-    });
-    setServices(serviceList);
+  const handleSave = async (service: Service) => {
+    try {
+      if (service.id) {
+        const { id, ...updates } = service;
+        await updateService(id, updates);
+      } else {
+        await addService(service);
+      }
+      const updatedServices = await getServices();
+      setServices(updatedServices);
+      toast.success('Service saved successfully');
+    } catch (error) {
+      console.error('Error saving service:', error);
+      toast.error('Failed to save service');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteService(id);
+      const updatedServices = await getServices();
+      setServices(updatedServices);
+      toast.success('Service deleted successfully');
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast.error('Failed to delete service');
+    }
   };
 
   return (
@@ -139,18 +145,9 @@ export default function ServiceTable({ onAddService, onEditService }: ServiceTab
           setIsDialogOpen(false);
           setSelectedService(undefined);
         }}
-        onSave={async (service: Service) => {
-          if (service.id) {
-            await onEditService(service.id);
-          } else {
-            await onAddService();
-          }
-          await fetchServices(); // Refresh the services after saving
-          setIsDialogOpen(false);
-          setSelectedService(undefined);
-        }}
-        fetchServices={fetchServices}
+        onSave={handleSave}
         service={selectedService}
+        fetchServices={fetchServices}
       />
     </div>
   );

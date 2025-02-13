@@ -12,11 +12,13 @@ import Table from "../Template/table";
 import { Transaction } from "@/app/models/transaction";
 import { fetchTransactions } from "@/app/models/transaction";
 import toast from "react-hot-toast";
-import { EyeIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, PencilIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { Tooltip } from '@/app/components/Tooltip';
 
 const TransactionsTable: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(false);
   const itemsPerPage = 10;
 
   const formatFirebaseTimestamp = (timestamp: Timestamp | null) => {
@@ -134,6 +136,8 @@ const TransactionsTable: React.FC = () => {
 
   return (
     <Table
+      title="Transactions"
+      description="A list of all transactions including their date, customer, service, amount, and status."
       data={transactions}
       columns={columns}
       initialTotalCount={totalCount}
@@ -146,12 +150,34 @@ const TransactionsTable: React.FC = () => {
           totalCount: result.totalCount,
         };
       }}
-      title="Transactions"
-      description="A list of all transactions including their date, customer, service, amount, and status."
       expandableContent={expandableContent}
       onStatusChange={handleStatusChange}
       statusOptions={["pending", "completed", "cancelled"]}
       rowActions={rowActions}
+      actions={
+        <button
+          onClick={async () => {
+            try {
+              setLoading(true);
+              const { transactions: newTransactions, totalCount: newTotal } = await fetchTransactions(itemsPerPage);
+              setTransactions(newTransactions);
+              setTotalCount(newTotal);
+              toast.success('Data refreshed successfully');
+            } catch (error) {
+              toast.error('Failed to refresh data');
+              console.error('Refresh error:', error);
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        >
+          <Tooltip content="Update list with latest transactions">
+            <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+          </Tooltip>
+          Refresh
+        </button>
+      }
     />
   );
 };

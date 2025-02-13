@@ -109,7 +109,6 @@ export default function AdminDashboard() {
 
         {activeTab === 'services' && (
           <ServiceTable
-            services={services}
             onAddService={handleAddService}
             onEditService={handleEditService}
           />
