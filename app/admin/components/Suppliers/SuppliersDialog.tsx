@@ -226,6 +226,19 @@ export default function SuppliersDialog<T extends Supplier>({
                             </div>
 
                             <div>
+                              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                                Address
+                              </label>
+                              <textarea
+                                id="address"
+                                value={formData.address || ''}
+                                onChange={(e) => handleInputChange('address', e.target.value)}
+                                rows={2}
+                                className="mt-2 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
+                              />
+                            </div>
+
+                            <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Category
                               </label>
@@ -299,18 +312,7 @@ export default function SuppliersDialog<T extends Supplier>({
                               />
                             </div>
 
-                            <div>
-                              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                                Address
-                              </label>
-                              <textarea
-                                id="address"
-                                value={formData.address || ''}
-                                onChange={(e) => handleInputChange('address', e.target.value)}
-                                rows={2}
-                                className="mt-2 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
-                              />
-                            </div>
+                           
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Payment Method
