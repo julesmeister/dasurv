@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
@@ -35,7 +36,7 @@ interface DialogProps<T> {
   }[];
 }
 
-export default function StaffDialog<T extends Record<string, T>>({
+export default function StaffDialog<T extends Record<string, any>>({
   open,
   setOpen,
   title,
@@ -68,10 +69,10 @@ export default function StaffDialog<T extends Record<string, T>>({
     }
   };
 
-  const handleInputChange = (name: string, value: T) => {
+  const handleInputChange = (name: keyof T, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value as T[keyof T]
     }));
   };
 
@@ -118,7 +119,7 @@ export default function StaffDialog<T extends Record<string, T>>({
                               {field.type === 'radio' && field.options ? (
                                 <RadioGroup
                                   value={formData[field.name]}
-                                  onChange={(value) => handleInputChange(field.name, value)}
+                                  onChange={(value) => handleInputChange(field.name, String(value))}
                                   className="mt-4"
                                 >
                                   <div className="grid grid-cols-2 gap-4">
