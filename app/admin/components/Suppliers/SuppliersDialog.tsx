@@ -243,7 +243,7 @@ export default function SuppliersDialog<T extends Supplier>({
                                 Category
                               </label>
                               <RadioGroup 
-                                value={formData.category || ''} 
+                                value={formData.category || 'Product'} 
                                 onChange={(value) => handleInputChange('category', value)}
                               >
                                 <RadioGroup.Label className="sr-only">Choose a category</RadioGroup.Label>
@@ -318,7 +318,7 @@ export default function SuppliersDialog<T extends Supplier>({
                                 Payment Method
                               </label>
                               <RadioGroup 
-                                value={formData.preferredPaymentMethod || ''} 
+                                value={formData.preferredPaymentMethod || 'Cash'} 
                                 onChange={(value) => handleInputChange('preferredPaymentMethod', value)}
                               >
                                 <RadioGroup.Label className="sr-only">Choose a payment method</RadioGroup.Label>
