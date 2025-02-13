@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { collection, getDocs, limit, orderBy, query, startAfter, where, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, startAfter, where, doc, updateDoc, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { db as firebaseDb } from '@/app/lib/firebase';
 import { db as dexieDb, CACHE_DURATION } from '@/app/lib/db';
 
@@ -94,5 +94,16 @@ export const fetchTransactions = async (
   } catch (error) {
     console.error('Error fetching transactions:', error);
     throw error;
+  }
+};
+
+export const updateTransactionStatus = async (id: string, newStatus: 'completed' | 'pending' | 'failed'): Promise<boolean> => {
+  try {
+    const transactionRef = doc(firebaseDb, 'transactions', id);
+    await updateDoc(transactionRef, { status: newStatus });
+    return true;
+  } catch (error) {
+    console.error('Error updating transaction status:', error);
+    return false;
   }
 };

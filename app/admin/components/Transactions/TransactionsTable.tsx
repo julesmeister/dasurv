@@ -10,7 +10,7 @@ import {
 import { format } from "date-fns";
 import Table from "../Template/table";
 import { Transaction } from "@/app/models/transaction";
-import { fetchTransactions } from "@/app/models/transaction";
+import { fetchTransactions, updateTransactionStatus } from "@/app/models/transaction";
 import toast from "react-hot-toast";
 import { EyeIcon, PencilIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from '@/app/components/Tooltip';
@@ -22,29 +22,50 @@ const TransactionsTable: React.FC = () => {
   const itemsPerPage = 10;
 
   const formatFirebaseTimestamp = (timestamp: Timestamp | null) => {
-    if (!timestamp) return "";
+    console.log('Timestamp received:', timestamp);
+    if (!timestamp || typeof timestamp.seconds !== 'number' || isNaN(timestamp.seconds)) {
+      console.error('Invalid timestamp:', timestamp);
+      return "";
+    }
     const date = timestamp.toDate();
     return format(date, "MMM d, yyyy h:mm a");
   };
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    // Implement status change logic here
-    toast.promise(
-      Promise.resolve(), // Replace with actual status update function
-      {
-        loading: "Updating transaction status...",
-        success: `Transaction status updated to ${newStatus}`,
-        error: "Failed to update transaction status",
+  const handleStatusChange = async (id: string, newStatus: 'completed' | 'pending' | 'failed') => {
+    try {
+      if(await updateTransactionStatus(id, newStatus)) {
+        try {
+          setLoading(true);
+          const { transactions: newTransactions, totalCount: newTotal } = await fetchTransactions(itemsPerPage);
+          setTransactions(newTransactions);
+          setTotalCount(newTotal);
+          toast.success('Data refreshed successfully');
+        } catch (error) {
+          toast.error('Failed to refresh data');
+          console.error('Refresh error:', error);
+        } finally {
+          setLoading(false);
+        }
       }
-    );
+      toast.success(`Transaction status updated to ${newStatus}`);
+    } catch (error) {
+      toast.error("Failed to update transaction status");
+    }
   };
 
   const columns = [
     {
       header: "Date",
       accessor: "date",
-      render: (value: Timestamp, row: Transaction) =>
-        formatFirebaseTimestamp(row.date),
+      render: (value: Timestamp) => {
+        const date = value?.toDate();
+        const timestamp = date?.getTime();
+        if (isNaN(timestamp)) {
+          console.error('Invalid timestamp:', value);
+          return 'N/A';
+        }
+        return format(date, "MMM d, yyyy h:mm a");
+      },
     },
     {
       header: "Customer",
@@ -67,38 +88,44 @@ const TransactionsTable: React.FC = () => {
       header: "Status",
       accessor: "status",
       render: (value: "completed" | "pending" | "failed", row: Transaction) => (
-        <span
-          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-            value === "completed"
-              ? "bg-green-100 text-green-800"
-              : value === "pending"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
+        <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+          value === "completed"
+            ? "bg-green-100 text-green-800"
+            : value === "pending"
+            ? "bg-yellow-100 text-yellow-800"
+            : "bg-red-100 text-red-800"
+        } group relative`}>  
           {value.charAt(0).toUpperCase() + value.slice(1)}
+          <div className="hidden group-hover:flex absolute -right-2 top-0 transform -translate-y-full bg-white shadow-lg rounded-lg p-1 z-10">
+            <button 
+              className="p-1 hover:bg-green-100 rounded-l-lg mx-1" 
+              title="Confirm"
+              onClick={() => handleStatusChange(row.id!, 'completed')}
+            >
+              <span className="text-green-600">Completed</span>
+            </button>
+            <button 
+              className="p-1 hover:bg-yellow-100 mx-1" 
+              title="Pending"
+              onClick={() => handleStatusChange(row.id!, 'pending')}
+            >
+              <span className="text-yellow-600">Pending</span>
+            </button>
+            <button 
+              className="p-1 hover:bg-red-100 rounded-r-lg mx-1" 
+              title="Cancel"
+              onClick={() => handleStatusChange(row.id!, 'failed')}
+            >
+              <span className="text-red-600">Failed</span>
+            </button>
+          </div>
         </span>
       ),
     },
+    
   ];
 
-  const rowActions = [
-    {
-      icon: <EyeIcon className="h-4 w-4" />,
-      label: "View",
-      action: (row: Transaction) => {
-        toast.success(`Viewing transaction for ${row.customerName}`);
-      },
-    },
-    {
-      icon: <PencilIcon className="h-4 w-4" />,
-      label: "Edit",
-      action: (row: Transaction) => {
-        toast.success(`Editing transaction for ${row.customerName}`);
-      },
-      showCondition: (row: Transaction) => row.status !== "completed",
-    },
-  ];
+  const rowActions = null;
 
   const expandableContent = (row: Transaction) => (
     <div className="p-4 bg-gray-50">
@@ -144,6 +171,7 @@ const TransactionsTable: React.FC = () => {
       itemsPerPage={itemsPerPage}
       fetchData={async (pageSize, lastDoc) => {
         const result = await fetchTransactions(pageSize, lastDoc);
+
         return {
           data: result.transactions,
           lastDoc: result.lastDoc,
@@ -151,8 +179,6 @@ const TransactionsTable: React.FC = () => {
         };
       }}
       expandableContent={expandableContent}
-      onStatusChange={handleStatusChange}
-      statusOptions={["pending", "completed", "cancelled"]}
       rowActions={rowActions}
       actions={
         <button

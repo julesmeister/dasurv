@@ -34,7 +34,7 @@ interface TableProps<T> {
     action: (row: T) => void;
     showCondition?: (row: T) => boolean;
     hideText?: boolean;
-  }[];
+  }[] | null;
   actions?: React.ReactNode;
 }
 
@@ -51,8 +51,6 @@ const Table = <T extends {}>({
   title,
   description,
   expandableContent,
-  onStatusChange,
-  statusOptions,
   rowActions,
   actions
 }: TableProps<T>) => {
@@ -97,19 +95,7 @@ const Table = <T extends {}>({
     setOpenRow(openRow === index ? null : index);
   };
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    if (onStatusChange) {
-      const updatePromise = onStatusChange(id, newStatus);
-      toast.promise(
-        updatePromise,
-        {
-          loading: 'Updating status...',
-          success: `Status updated to ${newStatus}`,
-          error: 'Failed to update status'
-        }
-      );
-    }
-  };
+
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -147,7 +133,7 @@ const Table = <T extends {}>({
                             {column.header}
                           </th>
                         ))}
-                        {(statusOptions || rowActions) && (
+                        {((rowActions && rowActions?.length > 0)) && (
                           <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                           </th>
@@ -157,7 +143,7 @@ const Table = <T extends {}>({
                     <tbody className="bg-white divide-y divide-gray-200">
                       {!hasInitialized ? (
                         <tr>
-                          <td colSpan={columns.length + (expandableContent ? 1 : 0) + ((statusOptions || rowActions) ? 1 : 0)} className="px-6 py-4 text-center">
+                          <td colSpan={columns.length + (expandableContent ? 1 : 0) + (( (rowActions && rowActions?.length > 0)) ? 1 : 0)} className="px-6 py-4 text-center">
                             <div className="flex justify-center">
                               <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -168,7 +154,7 @@ const Table = <T extends {}>({
                         </tr>
                       ) : (loading || externalLoading) ? (
                         <tr>
-                          <td colSpan={columns.length + (expandableContent ? 1 : 0) + ((statusOptions || rowActions) ? 1 : 0)} className="px-6 py-4 text-center">
+                          <td colSpan={columns.length + (expandableContent ? 1 : 0) + (((rowActions && rowActions?.length > 0)) ? 1 : 0)} className="px-6 py-4 text-center">
                             <div className="flex justify-center">
                               <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -179,7 +165,7 @@ const Table = <T extends {}>({
                         </tr>
                       ) : data.length === 0 ? (
                         <tr>
-                          <td colSpan={columns.length + (expandableContent ? 1 : 0) + ((statusOptions || rowActions) ? 1 : 0)} className="px-6 py-4 text-center text-sm text-gray-500">
+                          <td colSpan={columns.length + (expandableContent ? 1 : 0) + (((rowActions && rowActions?.length > 0)) ? 1 : 0)} className="px-6 py-4 text-center text-sm text-gray-500">
                             No data available
                           </td>
                         </tr>
@@ -203,31 +189,10 @@ const Table = <T extends {}>({
                                   {column.render ? column.render(row[column.accessor], row) : row[column.accessor]}
                                 </td>
                               ))}
-                              {(statusOptions || rowActions) && (
+                              {((rowActions && rowActions?.length > 0)) && (
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                   <div className="flex justify-end space-x-2">
-                                    {statusOptions && (
-                                      <div className="relative group">
-                                        <span className={`${
-                                          row.status === 'confirmed' ? 'text-green-600' :
-                                          row.status === 'pending' ? 'text-yellow-600' :
-                                          'text-red-600'
-                                        }`}>
-                                          {row.status}
-                                        </span>
-                                        <div className="hidden group-hover:flex absolute right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-lg p-1 z-10">
-                                          {statusOptions.map((status) => (
-                                            <button
-                                              key={status}
-                                              className="p-1 hover:bg-gray-100 rounded"
-                                              onClick={() => handleStatusChange(row.id, status)}
-                                            >
-                                              {status}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
+                                   
                                     {rowActions && rowActions.map((action, actionIndex) => (
                                       action.showCondition?.(row) !== false && (
                                         <div key={actionIndex} className="group flex justify-center">
@@ -265,88 +230,63 @@ const Table = <T extends {}>({
             </div>
           </div>
         </div>
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-            <div className="flex flex-1 justify-between sm:hidden">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1 || loading || externalLoading}
-                className={`relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 ${
-                  currentPage === 1 || loading || externalLoading
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-gray-50'
-                }`}
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages || loading || externalLoading}
-                className={`relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 ${
-                  currentPage === totalPages || loading || externalLoading
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-gray-50'
-                }`}
-              >
-                Next
-              </button>
+        
+        {true && (
+          <div className="hidden sm:flex sm:flex-1 mt-4 sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                <span className="font-medium">
+                  {Math.min(currentPage * itemsPerPage, totalCount)}
+                </span>{' '}
+                of <span className="font-medium">{totalCount}</span> results
+              </p>
             </div>
-            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
-                  <span className="font-medium">
-                    {Math.min(currentPage * itemsPerPage, totalCount)}
-                  </span>{' '}
-                  of <span className="font-medium">{totalCount}</span> results
-                </p>
-              </div>
-              <div>
-                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+            <div>
+              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1 || loading || externalLoading}
+                  className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                    currentPage === 1 || loading || externalLoading
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => (
                   <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1 || loading || externalLoading}
-                    className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
-                      currentPage === 1 || loading || externalLoading
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-gray-50'
-                    }`}
+                    key={i + 1}
+                    onClick={() => handlePageChange(i + 1)}
+                    disabled={loading || externalLoading}
+                    className={`relative inline-flex items-center px-4 py-2 text-sm font-medium ring-1 ring-inset ring-gray-300 ${
+                      currentPage === i + 1
+                        ? 'z-10 bg-indigo-50 text-indigo-600 ring-indigo-500'
+                        : 'text-gray-900 hover:bg-gray-50'
+                    } ${(loading || externalLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <span className="sr-only">Previous</span>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                    </svg>
+                    {i + 1}
                   </button>
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => (
-                    <button
-                      key={i + 1}
-                      onClick={() => handlePageChange(i + 1)}
-                      disabled={loading || externalLoading}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-medium ring-1 ring-inset ring-gray-300 ${
-                        currentPage === i + 1
-                          ? 'z-10 bg-indigo-50 text-indigo-600 ring-indigo-500'
-                          : 'text-gray-900 hover:bg-gray-50'
-                      } ${(loading || externalLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages || loading || externalLoading}
-                    className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
-                      currentPage === totalPages || loading || externalLoading
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <span className="sr-only">Next</span>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </nav>
-              </div>
+                ))}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading || externalLoading}
+                  className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                    currentPage === totalPages || loading || externalLoading
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="sr-only">Next</span>
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </nav>
             </div>
           </div>
         )}
