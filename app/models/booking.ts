@@ -25,20 +25,31 @@ export interface BookingPaginationResult {
 
 export const fetchBookings = async (
   pageSize: number = 10,
-  lastDoc?: QueryDocumentSnapshot<DocumentData> | null
+  lastDoc?: QueryDocumentSnapshot<DocumentData> | null,
+  tab: 'upcoming' | 'history' = 'upcoming'
 ): Promise<BookingPaginationResult> => {
   const bookingsCollection = collection(db, 'bookings');
   
-  // Get total count
-  const snapshot = await getCountFromServer(bookingsCollection);
+  // Get total count for the specific tab
+  let baseQuery = query(bookingsCollection);
+  
+  const now = new Date().toISOString().split('T')[0]; // Convert to YYYY-MM-DD format
+  if (tab === 'upcoming') {
+    baseQuery = query(baseQuery, where('date', '>=', now));
+  } else {
+    baseQuery = query(baseQuery, where('date', '<', now));
+  }
+  
+  const snapshot = await getCountFromServer(baseQuery);
   const totalCount = snapshot.data().count;
 
   console.log('Total count:', totalCount);
 
-  // Build query
+  // Build query with tab filter
   let q = query(
     bookingsCollection,
-    orderBy('createdAt', 'desc'),
+    where('date', tab === 'upcoming' ? '>=' : '<', now),
+    orderBy('date', tab === 'upcoming' ? 'asc' : 'desc'),
     limit(pageSize)
   );
 
@@ -52,7 +63,6 @@ export const fetchBookings = async (
 
   const bookings = bookingSnapshot.docs.map(doc => {
     const data = doc.data();
-    // Convert Firestore Timestamps to Date objects
     return {
       id: doc.id,
       ...data,

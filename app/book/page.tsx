@@ -237,7 +237,7 @@ export default function BookingPage() {
                   className="mt-2"
                 >
                   <div className="grid grid-cols-1 gap-3">
-                    {services.map((service) => (
+                    {services.filter(s => s.status === 'active').map((service) => (
                       <RadioGroup.Option
                         key={service.id}
                         value={service.name}
