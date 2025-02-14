@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
-import { Table as AntTable, Button, Spin, Pagination } from 'antd';
+import { Table as AntTable, Button, Spin, Pagination, PaginationProps } from 'antd';
 import toast from 'react-hot-toast';
 
 interface Column<T> {
@@ -101,6 +101,16 @@ const Table = <T extends {}>({
   console.log('Columns:', updatedColumns);
   console.log('Data:', data);
 
+  const itemRender: PaginationProps['itemRender'] = (_, type, originalElement) => {
+    if (type === 'prev') {
+      return <a>Previous</a>;
+    }
+    if (type === 'next') {
+      return <a>Next</a>;
+    }
+    return originalElement;
+  };
+
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
@@ -130,13 +140,19 @@ const Table = <T extends {}>({
             />
           )}
         </div>
-        <Pagination
-          current={currentPage}
-          total={totalCount}
-          pageSize={itemsPerPage}
-          onChange={handlePageChange}
-          className="mt-4"
-        />
+        <div className="flex items-center justify-center">
+          <Pagination
+            current={currentPage}
+            total={totalCount}
+            pageSize={itemsPerPage}
+            itemRender={itemRender}
+            onChange={handlePageChange}
+            showSizeChanger
+            showQuickJumper
+            showTotal={(total) => `Total ${total} items`}
+            className="mt-4"
+          />
+        </div>
       </div>
     </div>
   );
