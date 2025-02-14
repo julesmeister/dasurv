@@ -85,6 +85,19 @@ export default function InventoryTable() {
     },
   ];
 
+  const renderRowActions = (row: InventoryItem): React.ReactNode => {
+    return (
+      <>
+        {rowActions.map((action, index) => (
+          <button key={index} onClick={() => action.action(row)}>
+            {action.icon && <span>{action.icon}</span>}
+            {!action.hideText && <span>{action.label}</span>}
+          </button>
+        ))}
+      </>
+    );
+  };
+
   return (
     <>
       <Table<InventoryItem>
@@ -121,7 +134,7 @@ export default function InventoryTable() {
         title="Inventory Management"
         description="A list of all inventory items in your organization."
         expandableContent={expandableContent}
-        rowActions={rowActions}
+        rowActions={renderRowActions}
         actions={
           <button
             type="button"

@@ -35,8 +35,8 @@ const TransactionsTable: React.FC = () => {
         try {
           setLoading(true);
           const { transactions: newTransactions, totalCount: newTotal } = await fetchTransactions(itemsPerPage);
-          console.log('Fetched transactions:', newTransactions);
-          console.log('Transactions:', newTransactions);
+          // console.log('Fetched transactions:', newTransactions);
+          // console.log('Transactions:', newTransactions);
           setTransactions(newTransactions);
           setTotalCount(newTotal);
           toast.success('Data refreshed successfully');
@@ -57,10 +57,11 @@ const TransactionsTable: React.FC = () => {
     {
       header: "Date",
       accessor: "date",
+      dataIndex: "date",
       render: (value: Timestamp) => {
-        console.log('Value passed to render:', value);
-        console.log('Type of value:', typeof value);
-        console.log('Value structure:', JSON.stringify(value));
+        // console.log('Value passed to render:', value);
+        // console.log('Type of value:', typeof value);
+        // console.log('Value structure:', JSON.stringify(value));
         if (!value || typeof value.seconds !== 'number' || isNaN(value.seconds)) {
           return 'N/A';
         }
@@ -71,23 +72,28 @@ const TransactionsTable: React.FC = () => {
     {
       header: "Customer",
       accessor: "customerName",
+      dataIndex: "customerName",
     },
     {
       header: "Service",
       accessor: "serviceName",
+      dataIndex: "serviceName",
     },
     {
       header: "Amount",
       accessor: "amount",
+      dataIndex: "amount",
       render: (value: number, row: Transaction) => `₱${row.amount.toFixed(2)}`,
     },
     {
       header: "Payment Method",
-      accessor: "paymentMethod",  
+      accessor: "paymentMethod",
+      dataIndex: "paymentMethod",  
     },
     {
       header: "Status",
       accessor: "status",
+      dataIndex: "status",
       render: (value: "completed" | "pending" | "failed", row: Transaction) => (
         <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
           value === "completed"
@@ -126,7 +132,7 @@ const TransactionsTable: React.FC = () => {
     
   ];
 
-  const rowActions = null;
+  const rowActions = undefined;
 
   const expandableContent = (row: Transaction) => (
     <div className="p-4 bg-gray-50">
@@ -195,8 +201,8 @@ const TransactionsTable: React.FC = () => {
             try {
               setLoading(true);
               const { transactions: newTransactions, totalCount: newTotal } = await fetchTransactions(itemsPerPage);
-              console.log('Fetched transactions:', newTransactions);
-              console.log('Transactions:', newTransactions);
+              // console.log('Fetched transactions:', newTransactions);
+              // console.log('Transactions:', newTransactions);
               setTransactions(newTransactions);
               setTotalCount(newTotal);
               toast.success('Data refreshed successfully');

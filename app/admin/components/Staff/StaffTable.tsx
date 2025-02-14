@@ -53,7 +53,9 @@ const StaffTable: React.FC = () => {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
+    <div className="bg-white shadow rounded-lg">
+
+    <div className="px-4 sm:px-6 lg:px-8 sm:p-6">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-base font-semibold leading-6 text-gray-900">Staff</h1>
@@ -247,6 +249,7 @@ const StaffTable: React.FC = () => {
             )}
           </div>
         </div>
+      </div>
       </div>
 
       <StaffDialog

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { db as firebaseDb } from '@/app/lib/firebase';
 import { db as dexieDb, CACHE_DURATION } from '@/app/lib/db';
-import { collection, addDoc, updateDoc, doc, getDocs, deleteDoc, getCountFromServer } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDocs, deleteDoc, getCountFromServer, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 
 export interface Supplier {
   id: string;
@@ -16,7 +16,7 @@ export interface Supplier {
   createdAt: number;
   updatedAt: number;
   lastOrderDate?: number;
-  preferredPaymentMethod?: 'Cash' | 'Bank Transfer' | 'Check' | 'Credit Card';
+  preferredPaymentMethod?: 'Cash' | 'Wire' | 'Check' | 'Credit Card';
 }
 
 export const suppliersCollection = collection(firebaseDb, 'suppliers');
@@ -45,51 +45,63 @@ export const updateSupplier = async (supplierId: string, supplier: Partial<Suppl
   });
 };
 
-export const fetchSuppliers = async (): Promise<{ suppliers: Supplier[], totalCount: number }> => {
+export const fetchSuppliers = async (
+  pageLimit?: number,
+  offset?: number
+): Promise<{
+  suppliers: Supplier[],
+  lastDoc: QueryDocumentSnapshot<DocumentData> | undefined,
+  totalCount: number,
+  fromCache?: boolean
+}> => {
   const now = Date.now();
+  let totalCount = 0;
+  let fromCache = false;
 
-  // Try to get cached suppliers first
-  const cachedSuppliers = await dexieDb.suppliers
-    .where('timestamp')
-    .above(now - CACHE_DURATION)
-    .toArray();
-
+  // Try to get cached count first
   const cachedCount = await dexieDb.supplierCounts
     .where('timestamp')
     .above(now - CACHE_DURATION)
     .first();
 
-  if (cachedSuppliers.length > 0 && cachedCount) {
-    return {
-      suppliers: cachedSuppliers.map(({ timestamp, ...supplier }) => supplier),
-      totalCount: cachedCount.count
-    };
+  // Check if we have a valid cached count
+  if (cachedCount) {
+    totalCount = cachedCount.count;
+    fromCache = true;
+  } else {
+    // Get total count from Firebase
+    const snapshot = await getDocs(collection(firebaseDb, 'suppliers'));
+    totalCount = snapshot.size;
+
+    // Cache the count
+    await dexieDb.supplierCounts.put({
+      count: totalCount,
+      timestamp: now
+    });
   }
 
-  // If no cache or expired, fetch from Firebase
-  const snapshot = await getDocs(suppliersCollection);
-  const suppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier));
-  
-  const countSnapshot = await getCountFromServer(suppliersCollection);
-  const totalCount = countSnapshot.data().count;
+  // Fetch suppliers from Firebase
+  const querySnapshot = await getDocs(collection(firebaseDb, 'suppliers'));
+  const suppliers = querySnapshot.docs.map(doc => ({
+    ...doc.data(),
+    id: doc.id
+  } as Supplier));
 
-  // Cache the results
-  const supplierPromises = suppliers.map(supplier =>
+  // Cache the fetched suppliers
+  await Promise.all(suppliers.map(supplier =>
     dexieDb.suppliers.put({
       ...supplier,
       timestamp: now
     })
-  );
+  ));
 
-  await Promise.all([
-    ...supplierPromises,
-    dexieDb.supplierCounts.put({
-      count: totalCount,
-      timestamp: now
-    })
-  ]);
-
-  return { suppliers, totalCount };
+  const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || undefined;
+  return {
+    suppliers,
+    lastDoc,
+    totalCount,
+    fromCache
+  };
 };
 
 export const deleteSupplier = async (supplierId: string): Promise<void> => {
