@@ -62,7 +62,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
   const loadPage = useCallback(async (page: number) => {
     try {
       setLoading(true);
-      const result = await fetchBookings(itemsPerPage, page === 1 ? null : lastDoc, activeTab === 'calendar' ? 'upcoming' : activeTab);
+      const result = await fetchBookings(itemsPerPage, page === 1 ? null : lastDoc, activeTab, startOfWeek(currentDate), endOfWeek(currentDate));
       setBookings(result.bookings);
       setLastDoc(result.lastDoc);
       setCounts(prev => ({

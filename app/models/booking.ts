@@ -39,7 +39,9 @@ const getTotalCount = async (tab: 'upcoming' | 'history' | 'calendar' | '') => {
 export const fetchBookings = async (
   pageSize: number = 10,
   lastDoc?: QueryDocumentSnapshot<DocumentData> | null,
-  tab: 'upcoming' | 'history' | 'calendar' = 'upcoming'
+  tab: 'upcoming' | 'history' | 'calendar' = 'upcoming',
+  startDate?: Date,
+  endDate?: Date
 ): Promise<BookingPaginationResult> => {
   try {
     // Try to get cached count first
@@ -77,14 +79,28 @@ export const fetchBookings = async (
 
     // If cache miss or pagination, fetch from Firebase
     const bookingsCollection = collection(firebaseDb, 'bookings');
-    const currentDate = new Date().toISOString().split('T')[0];
-    
-    let q = query(
-      bookingsCollection,
-      where('date', tab === 'upcoming' ? '>=' : '<', currentDate),
-      orderBy('date', tab === 'upcoming' ? 'asc' : 'desc'),
-      limit(pageSize)
-    );
+    let q;
+
+    if (tab === 'calendar' && startDate && endDate) {
+      // Fetch bookings for the specified week range
+      const start = startDate.toISOString().split('T')[0];
+      const end = endDate.toISOString().split('T')[0];
+      q = query(
+        bookingsCollection,
+        where('date', '>=', start),
+        where('date', '<=', end),
+        orderBy('date', 'asc'),
+        limit(pageSize)
+      );
+    } else {
+      const currentDate = new Date().toISOString().split('T')[0];
+      q = query(
+        bookingsCollection,
+        where('date', tab === 'upcoming' ? '>=' : '<', currentDate),
+        orderBy('date', tab === 'upcoming' ? 'asc' : 'desc'),
+        limit(pageSize)
+      );
+    }
 
     if (lastDoc) {
       q = query(q, startAfter(lastDoc));
@@ -106,7 +122,19 @@ export const fetchBookings = async (
 
     // Get total count if not already cached
     if (!totalCount) {
-      totalCount = await getTotalCount(tab);
+      if (tab === 'calendar' && startDate && endDate) {
+        const start = startDate.toISOString().split('T')[0];
+        const end = endDate.toISOString().split('T')[0];
+        const q = query(
+          bookingsCollection,
+          where('date', '>=', start),
+          where('date', '<=', end)
+        );
+        const snapshot = await getCountFromServer(q);
+        totalCount = snapshot.data().count;
+      } else {
+        totalCount = await getTotalCount(tab);
+      }
 
       // Cache the count
       await dexieDb.appointmentCounts.put({
