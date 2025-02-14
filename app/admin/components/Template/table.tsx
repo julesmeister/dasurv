@@ -96,7 +96,10 @@ const Table = <T extends {}>({
     },
   }));
 
-  const updatedColumns = [...columnsWithRender, { title: 'Actions', dataIndex: 'rowActions', render: renderRowActions }];
+  const updatedColumns = [
+    ...columnsWithRender,
+    ...(rowActions ? [{ title: 'Actions', dataIndex: 'rowActions', render: renderRowActions }] : [])
+  ];
 
   console.log('Columns:', updatedColumns);
   console.log('Data:', data);
