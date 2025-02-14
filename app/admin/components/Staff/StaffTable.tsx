@@ -6,6 +6,9 @@ import { Staff, fetchStaffs } from "@/app/models/staff";
 import StaffDialog from "./StaffDialog";
 import { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { classNames } from "@/app/lib/utils";
+import { Tooltip } from '@/app/components/Tooltip';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { toast } from "react-hot-toast";
 import Table from "../Template/table";
 
 const tabs = [
@@ -42,59 +45,68 @@ const StaffTable: React.FC = () => {
   ];
 
   const rowActions = (staff: React.SetStateAction<Staff | undefined>) => (
-    <button
-      type="button"
-      onClick={() => setEditingStaff(staff)}
-    >
+    <button type="button" onClick={() => setEditingStaff(staff)}>
       Edit
     </button>
   );
 
- const fetchData = async (pageSize: number, lastDoc: QueryDocumentSnapshot<DocumentData> | null, activeFilter?: boolean) => {
-     setLoading(true);
-     try {
-         const result = await fetchStaffs(pageSize, lastDoc, activeFilter);
-         setStaffs(result.staffs);
-         setTotalCount(result.totalCount);
-         // Calculate counts
-        const activeCount = result.staffs.filter(staff => staff.active).length;
-        const inactiveCount = result.staffs.length > 0 ? result.staffs.length - activeCount : 0;
-        console.log('Active Count:', activeCount);
-        console.log('Inactive Count:', inactiveCount);
-        console.log('Inactive Staffs:', result.staffs.filter(staff => !staff.active));
+  const fetchData = async (
+    pageSize: number,
+    lastDoc: QueryDocumentSnapshot<DocumentData> | null,
+    activeFilter?: boolean
+  ) => {
+    setLoading(true);
+    try {
+      const result = await fetchStaffs(pageSize, lastDoc, activeFilter);
+      setStaffs(result.staffs);
+      setTotalCount(result.totalCount);
+      // Calculate counts
+      const activeCount = result.staffs.filter((staff) => staff.active).length;
+      const inactiveCount =
+        result.staffs.length > 0 ? result.staffs.length - activeCount : 0;
+      console.log("Active Count:", activeCount);
+      console.log("Inactive Count:", inactiveCount);
+      console.log(
+        "Inactive Staffs:",
+        result.staffs.filter((staff) => !staff.active)
+      );
 
-        // Update counts state
-        setCounts({ active: activeCount, inactive: inactiveCount });
+      // Update counts state
+      setCounts({ active: activeCount, inactive: inactiveCount });
 
-         return { data: result.staffs, lastDoc: result.lastDoc, totalCount: result.totalCount };
-     } catch (error) {
-         console.error('Error fetching staffs:', error);
-         return { data: [], lastDoc: null, totalCount: 0 };
-     } finally {
-         setLoading(false);
-     }
- };
+      return {
+        data: result.staffs,
+        lastDoc: result.lastDoc,
+        totalCount: result.totalCount,
+      };
+    } catch (error) {
+      console.error("Error fetching staffs:", error);
+      return { data: [], lastDoc: null, totalCount: 0 };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-      fetchData(1, null, true); // Fetch active staff initially
+    fetchData(1, null, true); // Fetch active staff initially
   }, []);
 
-const handleTabChange = (tabValue: string) => {
+  const handleTabChange = (tabValue: string) => {
     setActiveTab(tabValue);
     if (staffs.length > 0) {
-        const activeCount = staffs.filter(staff => staff.active).length;
-        const inactiveCount = staffs.length - activeCount;
-        setCounts({ active: activeCount, inactive: inactiveCount });
+      const activeCount = staffs.filter((staff) => staff.active).length;
+      const inactiveCount = staffs.length - activeCount;
+      setCounts({ active: activeCount, inactive: inactiveCount });
     } else {
-        if (tabValue === 'Active') {
-            fetchData(1, null, true);
-        } else if (tabValue === 'Inactive') {
-            fetchData(1, null, false);
-        } else {
-            fetchData(1, null);
-        }
+      if (tabValue === "Active") {
+        fetchData(1, null, true);
+      } else if (tabValue === "Inactive") {
+        fetchData(1, null, false);
+      } else {
+        fetchData(1, null);
+      }
     }
-};
+  };
 
   const handleAddStaff = () => {
     setIsAddDialogOpen(true);
@@ -117,23 +129,22 @@ const handleTabChange = (tabValue: string) => {
                 )}
               >
                 {tab.name}
-                
-                  {tab.name === "Active" || tab.name === "Inactive" ? (
-                    <span
-                      className={classNames(
-                        tab.value === activeTab
-                          ? "bg-indigo-100 text-indigo-600"
-                          : "bg-gray-100 text-gray-900",
-                        "ml-3 hidden rounded-full py-0.5 px-2.5 text-xs font-medium md:inline-block"
-                      )}
-                    >
-                      <span className="sr-only">{`${tab.name.toLowerCase()} count: `}</span>
-                      {counts[tab.name.toLowerCase() as keyof typeof counts]}
-                    </span>
-                  ) : (
-                    ""
-                  )}
-               
+
+                {tab.name === "Active" || tab.name === "Inactive" ? (
+                  <span
+                    className={classNames(
+                      tab.value === activeTab
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "bg-gray-100 text-gray-900",
+                      "ml-3 hidden rounded-full py-0.5 px-2.5 text-xs font-medium md:inline-block"
+                    )}
+                  >
+                    <span className="sr-only">{`${tab.name.toLowerCase()} count: `}</span>
+                    {counts[tab.name.toLowerCase() as keyof typeof counts]}
+                  </span>
+                ) : (
+                  ""
+                )}
               </button>
             ))}
           </nav>
@@ -153,13 +164,44 @@ const handleTabChange = (tabValue: string) => {
                 rowActions={rowActions}
                 itemsPerPage={itemsPerPage}
                 actions={
-                  <button
-                    type="button"
-                    onClick={handleAddStaff}
-                    className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-                  >
-                    Add Staff
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={handleAddStaff}
+                      className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                    >
+                      Add Staff
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          const { staffs: newStaffs, totalCount: newTotal } = await fetchStaffs(itemsPerPage, null, true); // Fetch active staff
+                          setStaffs(newStaffs);                      
+                          setTotalCount(newTotal);
+                          setLastDoc(null);
+                          setCurrentPage(1);
+                          toast.success("Data refreshed successfully");
+                        } catch (error) {
+                          toast.error("Failed to refresh data");
+                          console.error("Refresh error:", error);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    >
+                      <Tooltip content="Update list with latest bookings">
+                        <ArrowPathIcon
+                          className={`-ml-0.5 mr-1.5 h-5 w-5 ${
+                            loading ? "animate-spin" : ""
+                          }`}
+                          aria-hidden="true"
+                        />
+                      </Tooltip>
+                      Refresh
+                    </button>
+                  </div>
                 }
               />
             </div>

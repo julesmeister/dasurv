@@ -232,6 +232,7 @@ export const getActiveTherapistsCount = async (): Promise<number> => {
         .equals(true ? 1 : 0)
         .and(item => (now - item.timestamp) < CACHE_DURATION)
         .first();
+        console.log(cachedCount);
     } else {
       cachedCount = await dexieDb.staffCounts
         .where('timestamp')
