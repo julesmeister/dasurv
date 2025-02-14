@@ -12,7 +12,6 @@ export interface Supplier {
   notes?: string;
   category?: 'Product' | 'Service' | 'Both';
   status: 'Active' | 'Inactive' | 'Pending';
-  paymentTerms?: string;
   createdAt: number;
   updatedAt: number;
   lastOrderDate?: number;
@@ -47,7 +46,8 @@ export const updateSupplier = async (supplierId: string, supplier: Partial<Suppl
 
 export const fetchSuppliers = async (
   pageLimit?: number,
-  offset?: number
+  offset?: number,
+  refresh: boolean = false
 ): Promise<{
   suppliers: Supplier[],
   lastDoc: QueryDocumentSnapshot<DocumentData> | undefined,
@@ -58,26 +58,42 @@ export const fetchSuppliers = async (
   let totalCount = 0;
   let fromCache = false;
 
-  // Try to get cached count first
-  const cachedCount = await dexieDb.supplierCounts
-    .where('timestamp')
-    .above(now - CACHE_DURATION)
-    .first();
-
-  // Check if we have a valid cached count
-  if (cachedCount) {
-    totalCount = cachedCount.count;
-    fromCache = true;
+  if (refresh) {
+    // Clear cache
+    await dexieDb.supplierCounts.clear();
+    await dexieDb.suppliers.clear();
   } else {
-    // Get total count from Firebase
-    const snapshot = await getDocs(collection(firebaseDb, 'suppliers'));
-    totalCount = snapshot.size;
+    // Try to get cached count first
+    const cachedCount = await dexieDb.supplierCounts
+      .where('timestamp')
+      .above(now - CACHE_DURATION)
+      .first();
 
-    // Cache the count
-    await dexieDb.supplierCounts.put({
-      count: totalCount,
-      timestamp: now
-    });
+    if (cachedCount) {
+      totalCount = cachedCount.count;
+      fromCache = true;
+    } else {
+      // Get total count from Firebase
+      const snapshot = await getDocs(collection(firebaseDb, 'suppliers'));
+      totalCount = snapshot.size;
+
+      // Cache the count
+      await dexieDb.supplierCounts.put({
+        count: totalCount,
+        timestamp: now
+      });
+    }
+  }
+
+  // Check if cache is available
+  const cachedSuppliers = await dexieDb.suppliers.toArray();
+  if (!refresh && cachedSuppliers.length > 0) {
+    return {
+      suppliers: cachedSuppliers,
+      lastDoc: undefined,
+      totalCount,
+      fromCache: true
+    };
   }
 
   // Fetch suppliers from Firebase

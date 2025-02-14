@@ -51,6 +51,13 @@ const Table = <T extends {}>({
   const [loading, setLoading] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
 
+  // Update internal state when initialData changes
+  useEffect(() => {
+    setData(initialData);
+    setTotalCount(initialTotalCount);
+    setLastDoc(null);
+  }, [initialData, initialTotalCount]);
+
   const loadPage = useCallback(async (page: number) => {
     if (loading) return; // Prevent loading if already loading
 
@@ -101,8 +108,6 @@ const Table = <T extends {}>({
     ...(rowActions ? [{ title: 'Actions', dataIndex: 'rowActions', render: renderRowActions }] : [])
   ];
 
-  console.log('Columns:', updatedColumns);
-  console.log('Data:', data);
 
   const itemRender: PaginationProps['itemRender'] = (_, type, originalElement) => {
     if (type === 'prev') {

@@ -64,12 +64,7 @@ const StaffTable: React.FC = () => {
       const activeCount = result.staffs.filter((staff) => staff.active).length;
       const inactiveCount =
         result.staffs.length > 0 ? result.staffs.length - activeCount : 0;
-      console.log("Active Count:", activeCount);
-      console.log("Inactive Count:", inactiveCount);
-      console.log(
-        "Inactive Staffs:",
-        result.staffs.filter((staff) => !staff.active)
-      );
+
 
       // Update counts state
       setCounts({ active: activeCount, inactive: inactiveCount });
@@ -177,7 +172,7 @@ const StaffTable: React.FC = () => {
                         try {
                           setLoading(true);
                           const { staffs: newStaffs, totalCount: newTotal } = await fetchStaffs(itemsPerPage, null, true); // Fetch active staff
-                          setStaffs(newStaffs);                      
+                          setStaffs(newStaffs);
                           setTotalCount(newTotal);
                           setLastDoc(null);
                           setCurrentPage(1);

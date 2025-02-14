@@ -4,6 +4,9 @@ import { Supplier, fetchSuppliers } from "@/app/models/supplier";
 import SuppliersDialog from "./SuppliersDialog";
 import Table from "../Template/table";
 import { DocumentData, QueryDocumentSnapshot } from "@firebase/firestore";
+import toast from "react-hot-toast";
+import { Tooltip } from "@/app/components/Tooltip";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 
 const itemsPerPage = 10;
 
@@ -16,12 +19,11 @@ const SuppliersTable: React.FC = () => {
   const [supplierToEdit, setSupplierToEdit] = useState<Supplier | undefined>(
     undefined
   );
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
   const loadSuppliers = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await fetchSuppliers();
+      const result = await fetchSuppliers(undefined, undefined, true);
       setSuppliers(result.suppliers);
       setTotalCount(result.totalCount);
     } catch (error) {
@@ -50,7 +52,7 @@ const SuppliersTable: React.FC = () => {
   };
 
   const handleEditSupplier = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
+    setSupplierToEdit(supplier);
     setDialogOpen(true);
   };
 
@@ -80,8 +82,6 @@ const SuppliersTable: React.FC = () => {
       setLoading(true);
       try {
         const result = await fetchSuppliers(pageSize, numericValue);
-        console.log('Fetched suppliers:', result.suppliers);
-        console.log('Total count:', result.totalCount);
         return {
           data: result.suppliers,
           lastDoc: result.lastDoc !== undefined ? result.lastDoc : null,
@@ -101,8 +101,6 @@ const SuppliersTable: React.FC = () => {
     setLoading(true);
     try {
       const result = await fetchSuppliers(pageSize);
-      console.log('Fetched suppliers:', result.suppliers);
-      console.log('Total count:', result.totalCount);
       setSuppliers(result.suppliers);
       setTotalCount(result.totalCount);
 
@@ -120,7 +118,6 @@ const SuppliersTable: React.FC = () => {
     <button
       type="button"
       onClick={() => handleEditSupplier(supplier)}
-      className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
     >
       Edit
     </button>
@@ -146,6 +143,26 @@ const SuppliersTable: React.FC = () => {
     </div>
   );
 
+  const refreshSuppliers = async ({ refresh }: { refresh: boolean }) => {
+    setLoading(true);
+    try {
+      const result = await fetchSuppliers(undefined, undefined, refresh);
+      setSuppliers(result.suppliers);
+      setTotalCount(result.totalCount);
+      console.log('Suppliers refreshed:', result.suppliers);
+      toast.success('Supplier data refreshed successfully!');
+    } catch (error) {
+      console.error('Error refreshing suppliers:', error);
+      toast.error('Failed to refresh supplier data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefreshSuppliers = async () => {
+    await refreshSuppliers({ refresh: true });
+  };
+
   return (
     <div>
       <Table
@@ -159,6 +176,7 @@ const SuppliersTable: React.FC = () => {
         rowActions={rowActions}
         itemsPerPage={itemsPerPage}
         actions={
+          <div className="flex space-x-2">
           <button
             type="button"
             onClick={handleAddSupplier}
@@ -166,6 +184,17 @@ const SuppliersTable: React.FC = () => {
           >
             Add Supplier
           </button>
+            <button
+            type="button"
+            onClick={handleRefreshSuppliers} 
+            className="inline-flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+          >
+            <Tooltip content="Update list with latest suppliers">
+              <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+            </Tooltip>
+            Refresh
+          </button>
+          </div>
         }
         expandableContent={expandableContent}
       />
@@ -175,8 +204,10 @@ const SuppliersTable: React.FC = () => {
         setOpen={setDialogOpen}
         title={supplierToEdit ? "Edit Supplier" : "Add Supplier"}
         initialData={supplierToEdit}
+        refreshSuppliers={handleRefreshSuppliers}
         onSubmit={async (data) => {
           await handleSupplierAdded(data as Supplier);
+          await handleRefreshSuppliers();
           setDialogOpen(false);
         }}
       />
