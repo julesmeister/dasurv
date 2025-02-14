@@ -67,7 +67,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
       setLastDoc(result.lastDoc);
       setCounts(prev => ({
         ...prev,
-        [activeTab === 'calendar' ? 'upcoming' : activeTab]: result.totalCount
+        [activeTab]: result.totalCount
       }));
       setTotalCount(result.totalCount); // Update totalCount with the current tab's count
       setCurrentPage(page);
@@ -246,7 +246,7 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
                         'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium'
                       )}
                     >
-                      {tab.value !== 'calendar' ? `${tab.name} (${counts[tab.value as keyof typeof counts]})` : tab.name}
+                      {tab.name} ({counts[tab.value as keyof typeof counts]})
                     </button>
                   ))}
                 </nav>
