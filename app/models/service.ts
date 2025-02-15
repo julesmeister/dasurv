@@ -190,10 +190,10 @@ export async function refreshServices(
         description: data.description,
         price: data.price,
         status: data.status,
-        icon: data.icon,
+        icon: data.icon || '',
         createdAt: data.createdAt?.toDate(),
         updatedAt: data.updatedAt?.toDate(),
-        timestamp: Date.now(),
+        timestamp: Date.now(), // Set timestamp to current time
       } as Service;
     });
 
