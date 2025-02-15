@@ -77,10 +77,10 @@ export default function BookingPage() {
           id: doc.id,
           name: doc.data().name,
           description: doc.data().description,
-          duration: doc.data().duration,
           price: doc.data().price,
           status: doc.data().status,
-          icon: doc.data().icon || ''
+          icon: doc.data().icon || '',
+          timestamp: Date.now()
         }));
       setServices(servicesList);
     };
@@ -256,7 +256,7 @@ export default function BookingPage() {
                                   className={`inline ${checked ? 'text-indigo-100' : 'text-gray-500'}`}
                                 >
                                   <span className="block">{service.description}</span>
-                                  <span className="block font-medium mt-1">{service.duration} - &#x20B1;{service.price}</span>
+                                  <span className="block font-medium mt-1">{service.price}</span>
                                 </RadioGroup.Description>
                               </div>
                             </div>
