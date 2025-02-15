@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { db as firebaseDb } from '@/app/lib/firebase';
 import { db as dexieDb, CACHE_DURATION } from '@/app/lib/db';
 import { collection, addDoc, updateDoc, doc, getDocs, deleteDoc, getCountFromServer, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
@@ -20,9 +19,21 @@ export interface Supplier {
 
 export const suppliersCollection = collection(firebaseDb, 'suppliers');
 
+// Default values for supplier fields
+const DEFAULT_SUPPLIER_VALUES = {
+  category: 'Product' as const,
+  status: 'Active' as const,
+  preferredPaymentMethod: 'Cash' as const,
+};
+
 export const addSupplier = async (supplier: Omit<Supplier, 'id'>): Promise<Supplier> => {
-  const supplierRef = await addDoc(suppliersCollection, supplier);
-  const newSupplier = { id: supplierRef.id, ...supplier };
+  const supplierWithDefaults = {
+    ...DEFAULT_SUPPLIER_VALUES,
+    ...supplier, // User provided values will override defaults
+  };
+  
+  const supplierRef = await addDoc(suppliersCollection, supplierWithDefaults);
+  const newSupplier = { id: supplierRef.id, ...supplierWithDefaults };
   
   // Cache the new supplier
   await dexieDb.suppliers.add({
@@ -35,11 +46,21 @@ export const addSupplier = async (supplier: Omit<Supplier, 'id'>): Promise<Suppl
 
 export const updateSupplier = async (supplierId: string, supplier: Partial<Supplier>): Promise<void> => {
   const supplierRef = doc(firebaseDb, 'suppliers', supplierId);
-  await updateDoc(supplierRef, supplier);
+  
+  // For updates, we only apply defaults to fields that are being updated and are undefined
+  const updateData = {
+    ...Object.entries(supplier).reduce((acc, [key, value]) => ({
+      ...acc,
+      [key]: value ?? DEFAULT_SUPPLIER_VALUES[key as keyof typeof DEFAULT_SUPPLIER_VALUES]
+    }), {}),
+    updatedAt: Date.now()
+  };
+  
+  await updateDoc(supplierRef, updateData);
 
   // Update cache
   await dexieDb.suppliers.update(supplierId, {
-    ...supplier,
+    ...updateData,
     timestamp: Date.now()
   });
 };

@@ -128,16 +128,16 @@ const SuppliersTable: React.FC = () => {
       <h4 className="text-sm font-medium text-gray-900">Supplier Details</h4>
       <dl className="mt-2 grid grid-cols-2 gap-4">
         <div>
-          <dt className="text-sm font-medium text-gray-500">Category</dt>
-          <dd className="mt-1 text-sm text-gray-900">{supplier.category}</dd>
+          <dt className="text-sm font-medium text-gray-500">Payment Method</dt>
+          <dd className="mt-1 text-sm text-gray-900">{supplier.preferredPaymentMethod}</dd>
+        </div>  
+        <div>
+          <dt className="text-sm font-medium text-gray-500">Address</dt>
+          <dd className="mt-1 text-sm text-gray-900">{supplier.address}</dd>
         </div>
         <div>
-          <dt className="text-sm font-medium text-gray-500">Supplier</dt>
-          <dd className="mt-1 text-sm text-gray-900">{supplier.name}</dd>
-        </div>
-        <div>
-          <dt className="text-sm font-medium text-gray-500">Contact</dt>
-          <dd className="mt-1 text-sm text-gray-900">{supplier.contact}</dd>
+          <dt className="text-sm font-medium text-gray-500">Notes</dt>
+          <dd className="mt-1 text-sm text-gray-900">{supplier.notes}</dd>
         </div>
       </dl>
     </div>

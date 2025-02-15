@@ -4,7 +4,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { Dialog, Transition, RadioGroup } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { addSupplier, Supplier, deleteSupplier } from "@/app/models/supplier";
+import { addSupplier, Supplier, deleteSupplier, updateSupplier } from "@/app/models/supplier";
 import toast from "react-hot-toast";
 import { classNames } from "@/app/lib/utils";
 
@@ -80,13 +80,20 @@ export default function SuppliersDialog<T extends Supplier>({
     console.log("Submitting formData:", formData);
 
     try {
-      await handleAddSupplier(formData);
-      toast.success("Supplier saved successfully!");
+      if (initialData?.id) {
+        // If we have an ID, we're updating an existing supplier
+        await updateSupplier(initialData.id, formData);
+        toast.success("Supplier updated successfully!");
+      } else {
+        // If no ID, we're adding a new supplier
+        await handleAddSupplier(formData);
+        toast.success("Supplier added successfully!");
+      }
       await refreshSuppliers();
       setOpen(false);
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to save supplier.");
+      toast.error(initialData?.id ? "Failed to update supplier." : "Failed to add supplier.");
     } finally {
       setLoading(false);
     }

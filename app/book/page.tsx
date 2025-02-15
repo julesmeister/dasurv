@@ -107,31 +107,21 @@ export default function BookingPage() {
         updatedAt: new Date()
       };
 
-      await addDoc(collection(db, 'bookings'), reservation).then((docRef) => {
-        // Cache the booking ID in localStorage
-        const existingBookings = JSON.parse(localStorage.getItem('bookingIds') || '[]');
-        if (!existingBookings.includes(docRef.id)) {
-          existingBookings.push(docRef.id);
-        }
-        localStorage.setItem('bookingIds', JSON.stringify(existingBookings));
-      });
+      const docRef = await addDoc(collection(db, 'bookings'), reservation);
       
-      // Reset form and show success message
-      setFormData({
-        customerName: '',
-        email: '',
-        phone: '',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        time: '',
-        service: '',
-        notes: ''
-      });
-      setSubmitStatus('success');
-      toast.success('Booking submitted successfully!');
+      // Cache the booking ID in localStorage
+      const existingBookings = JSON.parse(localStorage.getItem('bookingIds') || '[]');
+      if (!existingBookings.includes(docRef.id)) {
+        existingBookings.push(docRef.id);
+      }
+      localStorage.setItem('bookingIds', JSON.stringify(existingBookings));
+      
+      // Redirect to the status page
+      window.location.href = `/book/status?id=${docRef.id}`;
     } catch (error) {
-      console.error('Error submitting reservation:', error);
-      toast.error('Error submitting booking. Please try again.');
+      console.error('Error submitting booking:', error);
       setSubmitStatus('error');
+      toast.error('Failed to submit booking. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
