@@ -78,6 +78,7 @@ export default function BookingPage() {
           name: doc.data().name,
           description: doc.data().description,
           price: doc.data().price,
+          duration: doc.data().duration,
           status: doc.data().status,
           icon: doc.data().icon || '',
           timestamp: Date.now()
