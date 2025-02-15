@@ -6,9 +6,10 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { QRCodeSVG } from 'qrcode.react';
 import { format } from 'date-fns';
+import { DownloadOutlined } from '@ant-design/icons';
 
 interface BookingData {
-  name: string;
+  customerName: string;
   email: string;
   phone: string;
   service: string;
@@ -84,6 +85,30 @@ function BookingStatusInner({ booking, setBooking, loading, setLoading, error, s
   const formattedDate = format(new Date(booking.date), 'MMMM d, yyyy');
   const formattedTime = format(new Date(`2000-01-01T${booking.time}`), 'h:mm a');
 
+  const downloadQRCode = () => {
+    const svg = document.getElementById('qr-code-canvas') as SVGSVGElement | null;
+    if (!svg) {
+      console.error('SVG element not found');
+      return;
+    }
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx?.drawImage(img, 0, 0);
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'booking-qr-code.png';
+      link.click();
+    };
+
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -94,8 +119,9 @@ function BookingStatusInner({ booking, setBooking, loading, setLoading, error, s
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                 ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : 
                   booking.status === 'cancelled' ? 'bg-red-100 text-red-800' : 
-                  'bg-yellow-100 text-yellow-800'}`}>
+                  'bg-yellow-100 text-yellow-800'}`}> 
                 {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                {booking.status === 'pending' && <span className="ml-2 text-xs text-gray-500">(Client has not paid yet; appointment is reserved.)</span>}
               </span>
             </div>
 
@@ -105,7 +131,7 @@ function BookingStatusInner({ booking, setBooking, loading, setLoading, error, s
                 <dl className="space-y-3">
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Name</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{booking.name}</dd>
+                    <dd className="mt-1 text-sm text-gray-900">{booking.customerName}</dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Email</dt>
@@ -128,16 +154,19 @@ function BookingStatusInner({ booking, setBooking, loading, setLoading, error, s
 
               {bookingId ? (
                 <div className="flex flex-col items-center justify-center">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Booking QR Code</h3>
-                  <div className="p-4 bg-white border rounded-lg shadow-sm">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    Booking QR Code
+                    <DownloadOutlined onClick={downloadQRCode} className="ml-6 cursor-pointer text-blue-600 hover:text-blue-800" />
+                  </h3>
+                  <div className="p-1 bg-white border rounded-xl shadow-sm border-gray-200">
                     <QRCodeSVG
-                      value={bookingId}
+                      id="qr-code-canvas"
+                      value={window.location.href}
                       size={200}
                       level="H"
                       includeMargin={true}
                     />
                   </div>
-                  <p className="mt-2 text-sm text-gray-500">Booking ID: {bookingId}</p>
                 </div>
               ) : null}
             </div>
