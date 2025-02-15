@@ -115,10 +115,7 @@ const SuppliersTable: React.FC = () => {
   };
 
   const rowActions = (supplier: Supplier) => (
-    <button
-      type="button"
-      onClick={() => handleEditSupplier(supplier)}
-    >
+    <button type="button" onClick={() => handleEditSupplier(supplier)}>
       Edit
     </button>
   );
@@ -129,8 +126,10 @@ const SuppliersTable: React.FC = () => {
       <dl className="mt-2 grid grid-cols-2 gap-4">
         <div>
           <dt className="text-sm font-medium text-gray-500">Payment Method</dt>
-          <dd className="mt-1 text-sm text-gray-900">{supplier.preferredPaymentMethod}</dd>
-        </div>  
+          <dd className="mt-1 text-sm text-gray-900">
+            {supplier.preferredPaymentMethod}
+          </dd>
+        </div>
         <div>
           <dt className="text-sm font-medium text-gray-500">Address</dt>
           <dd className="mt-1 text-sm text-gray-900">{supplier.address}</dd>
@@ -149,11 +148,11 @@ const SuppliersTable: React.FC = () => {
       const result = await fetchSuppliers(undefined, undefined, refresh);
       setSuppliers(result.suppliers);
       setTotalCount(result.totalCount);
-      console.log('Suppliers refreshed:', result.suppliers);
-      toast.success('Supplier data refreshed successfully!');
+      console.log("Suppliers refreshed:", result.suppliers);
+      toast.success("Supplier data refreshed successfully!");
     } catch (error) {
-      console.error('Error refreshing suppliers:', error);
-      toast.error('Failed to refresh supplier data.');
+      console.error("Error refreshing suppliers:", error);
+      toast.error("Failed to refresh supplier data.");
     } finally {
       setLoading(false);
     }
@@ -177,23 +176,28 @@ const SuppliersTable: React.FC = () => {
         itemsPerPage={itemsPerPage}
         actions={
           <div className="flex space-x-2">
-          <button
-            type="button"
-            onClick={handleAddSupplier}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-          >
-            Add Supplier
-          </button>
             <button
-            type="button"
-            onClick={handleRefreshSuppliers} 
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-          >
-            <Tooltip content="Update list with latest suppliers">
-              <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-            </Tooltip>
-            Refresh
-          </button>
+              type="button"
+              onClick={handleAddSupplier}
+              className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            >
+              Add Supplier
+            </button>
+            <button
+              type="button"
+              onClick={handleRefreshSuppliers}
+              className="inline-flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            >
+              <Tooltip content="Update list with latest suppliers">
+                <ArrowPathIcon
+                  className={`-ml-0.5 mr-1.5 h-5 w-5 ${
+                    loading ? "animate-spin" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+              </Tooltip>
+              Refresh
+            </button>
           </div>
         }
         expandableContent={expandableContent}

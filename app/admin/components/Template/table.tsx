@@ -24,7 +24,7 @@ interface TableProps<T> {
     lastDoc: QueryDocumentSnapshot<DocumentData> | null;
     totalCount: number;
   }>;
-  rowActions?: (row: T) => React.ReactNode;
+  rowActions?: (row: T) => React.ReactNode ;
   loading?: boolean;
   title?: string;
   description?: string;
@@ -109,7 +109,7 @@ const Table = <T extends {}>({
   ];
 
 
-  const itemRender: PaginationProps['itemRender'] = (_, type, originalElement) => {
+  const itemRender: PaginationProps['itemRender'] = (_: any, type: string, originalElement: any) => {
     if (type === 'prev') {
       return <a>Previous</a>;
     }
@@ -157,7 +157,7 @@ const Table = <T extends {}>({
             onChange={handlePageChange}
             showSizeChanger
             showQuickJumper
-            showTotal={(total) => `Total ${total} items`}
+            showTotal={(total: any) => `Total ${total} items`}
             className="mt-4"
           />
         </div>

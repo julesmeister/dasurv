@@ -5,7 +5,6 @@ import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition, RadioGroup } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Service, addService, updateService } from '@/app/models/service';
-import { db, servicesCollection } from '@/app/lib/firebase';
 import { classNames } from '@/app/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -19,11 +18,10 @@ interface ServiceDialogProps {
 
 interface ServiceFormData {
   name: string;
-  icon: string;
   description: string;
-  duration: string;
   price: string;
   status: string;
+  icon?: string;
 }
 
 const statuses = [
@@ -34,31 +32,28 @@ const statuses = [
 export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, service }: ServiceDialogProps) {
   const [formData, setFormData] = useState<ServiceFormData>({
     name: '',
-    icon: '',
     description: '',
-    duration: '',
     price: '',
-    status: 'active'
+    status: 'active',
+    icon: ''
   });
 
   useEffect(() => {
     if (service) {
       setFormData({
         name: service.name,
-        icon: service.icon,
         description: service.description,
-        duration: service.duration.toString(),
         price: service.price.toString(),
-        status: service.status
+        status: service.status,
+        icon: service.icon
       });
     } else {
       setFormData({
         name: '',
-        icon: '',
         description: '',
-        duration: '',
         price: '',
-        status: 'active'
+        status: 'active',
+        icon: ''
       });
     }
   }, [service]);
@@ -66,14 +61,14 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Convert string values to numbers for duration and price
+    // Convert string values to numbers for price
     const serviceData: Service = {
       name: formData.name,
-      icon: formData.icon,
       description: formData.description,
-      duration: Number(formData.duration),
       price: Number(formData.price),
-      status: formData.status
+      status: formData.status,
+      icon: formData.icon,
+      timestamp: 0
     };
 
     try {
@@ -81,13 +76,12 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
         // Update existing service
         const updateData: Partial<Service> = {};
         if (formData.name) updateData.name = formData.name;
-        if (formData.duration) updateData.duration = Number(formData.duration);
         if (formData.price) updateData.price = Number(formData.price);
         if (formData.status) updateData.status = formData.status;
-        if (formData.icon !== undefined) updateData.icon = formData.icon;
+        if (formData.icon) updateData.icon = formData.icon;
         if (formData.description !== undefined) updateData.description = formData.description;
 
-        await updateService(service.id.toString(), updateData);
+        await updateService(service.id, updateData);
         toast.success('Service updated successfully');
       } else {
         // Add new service
@@ -114,7 +108,7 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 backdrop-blur-sm transition-opacity" />
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
         </Transition.Child>
 
         <div className="fixed inset-0 z-10 overflow-y-auto">
@@ -128,180 +122,131 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                 <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                   <button
                     type="button"
-                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-1 focus:ring-offset-2"
+                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     onClick={onClose}
                   >
                     <span className="sr-only">Close</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </div>
-                <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start w-full">
-                    <div className="w-full">
-                      <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900 mb-5">
+
+                <form onSubmit={handleSubmit}>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-base font-semibold leading-6 text-gray-900">
                         {service ? 'Edit Service' : 'Add New Service'}
-                      </Dialog.Title>
-                      <form onSubmit={handleSubmit}>
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                          {/* Left Column */}
-                          <div>
-                            <div className="space-y-6">
-                              <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                                  Name
-                                </label>
-                                <input
-                                  type="text"
-                                  name="name"
-                                  id="name"
-                                  value={formData.name}
-                                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                  className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
-                                  required
-                                />
-                              </div>
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {service ? 'Update the service details below.' : 'Fill in the service details below.'}
+                      </p>
+                    </div>
 
-                              <div>
-                                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                                  Description
-                                </label>
-                                <textarea
-                                  name="description"
-                                  id="description"
-                                  rows={4}
-                                  value={formData.description}
-                                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                  className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
-                                />
-                              </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          required
+                        />
+                      </div>
 
-                              <div>
-                                <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
-                                  Duration
-                                </label>
-                                <input
-                                  type="text"
-                                  name="duration"
-                                  id="duration"
-                                  value={formData.duration}
-                                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                  className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
-                                  required
-                                />
-                              </div>
-                            </div>
+                      <div>
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                          Description
+                        </label>
+                        <textarea
+                          name="description"
+                          id="description"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+                          Price
+                        </label>
+                        <input
+                          type="number"
+                          name="price"
+                          id="price"
+                          value={formData.price}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="icon" className="block text-sm font-medium text-gray-700">
+                          Icon
+                        </label>
+                        <input
+                          type="text"
+                          name="icon"
+                          id="icon"
+                          value={formData.icon}
+                          onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-base font-medium text-gray-900">Status</label>
+                        <RadioGroup value={formData.status} onChange={(status) => setFormData({ ...formData, status })}>
+                          <div className="mt-4 grid grid-cols-2 gap-4">
+                            {statuses.map((status) => (
+                              <RadioGroup.Option
+                                key={status.value}
+                                value={status.value}
+                                className={({ active, checked }) =>
+                                  classNames(
+                                    active ? 'ring-2 ring-indigo-600 ring-offset-2' : '',
+                                    checked
+                                      ? 'bg-indigo-600 text-white hover:bg-indigo-500'
+                                      : 'bg-white text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50',
+                                    'flex items-center justify-center rounded-md py-3 px-3 text-sm font-semibold uppercase sm:flex-1 cursor-pointer focus:outline-none'
+                                  )
+                                }
+                              >
+                                <RadioGroup.Label as="span">{status.label}</RadioGroup.Label>
+                              </RadioGroup.Option>
+                            ))}
                           </div>
-
-                          {/* Right Column */}
-                          <div>
-                            <div className="space-y-6">
-                              <div>
-                                <label htmlFor="icon" className="block text-sm font-medium text-gray-700">
-                                  Icon
-                                </label>
-                                <input
-                                  type="text"
-                                  name="icon"
-                                  id="icon"
-                                  value={formData.icon}
-                                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                                  className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
-                                />
-                              </div>
-
-                              <div>
-                                <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                                  Price
-                                </label>
-                                <input
-                                  type="text"
-                                  name="price"
-                                  id="price"
-                                  value={formData.price}
-                                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                  className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm sm:leading-6"
-                                  required
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                  Status
-                                </label>
-                                <RadioGroup value={formData.status} onChange={(value) => setFormData({ ...formData, status: value })} className="mt-4">
-                                  <RadioGroup.Label className="sr-only">Choose a status</RadioGroup.Label>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    {statuses.map((status) => (
-                                      <RadioGroup.Option
-                                        key={String(status.value)}
-                                        value={status.value}
-                                        className={({ active, checked }) =>
-                                          classNames(
-                                            'relative flex cursor-pointer rounded-lg px-5 py-4 border focus:outline-none',
-                                            active && 'ring-2 ring-offset-2 ring-offset-white ring-indigo-500',
-                                            checked ? `${status.color} border-transparent text-white` : 'bg-white border-gray-200',
-                                            'transition-all duration-200 ease-in-out transform hover:scale-[1.02]'
-                                          )
-                                        }
-                                      >
-                                        {({ active, checked }) => (
-                                          <>
-                                            <div className="flex w-full items-center justify-between">
-                                              <div className="flex items-center">
-                                                <div className="text-sm">
-                                                  <RadioGroup.Label
-                                                    as="p"
-                                                    className={`font-medium ${
-                                                      checked ? 'text-white' : 'text-gray-900'
-                                                    }`}
-                                                  >
-                                                    {status.label}
-                                                  </RadioGroup.Label>
-                                                </div>
-                                              </div>
-                                              {checked && (
-                                                <div className="shrink-0 text-white">
-                                                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-                                                    <circle cx="12" cy="12" r="12" fill="white" fillOpacity="0.2" />
-                                                    <path d="M7 13l3 3 7-7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                                  </svg>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </>
-                                        )}
-                                      </RadioGroup.Option>
-                                    ))}
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-8 sm:flex sm:flex-row-reverse">
-                          <button
-                            type="submit"
-                            className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
-                          >
-                            {service ? 'Save Changes' : 'Add Service'}
-                          </button>
-                          <button
-                            type="button"
-                            className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                            onClick={onClose}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </form>
+                        </RadioGroup>
+                      </div>
                     </div>
                   </div>
-                </div>
+
+                  <div className="mt-6 flex justify-end gap-x-6">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="text-sm font-semibold leading-6 text-gray-900"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </form>
               </Dialog.Panel>
             </Transition.Child>
           </div>

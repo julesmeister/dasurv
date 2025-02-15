@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { getServices } from '@/app/lib/services';
+import { getServices } from '@/app/models/service';
 import { Service } from '@/app/models/service';
 
 interface ConfirmBookingDialogProps {
@@ -23,8 +23,9 @@ export default function ConfirmBookingDialog({
 
   useEffect(() => {
     const fetchService = async () => {
-      const services = await getServices();
-      const matchingService = services.find(s => s.name === serviceName);
+      const result = await getServices(1, null);
+      const services = result.data;
+      const matchingService = services.find((s: { name: string; }) => s.name === serviceName);
       if (matchingService) {
         setService(matchingService);
         setTotalAmount(Number(matchingService.price));
