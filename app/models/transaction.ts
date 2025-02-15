@@ -2,6 +2,7 @@
 import { collection, getDocs, limit, orderBy, query, startAfter, where, doc, updateDoc, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { db as firebaseDb } from '@/app/lib/firebase';
 import { db as dexieDb, CACHE_DURATION } from '@/app/lib/db';
+import dayjs from 'dayjs'; // Import dayjs
 
 export interface Transaction {
   id: string;
@@ -9,6 +10,7 @@ export interface Transaction {
   customerName: string;
   serviceName: string;
   amount: number;
+  bookingId?: string;
   paymentMethod: 'cash' | 'card' | 'gcash' | 'maya';
   status: 'completed' | 'pending' | 'failed';
 }
@@ -21,10 +23,34 @@ export const transactionsCollection = collection(firebaseDb, 'transactions');
 
 export const fetchTransactions = async (
   pageSize: number = 10,
-  lastDocument: QueryDocumentSnapshot<DocumentData> | null = null
+  lastDocument: QueryDocumentSnapshot<DocumentData> | null = null,
+  startDate: Timestamp | null = null,
+  endDate: Timestamp | null = null,
+  filterType: string = 'all'
 ) => {
   try {
     const now = Date.now();
+
+    // Adjust date ranges based on filterType
+    if (filterType === 'today') {
+      startDate = Timestamp.fromDate(new Date(new Date().setHours(0, 0, 0, 0)));
+      endDate = Timestamp.fromDate(new Date(new Date().setHours(23, 59, 59, 999)));
+    } else if (filterType === 'week') {
+      startDate = Timestamp.fromDate(dayjs().startOf('week').toDate());
+      endDate = Timestamp.fromDate(dayjs().endOf('week').toDate());
+    } else if (filterType === 'month') {
+      startDate = Timestamp.fromDate(dayjs().startOf('month').toDate());
+      endDate = Timestamp.fromDate(dayjs().endOf('month').toDate());
+    } else if (filterType === '3months') {
+      startDate = Timestamp.fromDate(dayjs().subtract(3, 'month').startOf('month').toDate());
+      endDate = Timestamp.fromDate(dayjs().endOf('month').toDate());
+    } else if (filterType === '6months') {
+      startDate = Timestamp.fromDate(dayjs().subtract(6, 'month').startOf('month').toDate());
+      endDate = Timestamp.fromDate(dayjs().endOf('month').toDate());
+    } else if (filterType === 'year') {
+      startDate = Timestamp.fromDate(dayjs().subtract(1, 'year').startOf('year').toDate());
+      endDate = Timestamp.fromDate(dayjs().endOf('year').toDate());
+    }
 
     // Try to get cached transactions first
     const cachedTransactions = await dexieDb.transactions
@@ -72,6 +98,14 @@ export const fetchTransactions = async (
       limit(pageSize)
     );
 
+    if (startDate) {
+      q = query(q, where('date', '>=', startDate));
+    }
+
+    if (endDate) {
+      q = query(q, where('date', '<=', endDate));
+    }
+
     if (lastDocument) {
       q = query(q, startAfter(lastDocument));
     }
@@ -79,28 +113,15 @@ export const fetchTransactions = async (
     const snapshot = await getDocs(q);
     console.log('Raw data fetched from Firestore:', snapshot.docs.map(doc => doc.data()));
     console.log('Raw data fetched from Firestore (with IDs):', snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    const transactions = snapshot.docs.map(doc => {
-      const fetchedDate = doc.data().date;
-      const currentDate = Timestamp.now();
-      console.log('Fetched date:', fetchedDate);
-      console.log('Current date (Timestamp.now()):', currentDate);
-      if (fetchedDate instanceof Timestamp) {
-        return {
-          id: doc.id,
-          ...doc.data(),
-          date: fetchedDate,
-          amount: doc.data().amount // Ensure amount is included
-        };
-      } else {
-        console.error('Invalid date fetched from Firestore:', fetchedDate);
-        return {
-          id: doc.id,
-          ...doc.data(),
-          date: currentDate,
-          amount: doc.data().amount // Ensure amount is included
-        };
-      }
-    }) as Transaction[];
+    const transactions = snapshot.docs.map(doc => ({
+      id: doc.id,
+      date: doc.data().date,
+      customerName: doc.data().customerName,
+      serviceName: doc.data().serviceName,
+      amount: doc.data().amount,
+      paymentMethod: doc.data().paymentMethod,
+      status: doc.data().status,
+    })) as Transaction[];
 
     console.log('Transaction date before caching:', transactions.map(transaction => transaction.date));
     // Get total count
@@ -131,6 +152,35 @@ export const fetchTransactions = async (
     console.error('Error fetching transactions:', error);
     throw error;
   }
+};
+
+export const fetchFreshTransactions = async (pageSize: number = 10, lastDocument: QueryDocumentSnapshot<DocumentData> | null = null) => {
+  // Clear outdated cache entries
+  const now = Date.now();
+  await dexieDb.transactions.where('timestamp').below(now - CACHE_DURATION).delete();
+  await dexieDb.transactionCounts.where('timestamp').below(now - CACHE_DURATION).delete();
+
+  // Fetch fresh transactions from Firestore
+  const transactionsRef = transactionsCollection;
+  let q = query(transactionsRef, orderBy('date', 'desc'), limit(pageSize));
+
+  if (lastDocument) {
+    q = query(q, startAfter(lastDocument));
+  }
+
+  const querySnapshot = await getDocs(q);
+  const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[];
+
+  // Save fetched transactions to cache
+  const timestamp = Date.now();
+  await dexieDb.transactions.bulkPut(transactions.map(t => ({ ...t, timestamp })));
+  await dexieDb.transactionCounts.put({ timestamp, count: transactions.length });
+
+  return {
+    transactions,
+    totalCount: transactions.length,
+    lastDoc: querySnapshot.docs[querySnapshot.docs.length - 1] || null,
+  };
 };
 
 export const fetchTransactionData = async (filter: string) => {

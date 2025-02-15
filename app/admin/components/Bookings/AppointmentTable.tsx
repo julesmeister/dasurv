@@ -18,6 +18,7 @@ import { Tooltip } from '@/app/components/Tooltip';
 import { addDoc } from 'firebase/firestore';
 import { transactionsCollection } from '@/app/models/transaction';
 import WeeklyCalendar from './WeeklyCalendar';
+import { updateBooking, confirmBooking } from '@/app/models/booking';
 
 interface AppointmentTableProps {
   initialBookings: Booking[];
@@ -104,13 +105,8 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
 
     const updatePromise = new Promise(async (resolve, reject) => {
       try {
-        const bookingRef = doc(db, 'bookings', bookingId);
-        await updateDoc(bookingRef, {
-          status: newStatus,
-          updatedAt: new Date()
-        });
+        await updateBookingStatus(bookingId, newStatus);
         resolve('Status updated successfully');
-        loadPage(currentPage); // Refresh the data after successful update
       } catch (error) {
         console.error('Error updating booking status:', error);
         reject(error);
@@ -127,43 +123,23 @@ const AppointmentTable: React.FC<AppointmentTableProps> = ({ initialBookings, in
   const handleConfirmBooking = async (totalAmount: number) => {
     if (!selectedBooking) return;
 
-    const updatePromise = new Promise(async (resolve, reject) => {
-      try {
-        // Create transaction
-        await addDoc(transactionsCollection, {
-          date: new Date(),
-          customerName: selectedBooking.customerName,
-          serviceName: selectedBooking.service,
-          amount: totalAmount,
-          paymentMethod: 'cash',
-          status: 'completed'
-        });
+    try {
+      await confirmBooking(selectedBooking, totalAmount, { status: 'confirmed', updatedAt: new Date() });
+      setIsConfirmDialogOpen(false);
+      setSelectedBooking(null);
+      loadPage(currentPage); // Refresh the data
+    } catch (error) {
+      console.error('Error confirming booking:', error);
+    }
+  };
 
-        // Update booking status
-        if (!selectedBooking.id) {
-          throw new Error('Booking ID is undefined');
-        }
-        const bookingRef = doc(db, 'bookings', selectedBooking.id);
-        await updateDoc(bookingRef, {
-          status: 'confirmed',
-          updatedAt: new Date()
-        });
-
-        setIsConfirmDialogOpen(false);
-        setSelectedBooking(null);
-        resolve('Booking confirmed and transaction created');
-        loadPage(currentPage); // Refresh the data
-      } catch (error) {
-        console.error('Error confirming booking:', error);
-        reject(error);
-      }
-    });
-
-    toast.promise(updatePromise, {
-      loading: 'Confirming booking...',
-      success: 'Booking confirmed successfully',
-      error: 'Failed to confirm booking'
-    });
+  const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+    try {
+      await updateBooking(bookingId, { status: newStatus });
+      loadPage(currentPage); // Refresh the data after successful update
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+    }
   };
 
   const updateBooking = async (bookingId: string, data: any) => {

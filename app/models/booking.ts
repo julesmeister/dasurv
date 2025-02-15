@@ -1,6 +1,6 @@
 import { db as firebaseDb } from '@/app/lib/firebase';
 import { db as dexieDb } from '@/app/lib/db';
-import { collection, getDocs, query, orderBy, limit, startAfter, getCountFromServer, DocumentData, QueryDocumentSnapshot, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, startAfter, getCountFromServer, DocumentData, QueryDocumentSnapshot, where, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
@@ -193,4 +193,42 @@ export const getTodayConfirmedBookingsCount = async (): Promise<number> => {
 export const clearBookingsCache = async (): Promise<void> => {
   await dexieDb.appointments.clear();
   await dexieDb.appointmentCounts.clear();
+};
+
+export const updateBooking = async (bookingId: string, data: Partial<Booking>) => {
+  const bookingRef = doc(firebaseDb, 'bookings', bookingId);
+  await updateDoc(bookingRef, data);
+};
+
+export const confirmBooking = async (selectedBooking: Booking, totalAmount: number, data: { status: 'confirmed'; updatedAt: Date }) => {
+  // Create transaction
+  const transactionsCollection = collection(firebaseDb, 'transactions');
+  await addDoc(transactionsCollection, {
+    date: new Date(),
+    bookingId: selectedBooking.id,
+    customerName: selectedBooking.customerName,
+    serviceName: selectedBooking.service,
+    amount: totalAmount,
+    paymentMethod: 'cash',
+    status: 'completed'
+  });
+
+  // Update booking status
+  if (!selectedBooking.id) {
+    throw new Error('Booking ID is undefined');
+  }
+  const bookingRef = doc(firebaseDb, 'bookings', selectedBooking.id);
+  await updateDoc(bookingRef, data);
+};
+
+export const fetchBookingById = async (bookingId: string) => {
+  const bookingRef = doc(firebaseDb, 'bookings', bookingId);
+  const bookingSnapshot = await getDoc(bookingRef);
+
+  if (bookingSnapshot.exists()) {
+    console.log(bookingSnapshot.data());
+    return { id: bookingSnapshot.id, ...bookingSnapshot.data() } as Booking;
+  } else {
+    throw new Error('No such booking!');
+  }
 };
