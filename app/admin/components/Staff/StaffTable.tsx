@@ -15,6 +15,7 @@ const tabs = [
   { name: "Active", value: "Active" },
   { name: "Inactive", value: "Inactive" },
   { name: "Serviced", value: "Serviced" },
+  { name: "Schedule", value: "Schedule" }
 ];
 
 const StaffTable: React.FC = () => {
@@ -27,7 +28,7 @@ const StaffTable: React.FC = () => {
     undefined
   );
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("Active");
+  const [selectedTab, setSelectedTab] = useState<string>("Active");
   const [counts, setCounts] = useState({ active: 0, inactive: 0 });
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 10;
@@ -65,7 +66,6 @@ const StaffTable: React.FC = () => {
       const inactiveCount =
         result.staffs.length > 0 ? result.staffs.length - activeCount : 0;
 
-
       // Update counts state
       setCounts({ active: activeCount, inactive: inactiveCount });
 
@@ -87,7 +87,7 @@ const StaffTable: React.FC = () => {
   }, []);
 
   const handleTabChange = (tabValue: string) => {
-    setActiveTab(tabValue);
+    setSelectedTab(tabValue);
     if (staffs.length > 0) {
       const activeCount = staffs.filter((staff) => staff.active).length;
       const inactiveCount = staffs.length - activeCount;
@@ -110,96 +110,132 @@ const StaffTable: React.FC = () => {
   return (
     <div className="mt-4 sm:mt-0 sm:flex-auto">
       <div className="hidden sm:block">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.name}
-                onClick={() => handleTabChange(tab.value)}
-                className={classNames(
-                  tab.value === activeTab
-                    ? "border-indigo-500 text-indigo-600"
-                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                  "whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
-                )}
-              >
-                {tab.name}
-
-                {tab.name === "Active" || tab.name === "Inactive" ? (
-                  <span
-                    className={classNames(
-                      tab.value === activeTab
-                        ? "bg-indigo-100 text-indigo-600"
-                        : "bg-gray-100 text-gray-900",
-                      "ml-3 hidden rounded-full py-0.5 px-2.5 text-xs font-medium md:inline-block"
-                    )}
-                  >
-                    <span className="sr-only">{`${tab.name.toLowerCase()} count: `}</span>
-                    {counts[tab.name.toLowerCase() as keyof typeof counts]}
-                  </span>
-                ) : (
-                  ""
-                )}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        <div className="mt-8 flow-root">
-          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-              <Table
-                title="Staff"
-                description="List of staff members"
-                columns={columns}
-                data={staffs}
-                initialTotalCount={totalCount}
-                fetchData={fetchData}
-                loading={loading}
-                rowActions={rowActions}
-                itemsPerPage={itemsPerPage}
-                actions={
-                  <div className="flex space-x-2">
-                    <button
-                      type="button"
-                      onClick={handleAddStaff}
-                      className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-                    >
-                      Add Staff
-                    </button>
-                    <button
-                      onClick={async () => {
-                        try {
-                          setLoading(true);
-                          const { staffs: newStaffs, totalCount: newTotal } = await fetchStaffs(itemsPerPage, null, true); // Fetch active staff
-                          setStaffs(newStaffs);
-                          setTotalCount(newTotal);
-                          setLastDoc(null);
-                          setCurrentPage(1);
-                          toast.success("Data refreshed successfully");
-                        } catch (error) {
-                          toast.error("Failed to refresh data");
-                          console.error("Refresh error:", error);
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                    >
-                      <Tooltip content="Update list with latest bookings">
-                        <ArrowPathIcon
-                          className={`-ml-0.5 mr-1.5 h-5 w-5 ${
-                            loading ? "animate-spin" : ""
-                          }`}
-                          aria-hidden="true"
-                        />
-                      </Tooltip>
-                      Refresh
-                    </button>
-                  </div>
-                }
-              />
+        <div className="flow-root">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="sm:flex sm:items-center">
+              <div className="sm:flex-auto">
+                <h1 className="text-base font-semibold leading-6 text-gray-900">
+                  Staff Management
+                </h1>
+                <p className="mt-2 text-sm text-gray-700">
+                  A list of all staff members in your account
+                </p>
+              </div>
             </div>
+            <div className="mt-4">
+              <div className="sm:hidden">
+                <label htmlFor="tabs" className="sr-only">
+                  Select a tab
+                </label>
+                <select
+                  id="tabs"
+                  name="tabs"
+                  className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                  value={selectedTab}
+                  onChange={(e) => setSelectedTab(e.target.value)}
+                >
+                  {tabs.map((tab) => (
+                    <option key={tab.name} value={tab.value}>
+                      {tab.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="hidden sm:block">
+                <div className="border-b border-gray-200">
+                  <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.name}
+                        onClick={() => setSelectedTab(tab.value)}
+                        className={classNames(
+                          tab.value === selectedTab
+                            ? "border-indigo-500 text-indigo-600"
+                            : "border-transparent text-gray-500 hover:border-gray-200 hover:text-gray-700",
+                          "whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+                        )}
+                      >
+                        {tab.name}
+                      </button>
+                    ))}
+                  </nav>
+                </div>
+              </div>
+            </div>
+
+            {(selectedTab === 'Active' || selectedTab === 'Inactive') && (
+              <div className="mt-8 flow-root">
+                <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                  <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <Table
+                      title="Staff"
+                      description="List of staff members"
+                      columns={columns}
+                      data={staffs.filter((staff) => staff.active === (selectedTab === 'Active'))}
+                      initialTotalCount={totalCount}
+                      fetchData={fetchData}
+                      loading={loading}
+                      rowActions={rowActions}
+                      itemsPerPage={itemsPerPage}
+                      actions={
+                        <div className="flex space-x-2">
+                          <button
+                            type="button"
+                            onClick={handleAddStaff}
+                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                          >
+                            Add Staff
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                setLoading(true);
+                                const { staffs: newStaffs, totalCount: newTotal } = await fetchStaffs(itemsPerPage, null, true);
+                                setStaffs(newStaffs);
+                                setTotalCount(newTotal);
+                                setLastDoc(null);
+                                setCurrentPage(1);
+                                toast.success("Data refreshed successfully");
+                              } catch (error) {
+                                toast.error("Failed to refresh data");
+                                console.error("Refresh error:", error);
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                            className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                          >
+                            <Tooltip content="Update list with latest bookings">
+                              <ArrowPathIcon
+                                className={`-ml-0.5 mr-1.5 h-5 w-5 ${
+                                  loading ? "animate-spin" : ""
+                                }`}
+                                aria-hidden="true"
+                              />
+                            </Tooltip>
+                            Refresh
+                          </button>
+                        </div>
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {selectedTab === 'Serviced' && (
+              <div className="mt-8">
+                {/* Add your Serviced content here */}
+                <p>Serviced content coming soon...</p>
+              </div>
+            )}
+            
+            {selectedTab === 'Schedule' && (
+              <div className="mt-8">
+                {/* Add your Schedule content here */}
+                <p>Schedule content coming soon...</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
