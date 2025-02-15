@@ -229,7 +229,7 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
                                       <Input
                                         placeholder="Search suppliers..."
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setSearchTerm(e.target.value)}
                                         prefix={<SearchOutlined />}
                                         className="mb-2"
                                       />

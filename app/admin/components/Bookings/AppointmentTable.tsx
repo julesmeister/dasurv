@@ -13,7 +13,6 @@ import { Staff } from '@/app/models/staff';
 import TherapistSelectionDialog from './TherapistSelectionDialog';
 import ConfirmBookingDialog from './ConfirmBookingDialog';
 import { classNames } from '@/app/lib/utils';
-import { useFloating, FloatingPortal, offset, shift, Placement, arrow, FloatingArrow } from '@floating-ui/react';
 import { Tooltip } from '@/app/components/Tooltip';
 import { addDoc } from 'firebase/firestore';
 import { transactionsCollection } from '@/app/models/transaction';
