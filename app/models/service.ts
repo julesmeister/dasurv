@@ -18,6 +18,7 @@ export interface Service {
   description: string;
   price: number;
   status: string;
+  duration: number;
   icon?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -43,6 +44,7 @@ export async function cacheServices() {
         name: data.name,
         description: data.description,
         price: data.price,
+        duration: data.duration,
         status: data.status,
         icon: data.icon,
         createdAt: data.createdAt?.toDate(),
@@ -189,8 +191,9 @@ export async function refreshServices(
         name: data.name,
         description: data.description,
         price: data.price,
+        duration: data.duration,
         status: data.status,
-        icon: data.icon || '',
+        icon: data.icon || "",
         createdAt: data.createdAt?.toDate(),
         updatedAt: data.updatedAt?.toDate(),
         timestamp: Date.now(), // Set timestamp to current time

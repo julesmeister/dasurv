@@ -20,6 +20,7 @@ interface ServiceFormData {
   name: string;
   description: string;
   price: string;
+  duration: string;
   status: string;
   icon?: string;
 }
@@ -34,6 +35,7 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
     name: '',
     description: '',
     price: '',
+    duration: '',
     status: 'active',
     icon: ''
   });
@@ -44,6 +46,7 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
         name: service.name,
         description: service.description,
         price: service.price.toString(),
+        duration: service.duration.toString(),
         status: service.status,
         icon: service.icon
       });
@@ -52,6 +55,7 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
         name: '',
         description: '',
         price: '',
+        duration: '',
         status: 'active',
         icon: ''
       });
@@ -66,6 +70,7 @@ export default function ServiceDialog({ isOpen, onClose, onSave, fetchServices, 
       name: formData.name,
       description: formData.description,
       price: Number(formData.price),
+      duration: Number(formData.duration),
       status: formData.status,
       icon: formData.icon,
       timestamp: 0

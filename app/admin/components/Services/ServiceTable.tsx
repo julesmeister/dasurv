@@ -137,6 +137,7 @@ export default function ServiceTable({
     { header: "Service Name", accessor: "name" },
     { header: "Description", accessor: "description" },
     { header: "Price", accessor: "price" },
+    { header: "Duration", accessor: "duration" },
     { header: "Icon", accessor: "icon", render: (value: string, row: Service) => value ? <Image width={24} height={24} src={row.icon!} alt={row.name} /> : <div className="w-6 h-6 bg-gray-200 rounded-full" /> },
   ];
 
