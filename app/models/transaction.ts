@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { collection, getDocs, limit, orderBy, query, startAfter, where, doc, updateDoc, DocumentData, QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 import { db as firebaseDb } from '@/app/lib/firebase';
 import { db as dexieDb, CACHE_DURATION } from '@/app/lib/db';

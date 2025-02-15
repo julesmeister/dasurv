@@ -32,7 +32,10 @@ const ExpandableContent: React.FC<{ record: Transaction }> = React.memo(({ recor
   const [bookingDetails, setBookingDetails] = useState<Booking | null>(null);
 
   useEffect(() => {
-    const fetchBooking = async () => {
+    async function fetchBooking() {
+      if (!record.bookingId) {
+        return;
+      }
       if (record.bookingId) {
         console.log('Fetching booking details for ID:', record.bookingId);
         try {

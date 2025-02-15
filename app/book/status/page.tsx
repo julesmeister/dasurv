@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
@@ -18,11 +18,21 @@ interface BookingData {
 }
 
 export default function BookingStatus() {
-  const searchParams = useSearchParams();
-  const bookingId = searchParams.get('id');
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BookingStatusInner booking={booking} setBooking={setBooking} loading={loading} setLoading={setLoading} error={error} setError={setError} />
+    </Suspense>
+  );
+}
+
+function BookingStatusInner({ booking, setBooking, loading, setLoading, error, setError }: { booking: BookingData | null; setBooking: React.Dispatch<React.SetStateAction<BookingData | null>>; loading: boolean; setLoading: React.Dispatch<React.SetStateAction<boolean>>; error: string | null; setError: React.Dispatch<React.SetStateAction<string | null>>; }) {
+  const searchParams = useSearchParams();
+  const bookingId = searchParams.get('id');
+  const selectedFilter = searchParams.get('filter');
 
   useEffect(() => {
     async function fetchBooking() {
@@ -50,7 +60,7 @@ export default function BookingStatus() {
     }
 
     fetchBooking();
-  }, [bookingId]);
+  }, [bookingId, selectedFilter]);
 
   if (loading) {
     return (
