@@ -1,13 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { Fragment, useEffect } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, UserPlusIcon } from '@heroicons/react/24/outline';
-import React, { useState } from 'react';
+import React from 'react';
 import { InventoryItem, saveInventoryItem, updateInventoryItem } from '@/app/models/inventory';
-import { Supplier } from '@/app/models/supplier';
+import { Supplier, fetchSupplierNames } from '@/app/models/supplier';
 import toast from 'react-hot-toast';
-import SupplierSelectionDialog from './SupplierSelectionDialog';
+import { Input } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 
 interface InventoryDialogProps {
   isOpen: boolean;
@@ -31,12 +33,27 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
   const [imageUrl, setImageUrl] = useState(initialItem?.imageUrl || '');
   const [loading, setLoading] = useState(false);
   const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
+  const [suppliers, setSuppliers] = useState<string[]>([]);
+  const [selectedSupplier, setSelectedSupplier] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    const loadSuppliers = async () => {
+      const supplierList = await fetchSupplierNames();
+      console.log('Fetched suppliers:', supplierList);
+      console.log('Type of fetched suppliers:', Array.isArray(supplierList));
+      setSuppliers(supplierList);
+    };
+    loadSuppliers();
+  }, []);
+
+  useEffect(() => {
+    console.log(initialItem?.supplier);
     if (initialItem) {
       setName(initialItem.name);
       setCategory(initialItem.category);
       setSupplier(initialItem.supplier);
+      setSelectedSupplier(initialItem.supplier);
       setCost(initialItem.cost);
       setPrice(initialItem.price);
       setExpirationDate(initialItem.expirationDate ? initialItem.expirationDate.toISOString() : undefined);
@@ -48,6 +65,7 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
       setName('');
       setCategory('');
       setSupplier('');
+      setSelectedSupplier('');
       setCost(0);
       setPrice(0);
       setExpirationDate(undefined);
@@ -57,6 +75,11 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
       setImageUrl('');
     }
   }, [initialItem]);
+
+  const handleSupplierSelect = (supplier: string) => {
+    setSelectedSupplier(supplier);
+    setIsSupplierDialogOpen(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +91,7 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
         current,
         minimum,
         category,
-        supplier,
+        supplier: selectedSupplier ?? supplier,
         cost,
         price,
         expirationDate: expirationDate ? new Date(expirationDate) : undefined,
@@ -92,6 +115,10 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
       setLoading(false);
     }
   };
+
+  const filteredSuppliers = suppliers.filter(supplier =>
+    supplier.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <>
@@ -181,15 +208,15 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
                                 <label htmlFor="supplier" className="block text-sm font-medium text-gray-700">
                                   Supplier
                                 </label>
-                                <div className="mt-1 flex items-center">
+                                <div className="mt-2 flex items-center relative">
                                   <input
                                     type="text"
                                     name="supplier"
                                     id="supplier"
-                                    value={supplier}
+                                    value={selectedSupplier}
                                     readOnly
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                  />
+                                    className=" block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
+                                    />
                                   <button
                                     type="button"
                                     onClick={() => setIsSupplierDialogOpen(true)}
@@ -197,6 +224,28 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
                                   >
                                     <UserPlusIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                                   </button>
+                                  {isSupplierDialogOpen && (
+                                    <div className="absolute z-10 bg-white shadow-lg rounded-md mt-2 p-4">
+                                      <Input
+                                        placeholder="Search suppliers..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        prefix={<SearchOutlined />}
+                                        className="mb-2"
+                                      />
+                                      <ul className="max-h-60 overflow-y-auto">
+                                        {filteredSuppliers.map((supplier) => (
+                                          <li
+                                            key={supplier}
+                                            className="p-2 hover:bg-gray-200 cursor-pointer border-gray-300 rounded-md transition duration-200 ease-in-out"
+                                            onClick={() => handleSupplierSelect(supplier)}
+                                          >
+                                            {supplier}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
@@ -340,16 +389,6 @@ const InventoryDialog: React.FC<InventoryDialogProps> = ({ isOpen, onClose, onSa
           </div>
         </Dialog>
       </Transition.Root>
-      {isOpen && (
-        <SupplierSelectionDialog
-          isOpen={isSupplierDialogOpen}
-          onClose={() => setIsSupplierDialogOpen(false)}
-          onSelect={(selectedSupplier: Supplier) => {
-            setSupplier(selectedSupplier.name);
-            setIsSupplierDialogOpen(false);
-          }}
-        />
-      )}
     </>
   );
 };

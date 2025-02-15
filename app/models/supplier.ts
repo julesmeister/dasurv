@@ -174,3 +174,8 @@ export const getSupplierCount = async (): Promise<number> => {
 
   return count;
 };
+
+export const fetchSupplierNames = async (): Promise<string[]> => {
+  const supplierDocs = await getDocs(suppliersCollection);
+  return supplierDocs.docs.map(doc => doc.data().name); // Assuming 'name' is the field with the supplier name
+};

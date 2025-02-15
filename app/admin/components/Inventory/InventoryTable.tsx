@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Table from "../Template/table";
 import InventoryDialog from "./InventoryDialog";
 import { InventoryItem, fetchInventoryItems } from "@/app/models/inventory";
@@ -8,10 +8,20 @@ import { InventoryItem, fetchInventoryItems } from "@/app/models/inventory";
 export default function InventoryTable() {
   const [editingItem, setEditingItem] = useState<InventoryItem | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
 
-  const handleCloseDialog = () => {
+  useEffect(() => {
+    const loadInventoryItems = async () => {
+      const { items } = await fetchInventoryItems();
+      setInventoryItems(items);
+    };
+    loadInventoryItems();
+  }, []);
+
+  const handleCloseDialog = async () => {
     setIsDialogOpen(false);
     setEditingItem(undefined);
+    await loadInventoryItems(); // Fetch items again after closing the dialog
   };
 
   const handleSave = async () => {
@@ -98,12 +108,17 @@ export default function InventoryTable() {
     );
   };
 
+  const loadInventoryItems = async () => {
+    const { items } = await fetchInventoryItems();
+    setInventoryItems(items);
+  };
+
   return (
     <>
       <Table<InventoryItem>
         columns={columns}
-        data={[]} // Initial empty data, will be populated by fetchData
-        initialTotalCount={0}
+        data={inventoryItems}
+        initialTotalCount={inventoryItems.length}
         fetchData={async (pageSize, lastDoc) => {
           if (lastDoc !== null) {
             if (lastDoc !== null) {
