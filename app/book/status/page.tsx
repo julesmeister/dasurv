@@ -116,18 +116,20 @@ export default function BookingStatus() {
                 </dl>
               </div>
 
-              <div className="flex flex-col items-center justify-center">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Booking QR Code</h3>
-                <div className="p-4 bg-white border rounded-lg shadow-sm">
-                  <QRCodeSVG
-                    value={bookingId}
-                    size={200}
-                    level="H"
-                    includeMargin={true}
-                  />
+              {bookingId ? (
+                <div className="flex flex-col items-center justify-center">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Booking QR Code</h3>
+                  <div className="p-4 bg-white border rounded-lg shadow-sm">
+                    <QRCodeSVG
+                      value={bookingId}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">Booking ID: {bookingId}</p>
                 </div>
-                <p className="mt-2 text-sm text-gray-500">Booking ID: {bookingId}</p>
-              </div>
+              ) : null}
             </div>
           </div>
         </div>
