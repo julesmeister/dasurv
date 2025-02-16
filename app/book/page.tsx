@@ -68,6 +68,7 @@ export default function BookingPage() {
   const dateRange = generateDateRange();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const fetchServices = async () => {
@@ -84,6 +85,7 @@ export default function BookingPage() {
           timestamp: Date.now()
         }));
       setServices(servicesList);
+      setLoading(false);
     };
     fetchServices();
   }, []);
@@ -223,55 +225,62 @@ export default function BookingPage() {
                 <label htmlFor="service" className="block text-sm font-medium leading-6 text-gray-900">
                   Select Massage Type
                 </label>
-                <RadioGroup 
-                  value={formData.service} 
-                  onChange={(value) => setFormData(prev => ({ ...prev, service: value }))}
-                  className="mt-2"
-                >
-                  <div className="grid grid-cols-1 gap-3">
-                    {services.filter(s => s.status === 'active').map((service) => (
-                      <RadioGroup.Option
-                        key={service.id}
-                        value={service.name}
-                        className={({ active, checked }) =>
-                          `${active ? 'ring-2 ring-indigo-600 ring-offset-2' : ''}
-                          ${checked ? 'bg-indigo-600 border-transparent' : 'bg-white border-gray-200'}
-                          relative flex cursor-pointer rounded-lg px-5 py-4 border-2 focus:outline-none hover:border-indigo-200 transition-colors`
-                        }
-                      >
-                        
-                        {
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        ({ active, checked }) => (
-                          <div className="flex w-full items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="text-sm">
-                                <RadioGroup.Label
-                                  as="p"
-                                  className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}
-                                >
-                                  {service.name}
-                                </RadioGroup.Label>
-                                <RadioGroup.Description
-                                  as="span"
-                                  className={`inline ${checked ? 'text-indigo-100' : 'text-gray-500'}`}
-                                >
-                                  <span className="block">{service.description}</span>
-                                  <span className="block font-medium mt-1">{service.price}</span>
-                                </RadioGroup.Description>
-                              </div>
-                            </div>
-                            {checked && (
-                              <div className="shrink-0 text-white">
-                                <CheckIcon className="h-6 w-6" />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </RadioGroup.Option>
-                    ))}
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <svg className="animate-spin h-5 w-5 mr-3 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    <span className="text-gray-700 font-medium">Loading services, please wait...</span>
                   </div>
-                </RadioGroup>
+                ) : (
+                  <RadioGroup 
+                    value={formData.service} 
+                    onChange={(value) => setFormData(prev => ({ ...prev, service: value }))}
+                    className="mt-2"
+                  >
+                    <div className="grid grid-cols-1 gap-3">
+                      {services.filter(s => s.status === 'active').map((service) => (
+                        <RadioGroup.Option
+                          key={service.id}
+                          value={service.name}
+                          className={({ active, checked }) =>
+                            `${active ? 'ring-2 ring-indigo-600 ring-offset-2' : ''}
+                            ${checked ? 'bg-indigo-600 border-transparent' : 'bg-white border-gray-200'}
+                            relative flex cursor-pointer rounded-lg px-5 py-4 border-2 focus:outline-none hover:border-indigo-200 transition-colors`
+                          }
+                        >
+                          {({ checked }) => (
+                            <div className="flex w-full items-center justify-between">
+                              <div className="flex items-center">
+                                <div className="text-sm">
+                                  <RadioGroup.Label
+                                    as="p"
+                                    className={`font-medium ${checked ? 'text-white' : 'text-gray-900'}`}
+                                  >
+                                    {service.name}
+                                  </RadioGroup.Label>
+                                  <RadioGroup.Description
+                                    as="span"
+                                    className={`inline ${checked ? 'text-indigo-100' : 'text-gray-500'}`}
+                                  >
+                                    <span className="block">{service.description}</span>
+                                    <span className="block font-medium mt-1">{service.duration} - &#x20B1;{service.price}</span>
+                                  </RadioGroup.Description>
+                                </div>
+                              </div>
+                              {checked && (
+                                <div className="shrink-0 text-white">
+                                  <CheckIcon className="h-6 w-6" />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </RadioGroup.Option>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                )}
               </div>
 
               <div className="relative">
@@ -340,10 +349,7 @@ export default function BookingPage() {
                         value={slot.time}
                         className={({ checked }) =>
                           classNames(
-                            'relative cursor-pointer focus:outline-none',
-                            checked 
-                              ? 'bg-indigo-600 text-white' 
-                              : 'bg-white text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50',
+                            checked ? 'bg-indigo-600 text-white' : 'bg-white text-gray-900',
                             'flex items-center justify-center rounded-md py-2 px-3 text-sm font-semibold uppercase'
                           )
                         }
