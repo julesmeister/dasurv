@@ -8,7 +8,8 @@ import {
   WrenchScrewdriverIcon,
   ChartBarIcon,
   TruckIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  CogIcon
 } from '@heroicons/react/24/outline';
 
 import TabNavigation from './components/Navigation/TabNavigation';
@@ -23,6 +24,7 @@ import { getTodayConfirmedBookingsCount } from '../models/booking';
 import { getActiveTherapistsCount } from '../models/staff';
 import { fetchLowStockCount } from '../models/inventory';
 import TransactionsTable from './components/Transactions/TransactionsTable';
+import Settings from './components/admin/Settings';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -62,6 +64,7 @@ export default function AdminDashboard() {
     { id: 'staff', name: 'Staff', icon: UserGroupIcon },
     { id: 'services', name: 'Services', icon: WrenchScrewdriverIcon },
     { id: 'suppliers', name: 'Suppliers', icon: TruckIcon },
+    { id: 'settings', name: 'Settings', icon: CogIcon },
   ];
 
   const handleAddService = () => {
@@ -116,6 +119,10 @@ export default function AdminDashboard() {
 
         {activeTab === 'suppliers' && (
           <SuppliersTable />
+        )}
+
+        {activeTab === 'settings' && (
+          <Settings />
         )}
       </div>
     </div>

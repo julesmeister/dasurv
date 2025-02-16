@@ -112,16 +112,7 @@ const StaffTable: React.FC = () => {
       <div className="hidden sm:block">
         <div className="flow-root">
           <div className="px-4 sm:px-6 lg:px-8">
-            <div className="sm:flex sm:items-center">
-              <div className="sm:flex-auto">
-                <h1 className="text-base font-semibold leading-6 text-gray-900">
-                  Staff Management
-                </h1>
-                <p className="mt-2 text-sm text-gray-700">
-                  A list of all staff members in your account
-                </p>
-              </div>
-            </div>
+            
             <div className="mt-4">
               <div className="sm:hidden">
                 <label htmlFor="tabs" className="sr-only">
