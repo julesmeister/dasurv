@@ -349,23 +349,18 @@ export default function BookingPage() {
                         value={slot.time}
                         className={({ checked }) =>
                           classNames(
-                            checked ? 'bg-indigo-600 text-white' : 'bg-white text-gray-900',
+                            'relative cursor-pointer focus:outline-none',
+                            checked 
+                              ? 'bg-indigo-600 text-white' 
+                              : 'bg-white text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50',
                             'flex items-center justify-center rounded-md py-2 px-3 text-sm font-semibold uppercase'
                           )
                         }
                       >
-                        {({ checked }) => (
-                          <>
+                        <>
                             <RadioGroup.Label as="span">{slot.label}</RadioGroup.Label>
-                            {checked && (
-                              <span
-                                className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2"
-                              >
-                                <CheckIcon className="h-5 w-5 text-white" aria-hidden="true" />
-                              </span>
-                            )}
+                            
                           </>
-                        )}
                       </RadioGroup.Option>
                     ))}
                   </div>
