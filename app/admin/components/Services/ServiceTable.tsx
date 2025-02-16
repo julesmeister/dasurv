@@ -18,6 +18,7 @@ import Table from "@/app/admin/components/Template/table";
 import { DocumentData, QueryDocumentSnapshot } from "@firebase/firestore";
 import { Tooltip } from "@/app/components/Tooltip";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 
 interface ServiceTableProps {
   onAddService: () => void;
@@ -122,12 +123,12 @@ export default function ServiceTable({
 
   const rowActions = (row: Service): React.ReactNode => {
     return (
-      <div>
-        <button onClick={() => handleEdit(row)} className="text-yellow-600 hover:text-yellow-900 ml-4">
-          Edit
+      <div className="flex space-x-2">
+        <button onClick={() => handleEdit(row)} className="text-yellow-600 hover:text-yellow-900">
+          <PencilIcon className="h-5 w-5" aria-hidden="true" />
         </button>
         <button onClick={() => handleDelete(row.id!)} className="text-red-600 hover:text-red-900">
-          Delete
+          <TrashIcon className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
     );
