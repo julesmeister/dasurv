@@ -6,6 +6,7 @@ import { Staff } from '../models/staff';
 import { Supplier } from '../models/supplier';
 import { Transaction as TransactionModel } from '../models/transaction';
 import { Service } from '../models/service';
+import { AppSettings } from '../models/settings';
 
 export class DasurvDatabase extends Dexie {
   appointments!: Table<Booking>;
@@ -20,10 +21,11 @@ export class DasurvDatabase extends Dexie {
   serviceCounts!: Table<{ count: number; timestamp: number }>;
   transactions!: Table<TransactionModel & { timestamp: number }>;
   transactionCounts!: Table<{ count: number; timestamp: number }>;
+  settings!: Table<AppSettings & { timestamp: number }>; // Table for settings
 
   constructor() {
     super('dasurvDb');
-    this.version(4).stores({
+    this.version(5).stores({
       appointments: '++id, customerName, email, phone, date, time, status, type, therapist, createdAt, updatedAt, timestamp',
       appointmentCounts: '++id, count, type, timestamp',
       inventory: '++id, name, timestamp',
@@ -35,7 +37,8 @@ export class DasurvDatabase extends Dexie {
       services: '++id, name, timestamp',
       serviceCounts: '++id, count, timestamp',
       transactions: 'id, date, customerName, timestamp',
-      transactionCounts: '++id, count, timestamp'
+      transactionCounts: '++id, count, timestamp',
+      settings: 'id, data, timestamp' // New settings table
     });
   }
 }

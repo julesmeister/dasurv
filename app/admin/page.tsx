@@ -24,7 +24,7 @@ import { getTodayConfirmedBookingsCount } from '../models/booking';
 import { getActiveTherapistsCount } from '../models/staff';
 import { fetchLowStockCount } from '../models/inventory';
 import TransactionsTable from './components/Transactions/TransactionsTable';
-import Settings from './components/admin/Settings';
+import Settings from './components/Admin/Settings';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
