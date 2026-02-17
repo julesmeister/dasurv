@@ -1,0 +1,23 @@
+package com.dasurv.data.local.entity
+
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "equipment")
+data class Equipment(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val category: String = "", // pigment, needle, numbing, other
+    val brand: String = "",
+    val costPerUnit: Double = 0.0,
+    val unitsPerSession: Double = 1.0,
+    val stockQuantity: Int = 0,
+    val notes: String = "",
+    val type: String = "consumable", // "studio" or "consumable"
+    val piecesPerPackage: Int = 1
+) {
+    @get:Ignore
+    val costPerPiece: Double
+        get() = if (piecesPerPackage > 0) costPerUnit / piecesPerPackage else 0.0
+}
