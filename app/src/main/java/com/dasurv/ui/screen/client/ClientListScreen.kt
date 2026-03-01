@@ -6,11 +6,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,10 +26,13 @@ import com.dasurv.ui.component.ClientCard
 import com.dasurv.ui.component.DasurvAddFab
 import com.dasurv.ui.component.DasurvBackButton
 import com.dasurv.ui.component.DasurvEmptyState
-import com.dasurv.ui.component.DasurvTextField
+import com.dasurv.ui.component.DasurvSearchField
 import com.dasurv.ui.component.DasurvTopAppBarTitle
 import com.dasurv.ui.component.M3ListCard
 import com.dasurv.ui.component.M3ListDivider
+import com.dasurv.ui.component.M3OnSurface
+import com.dasurv.ui.component.M3OnSurfaceVariant
+import com.dasurv.ui.component.M3Primary
 import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,15 +69,12 @@ fun ClientListScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            DasurvTextField(
+            DasurvSearchField(
                 value = searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = spacing.lg, vertical = spacing.sm),
-                placeholder = { Text("Search clients...") },
-                leadingIcon = { Icon(Icons.Default.Search, null) },
-                singleLine = true
+                    .padding(start = spacing.lg, end = spacing.lg, top = spacing.lg, bottom = spacing.sm),
+                placeholder = "Search clients..."
             )
 
             AnimatedContent(
@@ -81,26 +88,64 @@ fun ClientListScreen(
                         message = if (searchQuery.isBlank()) "No clients yet" else "No results"
                     )
                 } else {
+                    val grouped = remember(clients) {
+                        clients.groupBy {
+                            it.name.firstOrNull()?.uppercaseChar() ?: '#'
+                        }.toSortedMap()
+                    }
                     LazyColumn(
-                        contentPadding = PaddingValues(vertical = spacing.lg),
-                        verticalArrangement = Arrangement.spacedBy(spacing.sm)
+                        contentPadding = PaddingValues(bottom = spacing.lg),
                     ) {
-                        items(clients.size, key = { clients[it].id }) { index ->
-                            val client = clients[index]
-                            val position = when {
-                                clients.size == 1 -> CardPosition.Only
-                                index == 0 -> CardPosition.First
-                                index == clients.lastIndex -> CardPosition.Last
-                                else -> CardPosition.Middle
+                        grouped.forEach { (letter, groupClients) ->
+                            item(key = "header_$letter") {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(
+                                            start = spacing.lg,
+                                            top = spacing.lg,
+                                            bottom = spacing.sm
+                                        ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(M3Primary.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = letter.toString(),
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = M3Primary
+                                        )
+                                    }
+                                    Text(
+                                        text = "${groupClients.size}",
+                                        fontSize = 12.sp,
+                                        color = M3OnSurfaceVariant
+                                    )
+                                }
                             }
-                            M3ListCard(modifier = Modifier.animateItem()) {
-                                ClientCard(
-                                    client = client,
-                                    onClick = { onNavigateToClient(client.id) },
-                                    position = position
-                                )
-                                if (index < clients.lastIndex) {
-                                    M3ListDivider()
+                            item(key = "group_$letter") {
+                                M3ListCard {
+                                    groupClients.forEachIndexed { index, client ->
+                                        ClientCard(
+                                            client = client,
+                                            onClick = { onNavigateToClient(client.id) },
+                                            position = when {
+                                                groupClients.size == 1 -> CardPosition.Only
+                                                index == 0 -> CardPosition.First
+                                                index == groupClients.lastIndex -> CardPosition.Last
+                                                else -> CardPosition.Middle
+                                            }
+                                        )
+                                        if (index < groupClients.lastIndex) {
+                                            M3ListDivider()
+                                        }
+                                    }
                                 }
                             }
                         }

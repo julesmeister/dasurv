@@ -41,9 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-private val DialogBg = Color(0xFFFCFCFF)
-private val ButtonBarBg = Color(0xFFF6F6FE)
-private val FieldBg = Color(0xFFF0F1FA)
 
 @Composable
 fun DasurvMultiPageDialog(
@@ -75,7 +72,7 @@ fun DasurvMultiPageDialog(
     ) {
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = DialogBg,
+            color = M3DialogSurfaceBg,
             tonalElevation = 6.dp,
             modifier = Modifier.fillMaxWidth(0.92f).fillMaxHeight(0.85f),
         ) {
@@ -140,7 +137,7 @@ fun DasurvMultiPageDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(ButtonBarBg)
+                        .background(M3ButtonBarBg)
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically,
@@ -157,7 +154,7 @@ fun DasurvMultiPageDialog(
                             onClick = { onPageChange(currentPage - 1) },
                             shape = RoundedCornerShape(50),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = FieldBg, contentColor = M3OnSurfaceVariant,
+                                containerColor = M3FieldBg, contentColor = M3OnSurfaceVariant,
                             ),
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                         ) {
@@ -171,7 +168,7 @@ fun DasurvMultiPageDialog(
                             onClick = onDismiss,
                             shape = RoundedCornerShape(50),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = FieldBg, contentColor = M3OnSurfaceVariant,
+                                containerColor = M3FieldBg, contentColor = M3OnSurfaceVariant,
                             ),
                             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                         ) {

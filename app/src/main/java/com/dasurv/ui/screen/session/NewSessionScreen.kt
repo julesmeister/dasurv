@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -22,6 +23,8 @@ import com.dasurv.data.local.entity.Session
 import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatMl
+import com.dasurv.util.formatPrecise
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,16 +74,14 @@ fun NewSessionScreen(
         )
     }
 
-    val formBg = M3SurfaceContainer
-
     Scaffold(
-        containerColor = formBg,
+        containerColor = M3FieldBg,
         topBar = {
             TopAppBar(
                 title = { DasurvTopAppBarTitle("New Session") },
                 navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = formBg
+                    containerColor = M3FieldBg
                 )
             )
         }
@@ -89,27 +90,29 @@ fun NewSessionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(formBg),
+                .background(M3FieldBg),
             contentPadding = PaddingValues(DasurvTheme.spacing.lg),
             verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.lg)
         ) {
             // Card 1: Procedure, Lip Color Category, Color Hex
             item {
                 DasurvFormCard {
-                    FormRow(
-                        label = "Procedure",
+                    DasurvDropdownField(
                         value = procedure,
-                        onValueChange = { procedure = it }
+                        label = "Procedure",
+                        options = listOf("Lip Blush", "Lip Neutralizer", "Lip Combo"),
+                        onOptionSelected = { procedure = it }
                     )
-                    FormRow(
-                        label = "Lip Category",
+                    DasurvTextField(
                         value = lipColorCategory,
-                        onValueChange = { lipColorCategory = it }
+                        onValueChange = { lipColorCategory = it },
+                        label = "Lip Category"
                     )
-                    FormRow(
-                        label = "Color Hex",
+                    DasurvTextField(
                         value = lipColorHex,
-                        onValueChange = { lipColorHex = it }
+                        onValueChange = { lipColorHex = it },
+                        label = "Color Hex",
+                        autoCapitalize = false
                     )
                 }
             }
@@ -117,11 +120,12 @@ fun NewSessionScreen(
             // Card 2: Notes
             item {
                 DasurvFormCard {
-                    FormRow(
-                        label = "Notes",
+                    DasurvTextField(
                         value = notes,
                         onValueChange = { notes = it },
-                        singleLine = false
+                        label = "Notes",
+                        singleLine = false,
+                        minLines = 2
                     )
                 }
             }
@@ -171,7 +175,7 @@ fun NewSessionScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(item.name, style = MaterialTheme.typography.bodyMedium, color = M3OnSurface)
                                     Text(
-                                        "$${String.format("%.4f", item.costPerPiece)} / piece" +
+                                        "$${item.costPerPiece.formatPrecise()} / piece" +
                                             if (item.piecesPerPackage > 1)
                                                 " (${item.piecesPerPackage}/pkg)"
                                             else "",
@@ -189,10 +193,10 @@ fun NewSessionScreen(
                                             qtyText = newVal
                                             newVal.toDoubleOrNull()?.let { viewModel.setEquipmentQuantity(item.id, it) }
                                         },
-                                        label = { Text("Qty") },
+                                        label = "Qty",
                                         modifier = Modifier.width(72.dp),
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                        singleLine = true
+                                        autoCapitalize = false
                                     )
                                 }
                             }
@@ -244,7 +248,7 @@ fun NewSessionScreen(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(bottle.pigmentName, style = MaterialTheme.typography.bodyMedium, color = M3OnSurface)
                                         Text(
-                                            "${bottle.pigmentBrand} - ${String.format("%.1f", bottle.remainingMl)} ml left",
+                                            "${bottle.pigmentBrand} - ${bottle.remainingMl.formatMl()} ml left",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = M3OnSurfaceVariant
                                         )
@@ -261,10 +265,10 @@ fun NewSessionScreen(
                                                 mlText = newVal
                                                 newVal.toDoubleOrNull()?.let { viewModel.setBottleMlUsed(bottle.id, it) }
                                             },
-                                            label = { Text("ml") },
+                                            label = "ml",
                                             modifier = Modifier.width(72.dp),
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                            singleLine = true
+                                            autoCapitalize = false
                                         )
                                     }
                                 }
@@ -274,23 +278,24 @@ fun NewSessionScreen(
                                         horizontalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.sm)
                                     ) {
                                         UsageLipArea.entries.forEach { area ->
-                                            FilterChip(
-                                                selected = (entry?.lipArea ?: UsageLipArea.BOTH) == area,
+                                            val isAreaSelected = (entry?.lipArea ?: UsageLipArea.BOTH) == area
+                                            FilledTonalButton(
                                                 onClick = { viewModel.setBottleLipArea(bottle.id, area) },
-                                                label = {
-                                                    Text(
-                                                        when (area) {
-                                                            UsageLipArea.UPPER -> "U"
-                                                            UsageLipArea.LOWER -> "L"
-                                                            UsageLipArea.BOTH -> "B"
-                                                        }
-                                                    )
-                                                },
-                                                colors = FilterChipDefaults.filterChipColors(
-                                                    selectedContainerColor = M3Primary,
-                                                    selectedLabelColor = Color.White
+                                                colors = ButtonDefaults.filledTonalButtonColors(
+                                                    containerColor = if (isAreaSelected) M3PrimaryContainer else M3FieldBg,
+                                                    contentColor = if (isAreaSelected) M3Primary else M3OnSurfaceVariant
+                                                ),
+                                                contentPadding = PaddingValues(horizontal = DasurvTheme.spacing.lg, vertical = DasurvTheme.spacing.sm)
+                                            ) {
+                                                Text(
+                                                    when (area) {
+                                                        UsageLipArea.UPPER -> "Upper"
+                                                        UsageLipArea.LOWER -> "Lower"
+                                                        UsageLipArea.BOTH -> "Both"
+                                                    },
+                                                    maxLines = 1
                                                 )
-                                            )
+                                            }
                                         }
                                     }
                                 }
@@ -344,7 +349,7 @@ fun NewSessionScreen(
                     ),
                     contentPadding = PaddingValues(vertical = DasurvTheme.spacing.lg)
                 ) {
-                    Text("Create Session")
+                    Text("Create Session", fontWeight = FontWeight.SemiBold, color = Color.White)
                 }
             }
         }

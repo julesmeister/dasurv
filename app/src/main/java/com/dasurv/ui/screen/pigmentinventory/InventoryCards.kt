@@ -1,16 +1,17 @@
 package com.dasurv.ui.screen.pigmentinventory
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,7 +22,10 @@ import com.dasurv.data.local.entity.Equipment
 import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatCurrency
+import com.dasurv.util.formatMl
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun StockItemCard(
     equipment: Equipment,
@@ -45,8 +49,61 @@ internal fun StockItemCard(
         }
     }
     val spacing = DasurvTheme.spacing
+    var showSheet by remember { mutableStateOf(false) }
 
-    M3ListCard {
+    if (showSheet) {
+        DasurvOptionsSheet(
+            onDismiss = { showSheet = false },
+            icon = Icons.Default.Palette,
+            iconBg = color.copy(alpha = 0.15f),
+            iconTint = color,
+            title = equipment.name,
+            subtitle = equipment.brand,
+        ) {
+            DasurvSheetOptionRow(
+                icon = Icons.Default.Edit,
+                iconBg = Color(0xFFEEF2FF),
+                iconTint = Color(0xFF4F46E5),
+                label = "Edit",
+                subtitle = "Change pigment details",
+                onClick = { showSheet = false; onEdit() },
+            )
+            if (equipment.stockQuantity > 0) {
+                DasurvSheetOptionRow(
+                    icon = Icons.Default.Opacity,
+                    iconBg = M3CyanContainer,
+                    iconTint = M3CyanColor,
+                    label = "Open Bottle",
+                    subtitle = "Open a new bottle from stock",
+                    onClick = { showSheet = false; onOpenBottle() },
+                )
+            }
+            DasurvSheetOptionRow(
+                icon = Icons.Default.Add,
+                iconBg = M3GreenContainer,
+                iconTint = M3GreenColor,
+                label = "Restock",
+                subtitle = "Add bottles to inventory",
+                onClick = { showSheet = false; onRestock() },
+            )
+            DasurvSheetOptionRow(
+                icon = Icons.Default.Delete,
+                iconBg = M3RedContainer,
+                iconTint = M3RedColor,
+                label = "Delete",
+                subtitle = "Remove from inventory",
+                onClick = { showSheet = false; onDelete() },
+                isDestructive = true,
+            )
+        }
+    }
+
+    M3ListCard(
+        modifier = Modifier.combinedClickable(
+            onClick = onEdit,
+            onLongClick = { showSheet = true }
+        )
+    ) {
         Column(modifier = Modifier.padding(spacing.lg)) {
             // Header row
             Row(
@@ -74,87 +131,32 @@ internal fun StockItemCard(
                     )
                 }
                 // Stock badge
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (equipment.stockQuantity > 0) M3PrimaryContainer
-                    else MaterialTheme.colorScheme.errorContainer
-                ) {
-                    Text(
-                        "${equipment.stockQuantity} in stock",
-                        modifier = Modifier.padding(horizontal = spacing.sm, vertical = spacing.xs),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (equipment.stockQuantity > 0) M3Primary
-                        else MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-
-            // Cost info
-            if (equipment.costPerUnit > 0) {
-                Text(
-                    "\$${String.format("%.2f", equipment.costPerUnit)}/bottle",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = M3Primary,
-                    modifier = Modifier.padding(top = spacing.xs)
+                M3StatusBadge(
+                    text = "${equipment.stockQuantity} in stock",
+                    color = if (equipment.stockQuantity > 0) M3GreenColor else M3RedColor,
+                    containerColor = if (equipment.stockQuantity > 0) M3GreenContainer else M3RedContainer
                 )
             }
 
-            // Open bottles count
-            if (openBottleCount > 0) {
-                Text(
-                    "$openBottleCount open bottle${if (openBottleCount > 1) "s" else ""}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = M3OnSurfaceVariant,
-                    modifier = Modifier.padding(top = 2.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(spacing.sm))
-
-            // Action buttons
+            // Badges row
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+                modifier = Modifier.padding(start = 52.dp, top = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                FilledTonalButton(
-                    onClick = onOpenBottle,
-                    enabled = equipment.stockQuantity > 0,
-                    contentPadding = PaddingValues(horizontal = spacing.md, vertical = spacing.xs),
-                    modifier = Modifier.height(32.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = M3PrimaryContainer,
-                        contentColor = M3Primary
+                if (equipment.costPerUnit > 0) {
+                    M3ValueBadge(
+                        text = "₱${equipment.costPerUnit.formatCurrency()}/bottle",
+                        color = M3Primary,
+                        containerColor = M3PrimaryContainer.copy(alpha = 0.5f)
                     )
-                ) {
-                    Icon(Icons.Default.Opacity, null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(spacing.xs))
-                    Text("Open", style = MaterialTheme.typography.labelSmall)
                 }
-                FilledTonalButton(
-                    onClick = onRestock,
-                    contentPadding = PaddingValues(horizontal = spacing.md, vertical = spacing.xs),
-                    modifier = Modifier.height(32.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = M3PrimaryContainer,
-                        contentColor = M3Primary
+                if (openBottleCount > 0) {
+                    M3StatusBadge(
+                        text = "$openBottleCount open",
+                        color = M3CyanColor,
+                        containerColor = M3CyanContainer
                     )
-                ) {
-                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(spacing.xs))
-                    Text("Restock", style = MaterialTheme.typography.labelSmall)
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(
-                    onClick = onEdit,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(Icons.Default.Edit, "Edit", modifier = Modifier.size(16.dp), tint = M3OnSurfaceVariant)
-                }
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(Icons.Default.Delete, "Delete", modifier = Modifier.size(16.dp), tint = M3OnSurfaceVariant)
                 }
             }
 
@@ -162,7 +164,8 @@ internal fun StockItemCard(
             if (openBottles.isNotEmpty()) {
                 TextButton(
                     onClick = onToggleExpand,
-                    contentPadding = PaddingValues(0.dp)
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.padding(start = 40.dp)
                 ) {
                     Icon(
                         if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
@@ -230,13 +233,13 @@ internal fun BottleRow(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        "${String.format("%.1f", bottle.remainingMl)}/${String.format("%.0f", bottle.bottleSizeMl)} ml",
+                        "${bottle.remainingMl.formatMl()}/${String.format("%.0f", bottle.bottleSizeMl)} ml",
                         style = MaterialTheme.typography.labelSmall,
                         color = M3OnSurfaceVariant
                     )
                     if (bottle.pricePerMl > 0) {
                         Text(
-                            "\$${String.format("%.2f", bottle.remainingValue)} left",
+                            "\$${bottle.remainingValue.formatCurrency()} left",
                             style = MaterialTheme.typography.labelSmall,
                             color = M3Primary
                         )
@@ -308,7 +311,7 @@ internal fun StandaloneBottleCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "${String.format("%.1f", bottle.remainingMl)}/${String.format("%.0f", bottle.bottleSizeMl)} ml",
+                    "${bottle.remainingMl.formatMl()}/${String.format("%.0f", bottle.bottleSizeMl)} ml",
                     style = MaterialTheme.typography.labelSmall,
                     color = M3OnSurfaceVariant
                 )

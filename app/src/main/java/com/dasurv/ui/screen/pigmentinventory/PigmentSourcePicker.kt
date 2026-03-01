@@ -1,126 +1,152 @@
 package com.dasurv.ui.screen.pigmentinventory
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.dasurv.data.model.Pigment
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
-internal fun LazyListScope.pigmentSourcePicker(
+/**
+ * Reusable "From Catalog / Custom" toggle row.
+ */
+@Composable
+internal fun CatalogCustomToggle(
     isCustom: Boolean,
-    onSetCustom: (Boolean) -> Unit,
-    pigmentName: String,
-    pigmentBrand: String,
-    colorHex: String,
-    onPigmentNameChange: (String) -> Unit,
-    onPigmentBrandChange: (String) -> Unit,
-    onColorHexChange: (String) -> Unit,
+    onSetCustom: (Boolean) -> Unit
+) {
+    val spacing = DasurvTheme.spacing
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+    ) {
+        FilledTonalButton(
+            onClick = { onSetCustom(false) },
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = if (!isCustom) M3PrimaryContainer else M3FieldBg,
+                contentColor = if (!isCustom) M3Primary else M3OnSurfaceVariant
+            ),
+            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
+        ) {
+            Text("From Catalog", maxLines = 1)
+        }
+        FilledTonalButton(
+            onClick = { onSetCustom(true) },
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = if (isCustom) M3PrimaryContainer else M3FieldBg,
+                contentColor = if (isCustom) M3Primary else M3OnSurfaceVariant
+            ),
+            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
+        ) {
+            Text("Custom", maxLines = 1)
+        }
+    }
+}
+
+/**
+ * Preview swatch showing selected pigment name + brand with color dot.
+ */
+@Composable
+internal fun PigmentPreviewSwatch(
+    name: String,
+    brand: String,
+    colorHex: String
+) {
+    val spacing = DasurvTheme.spacing
+    if (name.isNotBlank()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ColorSwatch(colorHex = colorHex, label = "")
+            Spacer(modifier = Modifier.width(spacing.md))
+            Column {
+                Text(name, style = MaterialTheme.typography.titleSmall, color = M3OnSurface)
+                Text(brand, style = MaterialTheme.typography.bodySmall, color = M3OnSurfaceVariant)
+            }
+        }
+    }
+}
+
+/**
+ * Catalog pigment dropdown picker with color swatches in dropdown items.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun PigmentCatalogDropdown(
+    selectedName: String,
+    selectedBrand: String,
     allPigments: List<Pigment>,
     onPigmentSelected: (Pigment) -> Unit
 ) {
-    // Toggle: From Catalog / Custom
-    item {
-        val spacing = DasurvTheme.spacing
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
-        ) {
-            FilterChip(
-                selected = !isCustom,
-                onClick = { onSetCustom(false) },
-                label = { Text("From Catalog") }
-            )
-            FilterChip(
-                selected = isCustom,
-                onClick = { onSetCustom(true) },
-                label = { Text("Custom") }
-            )
-        }
-    }
+    val spacing = DasurvTheme.spacing
+    var expanded by remember { mutableStateOf(false) }
 
-    if (!isCustom) {
-        // Catalog mode: pigment picker dropdown
-        item {
-            val spacing = DasurvTheme.spacing
-            var catalogExpanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = catalogExpanded,
-                onExpandedChange = { catalogExpanded = it }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Pigment",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = M3OnSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(M3FieldBg)
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                DasurvTextField(
-                    value = if (pigmentName.isNotBlank()) "$pigmentName ($pigmentBrand)" else "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Select Pigment") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catalogExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                Text(
+                    text = if (selectedName.isNotBlank()) "$selectedName ($selectedBrand)" else "Select...",
+                    fontSize = 16.sp,
+                    color = if (selectedName.isBlank()) M3OnSurfaceVariant.copy(alpha = 0.5f) else M3OnSurfaceVariant,
+                    modifier = Modifier.weight(1f)
                 )
-                ExposedDropdownMenu(
-                    expanded = catalogExpanded,
-                    onDismissRequest = { catalogExpanded = false },
-                    scrollState = rememberScrollState(),
-                    shadowElevation = 0.dp
-                ) {
-                    allPigments.forEach { pigment ->
-                        DropdownMenuItem(
-                            text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    ColorSwatch(colorHex = pigment.colorHex, label = "")
-                                    Spacer(modifier = Modifier.width(spacing.sm))
-                                    Column {
-                                        Text(pigment.name, color = M3OnSurface)
-                                        Text(
-                                            pigment.brand.displayName,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = M3OnSurfaceVariant
-                                        )
-                                    }
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            }
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                scrollState = rememberScrollState(),
+                shadowElevation = 2.dp
+            ) {
+                allPigments.forEach { pigment ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ColorSwatch(colorHex = pigment.colorHex, label = "")
+                                Spacer(modifier = Modifier.width(spacing.sm))
+                                Column {
+                                    Text(pigment.name, color = M3OnSurface)
+                                    Text(
+                                        pigment.brand.displayName,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = M3OnSurfaceVariant
+                                    )
                                 }
-                            },
-                            onClick = {
-                                onPigmentSelected(pigment)
-                                catalogExpanded = false
                             }
-                        )
-                    }
+                        },
+                        onClick = {
+                            onPigmentSelected(pigment)
+                            expanded = false
+                        }
+                    )
                 }
             }
-        }
-    } else {
-        // Custom mode: manual text fields
-        item {
-            DasurvTextField(
-                value = pigmentName,
-                onValueChange = onPigmentNameChange,
-                label = { Text("Pigment Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-        }
-        item {
-            DasurvTextField(
-                value = pigmentBrand,
-                onValueChange = onPigmentBrandChange,
-                label = { Text("Brand") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-        }
-        item {
-            DasurvTextField(
-                value = colorHex,
-                onValueChange = onColorHexChange,
-                label = { Text("Color Hex (e.g. #FF6B6B)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
         }
     }
 }

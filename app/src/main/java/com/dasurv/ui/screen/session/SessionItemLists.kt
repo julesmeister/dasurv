@@ -17,7 +17,10 @@ import androidx.compose.ui.unit.dp
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.data.local.entity.UsageLipArea
-import com.dasurv.ui.component.DasurvTextField
+import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatMl
+import com.dasurv.util.formatPrecise
 
 internal fun LazyListScope.consumableItems(
     consumables: List<Equipment>,
@@ -48,7 +51,7 @@ internal fun LazyListScope.consumableItems(
             Column(modifier = Modifier.weight(1f)) {
                 Text(item.name, style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    "$${String.format("%.4f", item.costPerPiece)} / piece" +
+                    "$${item.costPerPiece.formatPrecise()} / piece" +
                         if (item.piecesPerPackage > 1)
                             " (${item.piecesPerPackage}/pkg)"
                         else "",
@@ -66,10 +69,10 @@ internal fun LazyListScope.consumableItems(
                         qtyText = newVal
                         newVal.toDoubleOrNull()?.let { onSetQuantity(item.id, it) }
                     },
-                    label = { Text("Qty") },
+                    label = "Qty",
                     modifier = Modifier.width(72.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true
+                    autoCapitalize = false
                 )
             }
         }
@@ -120,7 +123,7 @@ internal fun LazyListScope.pigmentBottleItems(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(bottle.pigmentName, style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        "${bottle.pigmentBrand} - ${String.format("%.1f", bottle.remainingMl)} ml left",
+                        "${bottle.pigmentBrand} - ${bottle.remainingMl.formatMl()} ml left",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -133,32 +136,37 @@ internal fun LazyListScope.pigmentBottleItems(
                             mlText = newVal
                             newVal.toDoubleOrNull()?.let { onSetMlUsed(bottle.id, it) }
                         },
-                        label = { Text("ml") },
+                        label = "ml",
                         modifier = Modifier.width(72.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true
+                        autoCapitalize = false
                     )
                 }
             }
             if (isSelected) {
+                val spacing = DasurvTheme.spacing
                 Row(
                     modifier = Modifier.padding(start = 48.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm)
                 ) {
                     UsageLipArea.entries.forEach { area ->
-                        FilterChip(
-                            selected = false, // Parent manages selection
+                        FilledTonalButton(
                             onClick = { onSetLipArea(bottle.id, area) },
-                            label = {
-                                Text(
-                                    when (area) {
-                                        UsageLipArea.UPPER -> "U"
-                                        UsageLipArea.LOWER -> "L"
-                                        UsageLipArea.BOTH -> "B"
-                                    }
-                                )
-                            }
-                        )
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = M3FieldBg,
+                                contentColor = M3OnSurfaceVariant
+                            ),
+                            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
+                        ) {
+                            Text(
+                                when (area) {
+                                    UsageLipArea.UPPER -> "Upper"
+                                    UsageLipArea.LOWER -> "Lower"
+                                    UsageLipArea.BOTH -> "Both"
+                                },
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }

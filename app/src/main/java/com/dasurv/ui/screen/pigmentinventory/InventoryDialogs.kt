@@ -1,7 +1,6 @@
 package com.dasurv.ui.screen.pigmentinventory
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +13,7 @@ import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatMl
 
 @Composable
 internal fun RestockDialog(
@@ -37,10 +37,9 @@ internal fun RestockDialog(
                 DasurvTextField(
                     value = countText,
                     onValueChange = { countText = it },
-                    label = { Text("Bottles to Add") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Bottles to Add",
+                    autoCapitalize = false,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
         },
@@ -71,7 +70,6 @@ internal fun LogUsageDialog(
     var selectedLipArea by remember { mutableStateOf(UsageLipArea.BOTH) }
     var mlUsedText by remember { mutableStateOf("0.5") }
     var notes by remember { mutableStateOf("") }
-    var clientDropdownExpanded by remember { mutableStateOf(false) }
     val spacing = DasurvTheme.spacing
 
     AlertDialog(
@@ -80,61 +78,42 @@ internal fun LogUsageDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.md)) {
                 Text(
-                    "Remaining: ${String.format("%.1f", bottle.remainingMl)} ml",
+                    "Remaining: ${bottle.remainingMl.formatMl()} ml",
                     style = MaterialTheme.typography.bodySmall,
                     color = M3OnSurfaceVariant
                 )
 
                 // Client picker
-                ExposedDropdownMenuBox(
-                    expanded = clientDropdownExpanded,
-                    onExpandedChange = { clientDropdownExpanded = it }
-                ) {
-                    DasurvTextField(
-                        value = clients.find { it.id == selectedClientId }?.name ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Client") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = clientDropdownExpanded) },
-                        modifier = Modifier
-                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                            .fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = clientDropdownExpanded,
-                        onDismissRequest = { clientDropdownExpanded = false },
-                        scrollState = rememberScrollState(),
-                        shadowElevation = 0.dp
-                    ) {
-                        clients.forEach { client ->
-                            DropdownMenuItem(
-                                text = { Text(client.name, color = M3OnSurface) },
-                                onClick = {
-                                    selectedClientId = client.id
-                                    clientDropdownExpanded = false
-                                }
-                            )
-                        }
+                DasurvDropdownField(
+                    value = clients.find { it.id == selectedClientId }?.name ?: "",
+                    label = "Client",
+                    options = clients.map { it.name },
+                    onOptionSelected = { name ->
+                        clients.find { it.name == name }?.let { selectedClientId = it.id }
                     }
-                }
+                )
 
                 // Lip area
-                Text("Lip Area", style = MaterialTheme.typography.labelMedium, color = M3OnSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                     UsageLipArea.entries.forEach { area ->
-                        FilterChip(
-                            selected = selectedLipArea == area,
+                        val isSelected = selectedLipArea == area
+                        FilledTonalButton(
                             onClick = { selectedLipArea = area },
-                            label = {
-                                Text(
-                                    when (area) {
-                                        UsageLipArea.UPPER -> "Upper"
-                                        UsageLipArea.LOWER -> "Lower"
-                                        UsageLipArea.BOTH -> "Both"
-                                    }
-                                )
-                            }
-                        )
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = if (isSelected) M3PrimaryContainer else M3FieldBg,
+                                contentColor = if (isSelected) M3Primary else M3OnSurfaceVariant
+                            ),
+                            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
+                        ) {
+                            Text(
+                                when (area) {
+                                    UsageLipArea.UPPER -> "Upper"
+                                    UsageLipArea.LOWER -> "Lower"
+                                    UsageLipArea.BOTH -> "Both"
+                                },
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
 
@@ -142,19 +121,16 @@ internal fun LogUsageDialog(
                 DasurvTextField(
                     value = mlUsedText,
                     onValueChange = { mlUsedText = it },
-                    label = { Text("ml Used") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    label = "ml Used",
+                    autoCapitalize = false,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
                 // Notes
                 DasurvTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Notes") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Notes"
                 )
             }
         },

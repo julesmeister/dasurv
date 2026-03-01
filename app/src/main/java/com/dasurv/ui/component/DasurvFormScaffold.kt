@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import com.dasurv.ui.theme.DasurvTheme
 import kotlinx.coroutines.launch
 
-val FormScreenBackground = Color(0xFFF1F5F9)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +35,7 @@ fun DasurvFormScaffold(
 
     Scaffold(
         modifier = modifier,
-        containerColor = FormScreenBackground,
+        containerColor = M3FieldBg,
         snackbarHost = { M3SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -44,7 +43,7 @@ fun DasurvFormScaffold(
                 navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = actions,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = FormScreenBackground
+                    containerColor = M3FieldBg
                 )
             )
         }
@@ -52,15 +51,13 @@ fun DasurvFormScaffold(
         val columnModifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(FormScreenBackground)
+            .background(M3FieldBg)
             .padding(DasurvTheme.spacing.lg)
         Column(
             modifier = if (scrollable) columnModifier.verticalScroll(rememberScrollState()) else columnModifier,
             verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.lg)
         ) {
             content()
-
-            Spacer(modifier = Modifier.height(DasurvTheme.spacing.sm))
 
             Button(
                 onClick = {
@@ -95,7 +92,7 @@ fun DasurvFormScaffold(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text(saveText, fontWeight = FontWeight.SemiBold)
+                    Text(saveText, fontWeight = FontWeight.SemiBold, color = Color.White)
                 }
             }
         }

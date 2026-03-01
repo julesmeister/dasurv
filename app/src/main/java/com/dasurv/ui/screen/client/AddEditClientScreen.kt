@@ -1,5 +1,6 @@
 package com.dasurv.ui.screen.client
 
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -7,7 +8,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Client
 import com.dasurv.ui.component.DasurvFormCard
 import com.dasurv.ui.component.DasurvFormScaffold
-import com.dasurv.ui.component.FormRow
+import com.dasurv.ui.component.DasurvTextField
 
 @Composable
 fun AddEditClientScreen(
@@ -48,18 +49,20 @@ fun AddEditClientScreen(
         }
     ) {
         DasurvFormCard {
-            FormRow(label = "Name *", value = name, onValueChange = { name = it })
-            FormRow(
-                label = "Phone", value = phone, onValueChange = { phone = it },
-                keyboardType = KeyboardType.Phone
+            DasurvTextField(value = name, onValueChange = { name = it }, label = "Name *")
+            DasurvTextField(
+                value = phone, onValueChange = { phone = it }, label = "Phone",
+                autoCapitalize = false,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
-            FormRow(
-                label = "Email", value = email, onValueChange = { email = it },
-                keyboardType = KeyboardType.Email
+            DasurvTextField(
+                value = email, onValueChange = { email = it }, label = "Email",
+                autoCapitalize = false,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
-            FormRow(
-                label = "Notes", value = notes, onValueChange = { notes = it },
-                singleLine = false
+            DasurvTextField(
+                value = notes, onValueChange = { notes = it }, label = "Notes",
+                singleLine = false, minLines = 2
             )
         }
     }

@@ -9,6 +9,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dasurv.data.model.CostItem
 import com.dasurv.data.model.CostSummary
+import com.dasurv.util.formatCurrency
+import com.dasurv.util.formatPrecise
 
 @Composable
 fun CostBreakdown(
@@ -36,7 +38,7 @@ fun CostBreakdown(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "$${String.format("%.2f", costSummary.totalCost)}",
+                    text = "$${costSummary.totalCost.formatCurrency()}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -58,7 +60,7 @@ private fun CostItemRow(item: CostItem) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = item.name, style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = "${item.quantity.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() }} x $${String.format("%.4f", item.unitCost)}",
+                text = "${item.quantity.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() }} x $${item.unitCost.formatPrecise()}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -71,7 +73,7 @@ private fun CostItemRow(item: CostItem) {
             }
         }
         Text(
-            text = "$${String.format("%.2f", item.totalCost)}",
+            text = "$${item.totalCost.formatCurrency()}",
             style = MaterialTheme.typography.bodyMedium
         )
     }

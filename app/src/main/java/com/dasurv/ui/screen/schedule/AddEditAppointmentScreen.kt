@@ -4,7 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Appointment
@@ -93,9 +94,9 @@ fun AddEditAppointmentScreen(
     ) {
         // Card 1: Client, Date, Time
         DasurvFormCard {
-            FormDropdownRow(
-                label = "Client *",
+            DasurvDropdownField(
                 value = clients.find { it.id == selectedClientId }?.name ?: "",
+                label = "Client *",
                 options = clientNames,
                 onOptionSelected = { selected ->
                     clients.find { it.name == selected }?.let { selectedClientId = it.id }
@@ -136,9 +137,9 @@ fun AddEditAppointmentScreen(
                 durationMinutes = durationMinutes,
                 onDurationChange = { durationMinutes = it }
             )
-            FormDropdownRow(
-                label = "Procedure",
+            DasurvDropdownField(
                 value = procedureType,
+                label = "Procedure",
                 options = listOf("Lip Blush", "Lip Neutralizer", "Lip Combo"),
                 onOptionSelected = { procedureType = it }
             )
@@ -146,27 +147,29 @@ fun AddEditAppointmentScreen(
 
         // Card 3: Notes
         DasurvFormCard {
-            FormRow(
-                label = "Notes",
+            DasurvTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                singleLine = false
+                label = "Notes",
+                singleLine = false,
+                minLines = 2
             )
         }
 
         // Card 4: Reminder
         DasurvFormCard {
-            FormToggleRow(
+            DasurvSwitchRow(
                 label = "Reminder",
                 checked = reminderEnabled,
                 onCheckedChange = { reminderEnabled = it }
             )
             if (reminderEnabled) {
-                FormRow(
-                    label = "Minutes before",
+                DasurvTextField(
                     value = reminderMinutesBefore.toString(),
                     onValueChange = { reminderMinutesBefore = it.toIntOrNull() ?: 30 },
-                    keyboardType = KeyboardType.Number
+                    label = "Minutes before",
+                    autoCapitalize = false,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
         }
@@ -184,7 +187,9 @@ private fun DurationSelector(
     Column(modifier = Modifier.padding(vertical = spacing.md)) {
         Text(
             "Duration",
-            style = FormDefaults.LabelStyle
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = M3OnSurfaceVariant,
         )
 
         Spacer(Modifier.height(spacing.sm + spacing.xs))
@@ -196,25 +201,19 @@ private fun DurationSelector(
             items(presets.size) { index ->
                 val minutes = presets[index]
                 val isSelected = durationMinutes == minutes
-                FilterChip(
-                    selected = isSelected,
+                FilledTonalButton(
                     onClick = { onDurationChange(minutes) },
-                    label = {
-                        Text(
-                            formatDuration(minutes),
-                            style = if (isSelected)
-                                MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                            else
-                                MaterialTheme.typography.labelMedium
-                        )
-                    },
-                    modifier = if (isSelected) Modifier.height(40.dp) else Modifier.height(32.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = M3PrimaryContainer,
-                        selectedLabelColor = M3Primary
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = if (isSelected) M3PrimaryContainer else M3FieldBg,
+                        contentColor = if (isSelected) M3Primary else M3OnSurfaceVariant
+                    ),
+                    contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
+                ) {
+                    Text(
+                        formatDuration(minutes),
+                        maxLines = 1
                     )
-                )
+                }
             }
         }
     }

@@ -28,11 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 // M3 Expressive Color System
-val Indigo = M3Primary
-val IndigoContainer = M3Primary
+val SkyBlue = M3Primary
+val SkyBlueContainer = M3PrimaryContainer
 val Green = M3GreenColor
 val Red = M3RedColor
-val Purple = Color(0xFF4338CA)
 val Teal = Color(0xFF14B8A6)
 val Blue = Color(0xFF0EA5E9)
 val Orange = Color(0xFFF97316)

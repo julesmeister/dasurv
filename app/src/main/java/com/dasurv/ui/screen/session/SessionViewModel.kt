@@ -23,6 +23,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import com.dasurv.util.formatCurrency
+import com.dasurv.util.formatPrecise
 import javax.inject.Inject
 
 data class PigmentBottleSessionEntry(
@@ -130,7 +132,7 @@ class SessionViewModel @Inject constructor(
                 quantity = qty,
                 unitCost = eq.costPerPiece,
                 perPieceInfo = if (eq.piecesPerPackage > 1)
-                    "$${String.format("%.4f", eq.costPerPiece)}/pc from $${String.format("%.2f", eq.costPerUnit)} pkg"
+                    "$${eq.costPerPiece.formatPrecise()}/pc from $${eq.costPerUnit.formatCurrency()} pkg"
                 else ""
             )
         }
@@ -144,7 +146,7 @@ class SessionViewModel @Inject constructor(
                 category = "pigment",
                 quantity = entry.mlUsed,
                 unitCost = bottle.pricePerMl,
-                perPieceInfo = "$${String.format("%.4f", bottle.pricePerMl)}/ml"
+                perPieceInfo = "$${bottle.pricePerMl.formatPrecise()}/ml"
             )
         }
 

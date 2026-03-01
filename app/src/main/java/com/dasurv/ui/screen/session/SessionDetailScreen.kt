@@ -28,7 +28,10 @@ import com.dasurv.ui.component.M3OnSurface
 import com.dasurv.ui.component.M3OnSurfaceVariant
 import com.dasurv.ui.component.M3Primary
 import com.dasurv.ui.component.M3SnackbarHost
+import com.dasurv.ui.component.M3FieldBg
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatCurrency
+import com.dasurv.util.formatPrecise
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -64,7 +67,7 @@ fun SessionDetailScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = Color(0xFFF1F5F9),
+        containerColor = M3FieldBg,
         snackbarHost = { M3SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -174,13 +177,13 @@ fun SessionDetailScreen(
                                                 color = M3OnSurface
                                             )
                                             Text(
-                                                "${se.quantityUsed.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() }} x $${String.format("%.4f", se.costPerPiece)}",
+                                                "${se.quantityUsed.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() }} x $${se.costPerPiece.formatPrecise()}",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = M3OnSurfaceVariant
                                             )
                                         }
                                         Text(
-                                            "$${String.format("%.2f", se.quantityUsed * se.costPerPiece)}",
+                                            "$${(se.quantityUsed * se.costPerPiece).formatCurrency()}",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = M3OnSurface
                                         )
@@ -200,7 +203,7 @@ fun SessionDetailScreen(
                                         color = M3OnSurface
                                     )
                                     Text(
-                                        "$${String.format("%.2f", sessionEquipment.sumOf { it.quantityUsed * it.costPerPiece })}",
+                                        "$${sessionEquipment.sumOf { it.quantityUsed * it.costPerPiece }.formatCurrency()}",
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = M3Primary
@@ -239,14 +242,14 @@ fun SessionDetailScreen(
                                                 color = M3OnSurface
                                             )
                                             Text(
-                                                "${String.format("%.2f", usage.mlUsed)} ml - $lipAreaText",
+                                                "${usage.mlUsed.formatCurrency()} ml - $lipAreaText",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = M3OnSurfaceVariant
                                             )
                                         }
                                         if (usage.costAtTimeOfUse > 0) {
                                             Text(
-                                                "$${String.format("%.2f", usage.costAtTimeOfUse)}",
+                                                "$${usage.costAtTimeOfUse.formatCurrency()}",
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = M3OnSurface
                                             )
@@ -267,7 +270,7 @@ fun SessionDetailScreen(
                                         color = M3OnSurface
                                     )
                                     Text(
-                                        "$${String.format("%.2f", sessionBottleUsages.sumOf { it.costAtTimeOfUse })}",
+                                        "$${sessionBottleUsages.sumOf { it.costAtTimeOfUse }.formatCurrency()}",
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = M3Primary
@@ -287,7 +290,7 @@ fun SessionDetailScreen(
                                     color = M3OnSurfaceVariant
                                 )
                                 Text(
-                                    "$${String.format("%.2f", session!!.totalCost)}",
+                                    "$${session!!.totalCost.formatCurrency()}",
                                     style = MaterialTheme.typography.headlineMedium,
                                     color = M3Primary,
                                     fontWeight = FontWeight.Bold

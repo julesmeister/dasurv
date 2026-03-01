@@ -1,5 +1,6 @@
 package com.dasurv.ui.screen.pigmentinventory
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import com.dasurv.ui.component.DasurvConfirmDialog
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -142,115 +144,165 @@ fun PigmentInventoryScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
+        val isEmpty = filteredStock.isEmpty() && filteredStandalone.isEmpty()
+
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(spacing.sm)
+                .padding(padding)
         ) {
-            // Brand filter chips
+            // Brand filter chips — always visible
             if (brands.isNotEmpty()) {
-                item {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
-                        item {
-                            FilterChip(
-                                selected = brandFilter == null,
-                                onClick = { viewModel.setBrandFilter(null) },
-                                label = { Text("All") }
-                            )
+                LazyRow(
+                    modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+                ) {
+                    item {
+                        FilledTonalButton(
+                            onClick = { viewModel.setBrandFilter(null) },
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = if (brandFilter == null) M3PrimaryContainer else M3FieldBg,
+                                contentColor = if (brandFilter == null) M3Primary else M3OnSurfaceVariant
+                            ),
+                            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
+                        ) {
+                            Text("All", maxLines = 1)
                         }
-                        items(brands) { brand ->
-                            FilterChip(
-                                selected = brandFilter == brand,
-                                onClick = { viewModel.setBrandFilter(brand) },
-                                label = { Text(brand) }
-                            )
+                    }
+                    items(brands) { brand ->
+                        FilledTonalButton(
+                            onClick = { viewModel.setBrandFilter(brand) },
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = if (brandFilter == brand) M3PrimaryContainer else M3FieldBg,
+                                contentColor = if (brandFilter == brand) M3Primary else M3OnSurfaceVariant
+                            ),
+                            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
+                        ) {
+                            Text(brand, maxLines = 1)
                         }
                     }
                 }
             }
 
-            // Stats
-            item {
-                Text(
-                    "${filteredStock.size} pigments | $totalStock in stock | $totalOpenBottles open",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = M3OnSurfaceVariant
-                )
+            // Stats summary tabs — always visible
+            LazyRow(
+                modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+            ) {
+                item {
+                    M3SummaryTab(
+                        value = "${filteredStock.size}",
+                        label = "Pigments",
+                        icon = Icons.Default.Palette,
+                        color = M3Primary,
+                        isActive = false,
+                        onClick = {}
+                    )
+                }
+                item {
+                    M3SummaryTab(
+                        value = "$totalStock",
+                        label = "In Stock",
+                        icon = Icons.Default.Inventory,
+                        color = M3GreenColor,
+                        isActive = false,
+                        onClick = {}
+                    )
+                }
+                item {
+                    M3SummaryTab(
+                        value = "$totalOpenBottles",
+                        label = "Open Bottles",
+                        icon = Icons.Default.Opacity,
+                        color = M3CyanColor,
+                        isActive = false,
+                        onClick = {}
+                    )
+                }
             }
 
-            // Empty state
-            if (filteredStock.isEmpty() && filteredStandalone.isEmpty()) {
-                item {
+            // List content or empty state
+            AnimatedContent(
+                targetState = isEmpty,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "pigment-inventory-state",
+                modifier = Modifier.fillMaxSize()
+            ) { showEmpty ->
+                if (showEmpty) {
                     DasurvEmptyState(
                         icon = Icons.Default.Opacity,
                         message = "No pigments tracked yet"
                     )
-                }
-            }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(spacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(spacing.sm)
+                    ) {
+                        // Stock items with their bottles
+                        items(filteredStock, key = { it.id }) { stockItem ->
+                            val stockBottles = bottlesByEquipmentId[stockItem.id] ?: emptyList()
+                            val openBottles = stockBottles.filter { it.remainingMl > 0 }
+                            val isExpanded = expandedStockIds.contains(stockItem.id)
+                            val stockColor = colorMap[stockItem.id] ?: "#CCCCCC"
 
-            // Stock items with their bottles
-            items(filteredStock, key = { it.id }) { stockItem ->
-                val stockBottles = bottlesByEquipmentId[stockItem.id] ?: emptyList()
-                val openBottles = stockBottles.filter { it.remainingMl > 0 }
-                val isExpanded = expandedStockIds.contains(stockItem.id)
-                val stockColor = colorMap[stockItem.id] ?: "#CCCCCC"
+                            StockItemCard(
+                                equipment = stockItem,
+                                colorHex = stockColor,
+                                openBottleCount = openBottles.size,
+                                isExpanded = isExpanded,
+                                onToggleExpand = {
+                                    expandedStockIds = if (isExpanded) {
+                                        expandedStockIds - stockItem.id
+                                    } else {
+                                        expandedStockIds + stockItem.id
+                                    }
+                                },
+                                onEdit = { onNavigateToEditStock(stockItem.id) },
+                                onOpenBottle = {
+                                    viewModel.openBottle(stockItem) { bottleId ->
+                                        onNavigateToEditBottle(bottleId)
+                                    }
+                                },
+                                onRestock = {
+                                    restockEquipment = stockItem
+                                    showRestockDialog = true
+                                },
+                                onDelete = {
+                                    deleteEquipment = stockItem
+                                    showDeleteDialog = true
+                                },
+                                openBottles = openBottles,
+                                onBottleClick = { onNavigateToEditBottle(it.id) },
+                                onLogUse = { bottle ->
+                                    logBottle = bottle
+                                    showLogDialog = true
+                                }
+                            )
+                        }
 
-                StockItemCard(
-                    equipment = stockItem,
-                    colorHex = stockColor,
-                    openBottleCount = openBottles.size,
-                    isExpanded = isExpanded,
-                    onToggleExpand = {
-                        expandedStockIds = if (isExpanded) {
-                            expandedStockIds - stockItem.id
-                        } else {
-                            expandedStockIds + stockItem.id
+                        // Standalone bottles (not linked to stock)
+                        if (filteredStandalone.isNotEmpty()) {
+                            item {
+                                Spacer(modifier = Modifier.height(spacing.sm))
+                                Text(
+                                    "Other Bottles",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = M3OnSurfaceVariant
+                                )
+                            }
+                            items(filteredStandalone, key = { it.id }) { bottle ->
+                                StandaloneBottleCard(
+                                    bottle = bottle,
+                                    onClick = { onNavigateToEditBottle(bottle.id) },
+                                    onLogUse = {
+                                        logBottle = bottle
+                                        showLogDialog = true
+                                    }
+                                )
+                            }
                         }
-                    },
-                    onEdit = { onNavigateToEditStock(stockItem.id) },
-                    onOpenBottle = {
-                        viewModel.openBottle(stockItem) { bottleId ->
-                            onNavigateToEditBottle(bottleId)
-                        }
-                    },
-                    onRestock = {
-                        restockEquipment = stockItem
-                        showRestockDialog = true
-                    },
-                    onDelete = {
-                        deleteEquipment = stockItem
-                        showDeleteDialog = true
-                    },
-                    openBottles = openBottles,
-                    onBottleClick = { onNavigateToEditBottle(it.id) },
-                    onLogUse = { bottle ->
-                        logBottle = bottle
-                        showLogDialog = true
                     }
-                )
-            }
-
-            // Standalone bottles (not linked to stock)
-            if (filteredStandalone.isNotEmpty()) {
-                item {
-                    Spacer(modifier = Modifier.height(spacing.sm))
-                    Text(
-                        "Other Bottles",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = M3OnSurfaceVariant
-                    )
-                }
-                items(filteredStandalone, key = { it.id }) { bottle ->
-                    StandaloneBottleCard(
-                        bottle = bottle,
-                        onClick = { onNavigateToEditBottle(bottle.id) },
-                        onLogUse = {
-                            logBottle = bottle
-                            showLogDialog = true
-                        }
-                    )
                 }
             }
         }

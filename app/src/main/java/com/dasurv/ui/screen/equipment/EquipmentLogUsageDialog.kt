@@ -34,17 +34,14 @@ internal fun EquipmentLogUsageDialog(
                 DasurvTextField(
                     value = quantity,
                     onValueChange = { quantity = it },
-                    label = { Text("Quantity Used") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true
+                    label = "Quantity Used",
+                    autoCapitalize = false,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 DasurvTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Notes (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    label = "Notes (optional)"
                 )
             }
         },

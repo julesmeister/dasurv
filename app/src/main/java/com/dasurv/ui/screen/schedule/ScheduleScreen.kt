@@ -78,7 +78,7 @@ fun ScheduleScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(spacing.lg),
+            contentPadding = PaddingValues(vertical = spacing.lg),
             verticalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             // Calendar card: month navigation + grid
@@ -159,23 +159,43 @@ fun ScheduleScreen(
                 }
             }
 
-            // Selected day appointments
-            if (selectedDay != null) {
-                item {
-                    Spacer(modifier = Modifier.height(spacing.xs))
+            // Appointments section header
+            item {
+                Spacer(modifier = Modifier.height(spacing.sm))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = spacing.lg),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = spacing.xs),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm)
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(M3Primary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                tint = M3Primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                         Text(
                             text = "Appointments",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = M3OnSurface
                         )
+                    }
+                    if (selectedDay != null) {
                         TextButton(onClick = {
                             val cal = Calendar.getInstance().apply {
                                 set(year, month, selectedDay!!, 10, 0, 0)
@@ -192,26 +212,36 @@ fun ScheduleScreen(
                         }
                     }
                 }
+            }
 
-                if (selectedDayAppointments.isEmpty()) {
-                    item {
-                        DasurvEmptyState(
-                            icon = Icons.Default.CalendarToday,
-                            message = "No appointments for this day"
-                        )
+            // Appointments content
+            item {
+                if (selectedDay != null && selectedDayAppointments.isNotEmpty()) {
+                    M3ListCard {
+                        selectedDayAppointments.forEachIndexed { index, awc ->
+                            AppointmentListRow(
+                                awc = awc,
+                                onClick = { onNavigateToAppointmentDetail(awc.appointment.id) }
+                            )
+                            if (index < selectedDayAppointments.lastIndex) {
+                                M3ListDivider()
+                            }
+                        }
                     }
                 } else {
-                    item {
-                        M3ListCard {
-                            selectedDayAppointments.forEachIndexed { index, awc ->
-                                AppointmentListRow(
-                                    awc = awc,
-                                    onClick = { onNavigateToAppointmentDetail(awc.appointment.id) }
-                                )
-                                if (index < selectedDayAppointments.lastIndex) {
-                                    M3ListDivider()
-                                }
-                            }
+                    M3ListCard {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (selectedDay == null) "Tap a day to see appointments"
+                                else "No appointments for this day",
+                                fontSize = 13.sp,
+                                color = M3OnSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -319,16 +349,12 @@ private fun AppointmentListRow(
                 fontWeight = FontWeight.Medium,
                 color = M3OnSurface
             )
-            if (awc.appointment.procedureType.isNotBlank()) {
-                Text(
-                    text = awc.appointment.procedureType,
-                    fontSize = 12.sp,
-                    color = M3OnSurfaceVariant
-                )
-            }
             Text(
-                text = "$durationText  ·  ${awc.appointment.status.name.lowercase()
-                    .replaceFirstChar { it.uppercase() }}",
+                text = listOfNotNull(
+                    awc.appointment.procedureType.ifBlank { null },
+                    durationText,
+                    awc.appointment.status.name.lowercase().replaceFirstChar { it.uppercase() }
+                ).joinToString("  ·  "),
                 fontSize = 12.sp,
                 color = M3OnSurfaceVariant
             )

@@ -9,9 +9,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +25,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -64,30 +69,22 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            "Dasurv",
-                            fontFamily = FontFamily(Font(R.font.bodoni_moda)),
-                            fontWeight = FontWeight.Bold,
-                            color = M3OnSurface
-                        )
-                        Text(
-                            "STUDIOS",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = M3OnSurfaceVariant,
-                            fontFamily = FontFamily(Font(R.font.bodoni_moda)),
-                            letterSpacing = 6.sp,
-                            modifier = Modifier.offset(x = spacing.xs, y = (-8).dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = M3SurfaceContainer,
-                    scrolledContainerColor = M3SurfaceContainer
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(top = 40.dp, bottom = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.lips_logo),
+                    contentDescription = "Dasurv Studios",
+                    modifier = Modifier
+                        .height(120.dp)
+                        .clip(RoundedCornerShape(20.dp)),
+                    contentScale = ContentScale.FillHeight
                 )
-            )
+            }
         },
         containerColor = M3SurfaceContainer
     ) { padding ->

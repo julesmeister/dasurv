@@ -7,6 +7,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,11 +72,11 @@ fun ClientCard(
                     .background(M3PrimaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = client.name.take(1).uppercase(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = M3Primary,
+                Icon(
+                    Icons.Outlined.Person,
+                    contentDescription = null,
+                    tint = M3Primary,
+                    modifier = Modifier.size(22.dp)
                 )
             }
             Spacer(modifier = Modifier.width(14.dp))

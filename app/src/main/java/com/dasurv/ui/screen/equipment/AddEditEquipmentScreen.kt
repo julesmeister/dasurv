@@ -1,6 +1,7 @@
 package com.dasurv.ui.screen.equipment
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -12,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatPrecise
 
 @Composable
 fun AddEditEquipmentScreen(
@@ -80,77 +82,87 @@ fun AddEditEquipmentScreen(
     ) {
         // Card 1: Type, Category, Name, Brand
         DasurvFormCard {
-            FormDropdownRow(
-                label = "Type",
+            DasurvDropdownField(
                 value = type.replaceFirstChar { it.uppercase() },
+                label = "Type",
                 options = types,
                 onOptionSelected = { type = it.lowercase() }
             )
-            FormDropdownRow(
-                label = "Category",
+            DasurvDropdownField(
                 value = category.replaceFirstChar { it.uppercase() }.ifEmpty { "" },
+                label = "Category",
                 options = categories,
                 onOptionSelected = { category = it.lowercase() }
             )
-            FormRow(label = "Name *", value = name, onValueChange = { name = it })
-            FormRow(label = "Brand", value = brand, onValueChange = { brand = it })
+            DasurvTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = "Name *"
+            )
+            DasurvTextField(
+                value = brand,
+                onValueChange = { brand = it },
+                label = "Brand"
+            )
         }
 
         // Card 2: Cost fields, Stock, Units/Session
         DasurvFormCard {
             if (isConsumable) {
-                FormRow(
-                    label = "Package Cost",
+                DasurvCurrencyField(
                     value = costPerUnit,
                     onValueChange = { costPerUnit = it },
-                    keyboardType = KeyboardType.Decimal
+                    label = "Package Cost"
                 )
-                FormRow(
-                    label = "Pcs/Package",
+                DasurvTextField(
                     value = piecesPerPackage,
                     onValueChange = { piecesPerPackage = it },
-                    keyboardType = KeyboardType.Number
+                    label = "Pieces per Package",
+                    autoCapitalize = false,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 if (costPerPiece > 0) {
                     Text(
-                        "Cost per piece: \$${String.format("%.4f", costPerPiece)}",
-                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = InterFontFamily),
+                        "Cost per piece: ₱${costPerPiece.formatPrecise()}",
+                        style = MaterialTheme.typography.bodySmall,
                         color = M3Primary,
                         modifier = Modifier.padding(
-                            start = FormDefaults.LabelWidth,
+                            start = 4.dp,
                             bottom = DasurvTheme.spacing.xs
                         )
                     )
                 }
             } else {
-                FormRow(
-                    label = "Cost",
+                DasurvCurrencyField(
                     value = costPerUnit,
                     onValueChange = { costPerUnit = it },
-                    keyboardType = KeyboardType.Decimal
+                    label = "Cost"
                 )
             }
-            FormRow(
-                label = if (isConsumable) "Stock (pcs)" else "Stock Qty",
+            DasurvTextField(
                 value = stockQuantity,
                 onValueChange = { stockQuantity = it },
-                keyboardType = KeyboardType.Number
+                label = if (isConsumable) "Stock (pcs)" else "Stock Qty",
+                autoCapitalize = false,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
-            FormRow(
-                label = "Units/Session",
+            DasurvTextField(
                 value = unitsPerSession,
                 onValueChange = { unitsPerSession = it },
-                keyboardType = KeyboardType.Decimal
+                label = "Units per Session",
+                autoCapitalize = false,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
         }
 
         // Card 3: Notes
         DasurvFormCard {
-            FormRow(
-                label = "Notes",
+            DasurvTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                singleLine = false
+                label = "Notes",
+                singleLine = false,
+                minLines = 2
             )
         }
     }

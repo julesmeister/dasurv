@@ -1,5 +1,9 @@
 package com.dasurv.util
 
+fun Double.formatCurrency(): String = String.format("%.2f", this)
+fun Double.formatMl(): String = String.format("%.1f", this)
+fun Double.formatPrecise(): String = String.format("%.4f", this)
+
 /**
  * Formats a duration in seconds to a timer string (MM:SS or HH:MM:SS).
  */

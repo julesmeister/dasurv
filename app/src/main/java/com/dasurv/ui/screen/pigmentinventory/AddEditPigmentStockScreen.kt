@@ -1,12 +1,11 @@
 package com.dasurv.ui.screen.pigmentinventory
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -15,6 +14,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatCurrency
+import com.dasurv.util.formatPrecise
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +36,6 @@ fun AddEditPigmentStockScreen(
     }
 
     val allPigments = viewModel.allPigments
-    var catalogExpanded by remember { mutableStateOf(false) }
     var isCustom by remember { mutableStateOf(prefillName == null && !isEditing) }
 
     var name by remember(existingStock) {
@@ -47,7 +47,7 @@ fun AddEditPigmentStockScreen(
     var colorHex by remember { mutableStateOf(prefillColorHex ?: "#CCCCCC") }
     var costPerBottle by remember(existingStock) {
         mutableStateOf(
-            existingStock?.costPerUnit?.let { if (it > 0) String.format("%.2f", it) else "" } ?: ""
+            existingStock?.costPerUnit?.let { if (it > 0) it.formatCurrency() else "" } ?: ""
         )
     }
     var stockCount by remember(existingStock) {
@@ -115,135 +115,63 @@ fun AddEditPigmentStockScreen(
     ) {
         // Catalog/Custom toggle (add mode only)
         if (!isEditing) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
-            ) {
-                FilterChip(
-                    selected = !isCustom,
-                    onClick = { isCustom = false },
-                    label = { Text("From Catalog") }
-                )
-                FilterChip(
-                    selected = isCustom,
-                    onClick = { isCustom = true },
-                    label = { Text("Custom") }
-                )
-            }
+            CatalogCustomToggle(isCustom = isCustom, onSetCustom = { isCustom = it })
         }
 
         // Preview swatch
-        if (name.isNotBlank()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ColorSwatch(colorHex = colorHex, label = "")
-                Spacer(modifier = Modifier.width(spacing.md))
-                Column {
-                    Text(name, style = MaterialTheme.typography.titleSmall, color = M3OnSurface)
-                    Text(
-                        brand,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = M3OnSurfaceVariant
-                    )
-                }
-            }
-        }
+        PigmentPreviewSwatch(name = name, brand = brand, colorHex = colorHex)
 
         // Card 1: Catalog picker or Name+Brand
         DasurvFormCard {
             if (!isCustom && !isEditing) {
-                // Catalog picker
-                ExposedDropdownMenuBox(
-                    expanded = catalogExpanded,
-                    onExpandedChange = { catalogExpanded = it }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                            .padding(vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Pigment",
-                            style = FormDefaults.LabelStyle,
-                            modifier = Modifier.width(FormDefaults.LabelWidth)
-                        )
-                        Text(
-                            text = if (name.isNotBlank()) "$name ($brand)" else "",
-                            style = FormDefaults.ValueStyle,
-                            modifier = Modifier.weight(1f)
-                        )
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = catalogExpanded)
+                PigmentCatalogDropdown(
+                    selectedName = name,
+                    selectedBrand = brand,
+                    allPigments = allPigments,
+                    onPigmentSelected = { pigment ->
+                        name = pigment.name
+                        brand = pigment.brand.displayName
+                        colorHex = pigment.colorHex
                     }
-                    ExposedDropdownMenu(
-                        expanded = catalogExpanded,
-                        onDismissRequest = { catalogExpanded = false },
-                        scrollState = rememberScrollState(),
-                        shadowElevation = 0.dp
-                    ) {
-                        allPigments.forEach { pigment ->
-                            DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        ColorSwatch(colorHex = pigment.colorHex, label = "")
-                                        Spacer(modifier = Modifier.width(spacing.sm))
-                                        Column {
-                                            Text(pigment.name, color = M3OnSurface)
-                                            Text(
-                                                pigment.brand.displayName,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = M3OnSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                },
-                                onClick = {
-                                    name = pigment.name
-                                    brand = pigment.brand.displayName
-                                    colorHex = pigment.colorHex
-                                    catalogExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                )
             } else {
-                FormRow(label = "Name *", value = name, onValueChange = { name = it })
-                FormRow(label = "Brand", value = brand, onValueChange = { brand = it })
+                DasurvTextField(value = name, onValueChange = { name = it }, label = "Name *")
+                DasurvTextField(value = brand, onValueChange = { brand = it }, label = "Brand")
             }
         }
 
         // Card 2: Cost/Bottle, Bottles in Stock
         DasurvFormCard {
-            FormRow(
-                label = "Cost/Bottle",
+            DasurvCurrencyField(
                 value = costPerBottle,
                 onValueChange = { costPerBottle = it },
-                keyboardType = KeyboardType.Decimal
+                label = "Cost/Bottle"
             )
-            FormRow(
-                label = "Bottles in Stock",
+            DasurvTextField(
                 value = stockCount,
                 onValueChange = { stockCount = it },
-                keyboardType = KeyboardType.Number
+                label = "Bottles in Stock",
+                autoCapitalize = false,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             if (pricePerMl > 0) {
                 Text(
-                    "Cost per ml: \$${String.format("%.4f", pricePerMl)} (15ml bottle)",
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = InterFontFamily),
+                    "Cost per ml: \$${pricePerMl.formatPrecise()} (15ml bottle)",
+                    style = MaterialTheme.typography.bodySmall,
                     color = M3Primary,
-                    modifier = Modifier.padding(start = FormDefaults.LabelWidth, bottom = spacing.xs)
+                    modifier = Modifier.padding(start = 4.dp, bottom = spacing.xs)
                 )
             }
         }
 
         // Card 3: Notes
         DasurvFormCard {
-            FormRow(
-                label = "Notes",
+            DasurvTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                singleLine = false
+                label = "Notes",
+                singleLine = false,
+                minLines = 2
             )
         }
     }

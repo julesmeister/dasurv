@@ -14,6 +14,7 @@ import com.dasurv.ui.component.M3OnSurface
 import com.dasurv.ui.component.M3OnSurfaceVariant
 import com.dasurv.ui.component.M3Primary
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatCurrency
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -36,7 +37,7 @@ internal fun UsageHistoryRow(usage: PigmentBottleUsage) {
                 color = M3OnSurface
             )
             Text(
-                "${String.format("%.2f", usage.mlUsed)} ml - ${
+                "${usage.mlUsed.formatCurrency()} ml - ${
                     when (usage.lipArea) {
                         UsageLipArea.UPPER -> "Upper Lip"
                         UsageLipArea.LOWER -> "Lower Lip"
@@ -56,7 +57,7 @@ internal fun UsageHistoryRow(usage: PigmentBottleUsage) {
         }
         if (usage.costAtTimeOfUse > 0) {
             Text(
-                "$${String.format("%.2f", usage.costAtTimeOfUse)}",
+                "$${usage.costAtTimeOfUse.formatCurrency()}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = M3Primary
