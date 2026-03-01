@@ -4,9 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Session
 import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +59,7 @@ fun NewSessionScreen(
         DasurvConfirmDialog(
             onDismissRequest = { showConflictDialog = false },
             icon = Icons.Default.Warning,
-            iconTint = MaterialTheme.colorScheme.error,
+            iconTint = M3RedColor,
             title = "Timer Already Running",
             message = "A timer is running for ${timerState.clientName.ifBlank { "another client" }}. " +
                 "Starting a new timer will discard those durations.",
@@ -70,18 +71,16 @@ fun NewSessionScreen(
         )
     }
 
+    val formBg = M3SurfaceContainer
+
     Scaffold(
-        containerColor = FormScreenBackground,
+        containerColor = formBg,
         topBar = {
             TopAppBar(
-                title = { Text("New Session") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
+                title = { DasurvTopAppBarTitle("New Session") },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = FormScreenBackground
+                    containerColor = formBg
                 )
             )
         }
@@ -90,9 +89,9 @@ fun NewSessionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(FormScreenBackground),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .background(formBg),
+            contentPadding = PaddingValues(DasurvTheme.spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.lg)
         ) {
             // Card 1: Procedure, Lip Color Category, Color Hex
             item {
@@ -145,7 +144,11 @@ fun NewSessionScreen(
             // Consumables section (wrapped in card)
             if (consumables.isNotEmpty()) {
                 item {
-                    Text("Consumables Used", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Consumables Used",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = M3OnSurface
+                    )
                 }
 
                 item {
@@ -157,22 +160,23 @@ fun NewSessionScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
+                                    .padding(vertical = DasurvTheme.spacing.xs),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Checkbox(
                                     checked = isSelected,
-                                    onCheckedChange = { viewModel.toggleEquipment(item.id) }
+                                    onCheckedChange = { viewModel.toggleEquipment(item.id) },
+                                    colors = CheckboxDefaults.colors(checkedColor = M3Primary)
                                 )
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(item.name, style = MaterialTheme.typography.bodyMedium)
+                                    Text(item.name, style = MaterialTheme.typography.bodyMedium, color = M3OnSurface)
                                     Text(
                                         "$${String.format("%.4f", item.costPerPiece)} / piece" +
                                             if (item.piecesPerPackage > 1)
                                                 " (${item.piecesPerPackage}/pkg)"
                                             else "",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = M3OnSurfaceVariant
                                     )
                                 }
                                 if (isSelected) {
@@ -200,7 +204,11 @@ fun NewSessionScreen(
             // Pigment bottles section (wrapped in card)
             if (bottles.isNotEmpty()) {
                 item {
-                    Text("Pigment Bottles Used", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Pigment Bottles Used",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = M3OnSurface
+                    )
                 }
 
                 item {
@@ -208,20 +216,23 @@ fun NewSessionScreen(
                         bottles.forEach { bottle ->
                             val isSelected = bottle.id in selectedBottleIds
                             val entry = bottleEntries[bottle.id]
-                            val bottleColor = try {
-                                Color(android.graphics.Color.parseColor(bottle.colorHex))
-                            } catch (e: Exception) {
-                                Color.Gray
+                            val bottleColor = remember(bottle.colorHex) {
+                                try {
+                                    Color(android.graphics.Color.parseColor(bottle.colorHex))
+                                } catch (e: Exception) {
+                                    Color.Gray
+                                }
                             }
 
-                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                            Column(modifier = Modifier.padding(vertical = DasurvTheme.spacing.xs)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Checkbox(
                                         checked = isSelected,
-                                        onCheckedChange = { viewModel.toggleBottle(bottle.id) }
+                                        onCheckedChange = { viewModel.toggleBottle(bottle.id) },
+                                        colors = CheckboxDefaults.colors(checkedColor = M3Primary)
                                     )
                                     Box(
                                         modifier = Modifier
@@ -229,13 +240,13 @@ fun NewSessionScreen(
                                             .clip(CircleShape)
                                             .background(bottleColor)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(DasurvTheme.spacing.sm))
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(bottle.pigmentName, style = MaterialTheme.typography.bodyMedium)
+                                        Text(bottle.pigmentName, style = MaterialTheme.typography.bodyMedium, color = M3OnSurface)
                                         Text(
                                             "${bottle.pigmentBrand} - ${String.format("%.1f", bottle.remainingMl)} ml left",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = M3OnSurfaceVariant
                                         )
                                     }
                                     if (isSelected) {
@@ -260,7 +271,7 @@ fun NewSessionScreen(
                                 if (isSelected) {
                                     Row(
                                         modifier = Modifier.padding(start = 48.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.sm)
                                     ) {
                                         UsageLipArea.entries.forEach { area ->
                                             FilterChip(
@@ -274,7 +285,11 @@ fun NewSessionScreen(
                                                             UsageLipArea.BOTH -> "B"
                                                         }
                                                     )
-                                                }
+                                                },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = M3Primary,
+                                                    selectedLabelColor = Color.White
+                                                )
                                             )
                                         }
                                     }
@@ -293,7 +308,7 @@ fun NewSessionScreen(
 
             // Save button
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(DasurvTheme.spacing.sm))
                 Button(
                     onClick = {
                         val (totalDur, upperDur, lowerDur) = timerViewModel.getDurationsForClient(clientId)
@@ -308,19 +323,26 @@ fun NewSessionScreen(
                             upperLipSeconds = upperDur,
                             lowerLipSeconds = lowerDur
                         )
-                        viewModel.saveSession(session, equipment) { sessionId ->
-                            if (isTimerForThisClient) {
-                                timerViewModel.resetTimer()
+                        viewModel.saveSession(
+                            session = session,
+                            equipmentList = equipment,
+                            onSuccess = { sessionId ->
+                                if (isTimerForThisClient) {
+                                    timerViewModel.resetTimer()
+                                }
+                                onSessionCreated(sessionId)
                             }
-                            onSessionCreated(sessionId)
-                        }
+                        )
                     },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF263238),
-                        contentColor = Color.White
+                        containerColor = M3Primary,
+                        contentColor = Color.White,
+                        disabledContainerColor = M3Primary.copy(alpha = 0.4f),
+                        disabledContentColor = Color.White.copy(alpha = 0.7f)
                     ),
-                    contentPadding = PaddingValues(vertical = 16.dp)
+                    contentPadding = PaddingValues(vertical = DasurvTheme.spacing.lg)
                 ) {
                     Text("Create Session")
                 }

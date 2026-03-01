@@ -18,10 +18,7 @@ internal fun NavGraphBuilder.pigmentRoutes(navController: NavController) {
             onNavigateToRecommendation = { navController.navigate(Routes.COLOR_RECOMMENDATION) },
             onNavigateToPigmentInventory = { navController.navigate(Routes.PIGMENT_INVENTORY) },
             onNavigateToAddStock = { name, brand, colorHex ->
-                val encodedName = java.net.URLEncoder.encode(name, "UTF-8")
-                val encodedBrand = java.net.URLEncoder.encode(brand, "UTF-8")
-                val encodedColor = java.net.URLEncoder.encode(colorHex, "UTF-8")
-                navController.navigate("pigment-inventory/add-stock?name=$encodedName&brand=$encodedBrand&colorHex=$encodedColor")
+                navController.navigate(Routes.addPigmentStockFromCatalog(name, brand, colorHex))
             }
         )
     }
@@ -34,8 +31,8 @@ internal fun NavGraphBuilder.pigmentRoutes(navController: NavController) {
         PigmentInventoryScreen(
             onNavigateBack = { navController.popBackStack() },
             onNavigateToAddStock = { navController.navigate(Routes.ADD_PIGMENT_STOCK) },
-            onNavigateToEditStock = { id -> navController.navigate("pigment-inventory/edit-stock/$id") },
-            onNavigateToEditBottle = { id -> navController.navigate("pigment-inventory/edit/$id") },
+            onNavigateToEditStock = { id -> navController.navigate(Routes.editPigmentStock(id)) },
+            onNavigateToEditBottle = { id -> navController.navigate(Routes.editPigmentBottle(id)) },
             onNavigateToCatalogue = { navController.navigate(Routes.PIGMENT_CATALOGUE) }
         )
     }

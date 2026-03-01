@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -17,12 +18,12 @@ import androidx.compose.ui.window.DialogProperties
 fun DasurvConfirmDialog(
     onDismissRequest: () -> Unit,
     icon: ImageVector,
-    iconTint: Color = MaterialTheme.colorScheme.error,
+    iconTint: Color = M3RedColor,
     title: String,
     message: String,
     confirmText: String = "Delete",
     dismissText: String = "Cancel",
-    confirmColor: Color = MaterialTheme.colorScheme.error,
+    confirmColor: Color = M3RedColor,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit = onDismissRequest
 ) {
@@ -34,8 +35,8 @@ fun DasurvConfirmDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp),
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFFFCFCFF),
             tonalElevation = 6.dp
         ) {
             Column(
@@ -43,16 +44,16 @@ fun DasurvConfirmDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     color = iconTint.copy(alpha = 0.12f),
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
                             tint = iconTint,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -62,6 +63,8 @@ fun DasurvConfirmDialog(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = M3OnSurface,
                     textAlign = TextAlign.Center
                 )
 
@@ -70,7 +73,7 @@ fun DasurvConfirmDialog(
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = M3OnSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
 
@@ -80,25 +83,31 @@ fun DasurvConfirmDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    FilledTonalButton(
+                    Button(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFF0F1FA),
+                            contentColor = M3OnSurfaceVariant,
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        Text(dismissText)
+                        Text(dismissText, fontWeight = FontWeight.Medium)
                     }
                     Button(
                         onClick = onConfirm,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = confirmColor,
                             contentColor = Color.White
                         ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        Text(confirmText)
+                        Text(confirmText, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -110,12 +119,12 @@ fun DasurvConfirmDialog(
 fun DasurvConfirmDialog(
     onDismissRequest: () -> Unit,
     icon: ImageVector,
-    iconTint: Color = MaterialTheme.colorScheme.error,
+    iconTint: Color = M3RedColor,
     title: String,
     content: @Composable () -> Unit,
     confirmText: String = "Delete",
     dismissText: String = "Cancel",
-    confirmColor: Color = MaterialTheme.colorScheme.error,
+    confirmColor: Color = M3RedColor,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit = onDismissRequest
 ) {
@@ -127,8 +136,8 @@ fun DasurvConfirmDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp),
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFFFCFCFF),
             tonalElevation = 6.dp
         ) {
             Column(
@@ -136,16 +145,16 @@ fun DasurvConfirmDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     color = iconTint.copy(alpha = 0.12f),
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
                             tint = iconTint,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -155,6 +164,8 @@ fun DasurvConfirmDialog(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = M3OnSurface,
                     textAlign = TextAlign.Center
                 )
 
@@ -168,25 +179,31 @@ fun DasurvConfirmDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    FilledTonalButton(
+                    Button(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFF0F1FA),
+                            contentColor = M3OnSurfaceVariant,
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        Text(dismissText)
+                        Text(dismissText, fontWeight = FontWeight.Medium)
                     }
                     Button(
                         onClick = onConfirm,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = confirmColor,
                             contentColor = Color.White
                         ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        Text(confirmText)
+                        Text(confirmText, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

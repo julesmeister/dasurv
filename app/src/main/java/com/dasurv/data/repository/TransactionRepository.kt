@@ -2,7 +2,9 @@ package com.dasurv.data.repository
 
 import com.dasurv.data.local.dao.TransactionDao
 import com.dasurv.data.local.entity.ClientTransaction
+import com.dasurv.data.model.FinancialSummary
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,4 +35,13 @@ class TransactionRepository @Inject constructor(
 
     fun getTotalPaidForClient(clientId: Long): Flow<Double> =
         transactionDao.getTotalPaidForClient(clientId)
+
+    fun getFinancialSummary(clientId: Long): Flow<FinancialSummary> =
+        combine(
+            getTotalChargedForClient(clientId),
+            getTotalPaidForClient(clientId),
+            getBalanceForClient(clientId)
+        ) { charged, paid, balance ->
+            FinancialSummary(totalCharged = charged, totalPaid = paid, balance = balance)
+        }
 }

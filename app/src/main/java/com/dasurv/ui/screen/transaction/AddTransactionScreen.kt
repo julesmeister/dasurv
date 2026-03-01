@@ -15,6 +15,11 @@ import com.dasurv.ui.component.DasurvFormCard
 import com.dasurv.ui.component.DasurvFormScaffold
 import com.dasurv.ui.component.FormDefaults
 import com.dasurv.ui.component.FormRow
+import com.dasurv.ui.component.M3AmberColor
+import com.dasurv.ui.component.M3Primary
+import com.dasurv.ui.component.M3OnSurface
+import com.dasurv.ui.component.M3OnSurfaceVariant
+import com.dasurv.ui.theme.DasurvTheme
 
 @Composable
 fun AddTransactionScreen(
@@ -24,6 +29,7 @@ fun AddTransactionScreen(
 ) {
     LaunchedEffect(clientId) { viewModel.loadClient(clientId) }
 
+    val spacing = DasurvTheme.spacing
     var selectedType by remember { mutableStateOf(TransactionType.PAYMENT) }
     var amountText by remember { mutableStateOf("") }
     var selectedPaymentMethod by remember { mutableStateOf<PaymentMethod?>(null) }
@@ -59,11 +65,11 @@ fun AddTransactionScreen(
     ) {
         // Card 1: Transaction type
         DasurvFormCard {
-            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+            Column(modifier = Modifier.padding(vertical = spacing.sm)) {
                 Text(
                     "Type",
                     style = FormDefaults.LabelStyle,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = spacing.sm)
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -82,8 +88,8 @@ fun AddTransactionScreen(
                             shape = RoundedCornerShape(12.dp),
                             colors = if (selectedType == type)
                                 ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                    containerColor = M3Primary,
+                                    contentColor = androidx.compose.ui.graphics.Color.White
                                 )
                             else ButtonDefaults.filledTonalButtonColors(),
                             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp)
@@ -108,11 +114,11 @@ fun AddTransactionScreen(
         // Card 3: Payment method (conditional)
         if (showPaymentMethod) {
             DasurvFormCard {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                Column(modifier = Modifier.padding(vertical = spacing.sm)) {
                     Text(
                         "Payment Method",
                         style = FormDefaults.LabelStyle,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = spacing.sm)
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -131,8 +137,8 @@ fun AddTransactionScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = if (selectedPaymentMethod == method)
                                     ButtonDefaults.filledTonalButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.tertiary,
-                                        contentColor = MaterialTheme.colorScheme.onTertiary
+                                        containerColor = M3AmberColor,
+                                        contentColor = androidx.compose.ui.graphics.Color.White
                                     )
                                 else ButtonDefaults.filledTonalButtonColors(),
                                 contentPadding = PaddingValues(horizontal = 2.dp, vertical = 10.dp)

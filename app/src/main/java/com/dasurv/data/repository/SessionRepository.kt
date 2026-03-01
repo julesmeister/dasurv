@@ -17,6 +17,8 @@ class SessionRepository @Inject constructor(
 
     fun getAllSessions(): Flow<List<Session>> = sessionDao.getAllSessions()
 
+    fun getSessionCount(): Flow<Int> = sessionDao.getSessionCount()
+
     suspend fun getSessionById(id: Long): Session? = sessionDao.getSessionById(id)
 
     suspend fun insertSession(session: Session): Long = sessionDao.insertSession(session)

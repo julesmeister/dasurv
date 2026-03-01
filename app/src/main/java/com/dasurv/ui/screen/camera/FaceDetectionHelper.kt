@@ -8,10 +8,26 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlinx.coroutines.tasks.await
+import java.io.Closeable
 
 internal class FaceDetectionHelper(
     private val lipColorAnalyzer: LipColorAnalyzer
-) {
+) : Closeable {
+
+    private val detector by lazy {
+        val options = FaceDetectorOptions.Builder()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+            .setMinFaceSize(0.1f)
+            .build()
+        FaceDetection.getClient(options)
+    }
+
+    override fun close() {
+        try { detector.close() } catch (_: Exception) {}
+    }
+
     /**
      * Detect a face in the bitmap and optionally run lip-color analysis.
      * @param existingAnalysis if non-null, lip-color analysis is skipped.
@@ -23,15 +39,7 @@ internal class FaceDetectionHelper(
     ): Pair<Face?, DualLipAnalysis?> {
         return try {
             val inputImage = InputImage.fromBitmap(bitmap, 0)
-            val options = FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-                .setMinFaceSize(0.1f)
-                .build()
-            val detector = FaceDetection.getClient(options)
             val faces = detector.process(inputImage).await()
-            detector.close()
 
             if (faces.isEmpty()) return Pair(null, existingAnalysis)
 

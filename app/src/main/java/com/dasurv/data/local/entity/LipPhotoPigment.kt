@@ -1,5 +1,6 @@
 package com.dasurv.data.local.entity
 
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -9,6 +10,7 @@ enum class LipZone {
     UPPER, LOWER
 }
 
+@Stable
 @Entity(
     tableName = "lip_photo_pigments",
     foreignKeys = [

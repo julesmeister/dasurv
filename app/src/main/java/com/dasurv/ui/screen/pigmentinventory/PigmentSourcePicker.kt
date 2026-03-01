@@ -9,8 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dasurv.data.model.Pigment
-import com.dasurv.ui.component.ColorSwatch
-import com.dasurv.ui.component.DasurvTextField
+import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun LazyListScope.pigmentSourcePicker(
@@ -27,9 +27,10 @@ internal fun LazyListScope.pigmentSourcePicker(
 ) {
     // Toggle: From Catalog / Custom
     item {
+        val spacing = DasurvTheme.spacing
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             FilterChip(
                 selected = !isCustom,
@@ -47,6 +48,7 @@ internal fun LazyListScope.pigmentSourcePicker(
     if (!isCustom) {
         // Catalog mode: pigment picker dropdown
         item {
+            val spacing = DasurvTheme.spacing
             var catalogExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = catalogExpanded,
@@ -71,13 +73,13 @@ internal fun LazyListScope.pigmentSourcePicker(
                             text = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     ColorSwatch(colorHex = pigment.colorHex, label = "")
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(spacing.sm))
                                     Column {
-                                        Text(pigment.name)
+                                        Text(pigment.name, color = M3OnSurface)
                                         Text(
                                             pigment.brand.displayName,
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = M3OnSurfaceVariant
                                         )
                                     }
                                 }

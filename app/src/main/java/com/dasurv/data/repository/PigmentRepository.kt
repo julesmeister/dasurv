@@ -8,7 +8,7 @@ import javax.inject.Singleton
 @Singleton
 class PigmentRepository @Inject constructor() {
 
-    fun getAllPigments(): List<Pigment> = permablendLuxe + permablendOriginal + evenflo + trunm
+    fun getAllPigments(): List<Pigment> = allPigmentsCached
 
     fun getPigmentsByBrand(brand: PigmentBrand): List<Pigment> = when (brand) {
         PigmentBrand.PERMABLEND_LUXE -> permablendLuxe
@@ -17,9 +17,13 @@ class PigmentRepository @Inject constructor() {
         PigmentBrand.TRUNM -> trunm
     }
 
-    fun getPigmentByName(name: String): Pigment? = getAllPigments().find { it.name == name }
+    fun getPigmentByName(name: String): Pigment? = allPigmentsCached.find { it.name == name }
 
     companion object {
+        private val allPigmentsCached: List<Pigment> by lazy {
+            permablendLuxe + permablendOriginal + evenflo + trunm
+        }
+
         val permablendLuxe = listOf(
             Pigment("Amelia Rose", PigmentBrand.PERMABLEND_LUXE, "#D4737E", "warm", "medium", "Soft dusty rose",
                 retentionRate = 0.57f, healingNotes = "Good retention; heals slightly cooler"),

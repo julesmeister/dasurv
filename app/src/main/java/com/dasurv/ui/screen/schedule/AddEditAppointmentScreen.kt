@@ -7,9 +7,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -18,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Appointment
 import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -63,8 +62,8 @@ fun AddEditAppointmentScreen(
     }
 
     val context = LocalContext.current
-    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+    val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
     val cal = Calendar.getInstance().apply { timeInMillis = scheduledDateTime }
 
     val clientNames = remember(clients) { clients.map { it.name } }
@@ -179,18 +178,19 @@ private fun DurationSelector(
     durationMinutes: Int,
     onDurationChange: (Int) -> Unit
 ) {
+    val spacing = DasurvTheme.spacing
     val presets = listOf(15, 30, 45, 60, 90, 120, 150, 180, 210, 240, 300, 360)
 
-    Column(modifier = Modifier.padding(vertical = 12.dp)) {
+    Column(modifier = Modifier.padding(vertical = spacing.md)) {
         Text(
             "Duration",
             style = FormDefaults.LabelStyle
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(spacing.sm + spacing.xs))
 
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
             contentPadding = PaddingValues(horizontal = 2.dp)
         ) {
             items(presets.size) { index ->
@@ -202,15 +202,17 @@ private fun DurationSelector(
                     label = {
                         Text(
                             formatDuration(minutes),
-                            style = if (isSelected) MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                            else MaterialTheme.typography.labelMedium
+                            style = if (isSelected)
+                                MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            else
+                                MaterialTheme.typography.labelMedium
                         )
                     },
                     modifier = if (isSelected) Modifier.height(40.dp) else Modifier.height(32.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        selectedContainerColor = M3PrimaryContainer,
+                        selectedLabelColor = M3Primary
                     )
                 )
             }

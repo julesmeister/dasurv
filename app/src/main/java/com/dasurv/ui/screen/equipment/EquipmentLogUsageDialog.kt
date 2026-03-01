@@ -9,6 +9,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.ui.component.DasurvTextField
+import com.dasurv.ui.component.M3OnSurfaceVariant
+import com.dasurv.ui.component.M3Primary
 
 @Composable
 internal fun EquipmentLogUsageDialog(
@@ -27,7 +29,7 @@ internal fun EquipmentLogUsageDialog(
                 Text(
                     "Stock: ${equipment.stockQuantity}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = M3OnSurfaceVariant
                 )
                 DasurvTextField(
                     value = quantity,
@@ -55,7 +57,7 @@ internal fun EquipmentLogUsageDialog(
                     }
                 },
                 enabled = (quantity.toDoubleOrNull() ?: 0.0) > 0
-            ) { Text("Log") }
+            ) { Text("Log", color = M3Primary) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }

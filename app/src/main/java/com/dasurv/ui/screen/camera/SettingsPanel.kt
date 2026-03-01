@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,10 +42,12 @@ internal fun AnalysisPill(label: String, categoryName: String, colorHex: String)
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             // Color dot
-            val dotColor = try {
-                Color(android.graphics.Color.parseColor(colorHex))
-            } catch (_: Exception) {
-                RoseTertiary
+            val dotColor = remember(colorHex) {
+                try {
+                    Color(android.graphics.Color.parseColor(colorHex))
+                } catch (_: Exception) {
+                    RoseTertiary
+                }
             }
             Box(
                 modifier = Modifier

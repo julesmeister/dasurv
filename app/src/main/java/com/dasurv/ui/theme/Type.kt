@@ -5,95 +5,25 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-val ExpressiveTypography = Typography(
-    displayLarge = TextStyle(
-        fontWeight = FontWeight.Normal,
-        fontSize = 64.sp,
-        lineHeight = 72.sp,
-        letterSpacing = (-0.25).sp
-    ),
-    displayMedium = TextStyle(
-        fontWeight = FontWeight.Normal,
-        fontSize = 52.sp,
-        lineHeight = 60.sp,
-        letterSpacing = 0.sp
-    ),
-    displaySmall = TextStyle(
-        fontWeight = FontWeight.Normal,
-        fontSize = 44.sp,
-        lineHeight = 52.sp,
-        letterSpacing = 0.sp
-    ),
-    headlineLarge = TextStyle(
-        fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 44.sp,
-        letterSpacing = 0.sp
-    ),
-    headlineMedium = TextStyle(
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
-        letterSpacing = 0.sp
-    ),
-    headlineSmall = TextStyle(
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 28.sp,
-        lineHeight = 36.sp,
-        letterSpacing = 0.sp
-    ),
-    titleLarge = TextStyle(
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
-    ),
-    titleMedium = TextStyle(
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.15.sp
-    ),
-    titleSmall = TextStyle(
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
-    ),
-    bodyLarge = TextStyle(
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    bodyMedium = TextStyle(
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
-    ),
-    bodySmall = TextStyle(
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
-    ),
-    labelLarge = TextStyle(
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
-    ),
-    labelMedium = TextStyle(
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
-    ),
-    labelSmall = TextStyle(
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
-    )
+// Typography scale
+val TypographyXs = TextStyle(fontSize = 11.sp, lineHeight = 16.sp)
+val TypographySm = TextStyle(fontSize = 12.sp, lineHeight = 18.sp)
+val TypographyBase = TextStyle(fontSize = 14.sp, lineHeight = 20.sp)
+val TypographyLg = TextStyle(fontSize = 16.sp, lineHeight = 24.sp)
+val TypographyXl = TextStyle(fontSize = 18.sp, lineHeight = 28.sp)
+val TypographyXxl = TextStyle(fontSize = 20.sp, lineHeight = 28.sp)
+val TypographyXxxl = TextStyle(fontSize = 36.sp, lineHeight = 40.sp)
+
+val DasurvTypography = Typography(
+    displayLarge = TypographyXxxl.copy(fontWeight = FontWeight.Bold, color = Gray800),
+    headlineLarge = TypographyXxl.copy(fontWeight = FontWeight.Bold, color = Gray800),
+    headlineMedium = TypographyXl.copy(fontWeight = FontWeight.SemiBold, color = Gray800),
+    titleLarge = TypographyLg.copy(fontWeight = FontWeight.SemiBold, color = Gray800),
+    titleMedium = TypographyBase.copy(fontWeight = FontWeight.SemiBold, color = Gray700),
+    bodyLarge = TypographyBase.copy(color = Gray700),
+    bodyMedium = TypographySm.copy(color = Gray600),
+    bodySmall = TypographyXs.copy(color = Gray500),
+    labelLarge = TypographyBase.copy(fontWeight = FontWeight.SemiBold),
+    labelMedium = TypographySm.copy(fontWeight = FontWeight.Medium),
+    labelSmall = TypographyXs.copy(fontWeight = FontWeight.Medium),
 )

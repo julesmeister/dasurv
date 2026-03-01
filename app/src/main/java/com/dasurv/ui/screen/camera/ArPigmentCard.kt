@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,18 +69,19 @@ internal fun ArPigmentCard(
                         )
                     }
                     if (currentPigment != null) {
+                        val swatchColor = remember(currentPigment.pigment.colorHex) {
+                            try {
+                                Color(android.graphics.Color.parseColor(currentPigment.pigment.colorHex))
+                            } catch (_: Exception) {
+                                Color.Gray
+                            }
+                        }
                         // Larger swatch
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(
-                                    try {
-                                        Color(android.graphics.Color.parseColor(currentPigment.pigment.colorHex))
-                                    } catch (_: Exception) {
-                                        Color.Gray
-                                    }
-                                )
+                                .background(swatchColor)
                                 .border(2.dp, Color.White.copy(alpha = 0.4f), CircleShape)
                         )
                         Spacer(Modifier.width(10.dp))

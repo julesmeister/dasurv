@@ -51,6 +51,7 @@ import com.dasurv.util.loadBitmapFromUri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -194,19 +195,30 @@ fun ClientTryOnScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             } else if (hasCameraPermission) {
+                val tryOnFaceDetector = remember {
+                    val options = FaceDetectorOptions.Builder()
+                        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                        .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                        .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                        .setMinFaceSize(0.3f)
+                        .build()
+                    FaceDetection.getClient(options)
+                }
+                val tryOnExecutor = remember { Executors.newSingleThreadExecutor() as ExecutorService }
+
+                DisposableEffect(Unit) {
+                    onDispose {
+                        tryOnFaceDetector.close()
+                        tryOnExecutor.shutdown()
+                    }
+                }
+
                 AndroidView(
                     factory = { ctx ->
                         val previewView = PreviewView(ctx)
                         val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                        val executor = Executors.newSingleThreadExecutor()
-
-                        val faceDetectorOptions = FaceDetectorOptions.Builder()
-                            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-                            .setMinFaceSize(0.3f)
-                            .build()
-                        val faceDetector = FaceDetection.getClient(faceDetectorOptions)
+                        val executor = tryOnExecutor
+                        val faceDetector = tryOnFaceDetector
 
                         cameraProviderFuture.addListener({
                             val cameraProvider = cameraProviderFuture.get()

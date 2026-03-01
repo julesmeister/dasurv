@@ -20,10 +20,10 @@ internal fun NavGraphBuilder.mediaRoutes(navController: NavController) {
             clientId = clientId,
             onNavigateBack = { navController.popBackStack() },
             onNavigateToSummary = { photoId ->
-                navController.navigate("pigment-summary/$photoId")
+                navController.navigate(Routes.pigmentSummary(photoId))
             },
             onNavigateToCaptureResult = { photoId ->
-                navController.navigate("capture-result/$photoId")
+                navController.navigate(Routes.captureResult(photoId))
             }
         )
     }
@@ -48,7 +48,7 @@ internal fun NavGraphBuilder.mediaRoutes(navController: NavController) {
             photoId = photoId,
             onNavigateBack = { navController.popBackStack() },
             onNavigateToSummary = { id ->
-                navController.navigate("pigment-summary/$id")
+                navController.navigate(Routes.pigmentSummary(id))
             }
         )
     }
@@ -63,7 +63,7 @@ internal fun NavGraphBuilder.mediaRoutes(navController: NavController) {
             demoPhotoPath = decodedPath,
             onNavigateBack = { navController.popBackStack() },
             onNavigateToSummary = { id ->
-                navController.navigate("pigment-summary/$id")
+                navController.navigate(Routes.pigmentSummary(id))
             }
         )
     }

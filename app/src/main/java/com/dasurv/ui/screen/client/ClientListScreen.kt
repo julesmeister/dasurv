@@ -5,22 +5,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.ui.component.CardPosition
 import com.dasurv.ui.component.ClientCard
+import com.dasurv.ui.component.DasurvAddFab
+import com.dasurv.ui.component.DasurvBackButton
+import com.dasurv.ui.component.DasurvEmptyState
 import com.dasurv.ui.component.DasurvTextField
+import com.dasurv.ui.component.DasurvTopAppBarTitle
+import com.dasurv.ui.component.M3ListCard
+import com.dasurv.ui.component.M3ListDivider
+import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,31 +36,22 @@ fun ClientListScreen(
     val clients by viewModel.filteredClients.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val spacing = DasurvTheme.spacing
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text("Clients") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
+                title = { DasurvTopAppBarTitle(title = "Clients") },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            DasurvAddFab(
                 onClick = onNavigateToAddClient,
-                shape = RoundedCornerShape(16.dp),
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp
-                )
-            ) {
-                Icon(Icons.Default.Add, "Add Client")
-            }
+                contentDescription = "Add Client"
+            )
         }
     ) { padding ->
         Column(
@@ -70,7 +64,7 @@ fun ClientListScreen(
                 onValueChange = viewModel::onSearchQueryChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = spacing.lg, vertical = spacing.sm),
                 placeholder = { Text("Search clients...") },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 singleLine = true
@@ -82,20 +76,14 @@ fun ClientListScreen(
                 label = "client-list-state"
             ) { isEmpty ->
                 if (isEmpty) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (searchQuery.isBlank()) "No clients yet" else "No results",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    DasurvEmptyState(
+                        icon = Icons.Default.People,
+                        message = if (searchQuery.isBlank()) "No clients yet" else "No results"
+                    )
                 } else {
                     LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        contentPadding = PaddingValues(vertical = spacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(spacing.sm)
                     ) {
                         items(clients.size, key = { clients[it].id }) { index ->
                             val client = clients[index]
@@ -105,12 +93,16 @@ fun ClientListScreen(
                                 index == clients.lastIndex -> CardPosition.Last
                                 else -> CardPosition.Middle
                             }
-                            ClientCard(
-                                client = client,
-                                onClick = { onNavigateToClient(client.id) },
-                                position = position,
-                                modifier = Modifier.animateItem()
-                            )
+                            M3ListCard(modifier = Modifier.animateItem()) {
+                                ClientCard(
+                                    client = client,
+                                    onClick = { onNavigateToClient(client.id) },
+                                    position = position
+                                )
+                                if (index < clients.lastIndex) {
+                                    M3ListDivider()
+                                }
+                            }
                         }
                     }
                 }

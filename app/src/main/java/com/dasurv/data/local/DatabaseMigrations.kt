@@ -174,6 +174,12 @@ object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // No schema changes — version bump only
+        }
+    }
+
     val MIGRATION_8_9 = object : Migration(8, 9) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE `lip_photos` ADD COLUMN `upperLipScale` REAL NOT NULL DEFAULT 1.0")
@@ -200,6 +206,15 @@ object DatabaseMigrations {
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_client_transactions_clientId` ON `client_transactions` (`clientId`)")
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_client_transactions_sessionId` ON `client_transactions` (`sessionId`)")
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_client_transactions_date` ON `client_transactions` (`date`)")
+        }
+    }
+
+    val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_equipment_category` ON `equipment` (`category`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_equipment_type` ON `equipment` (`type`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_pigment_bottles_remainingMl` ON `pigment_bottles` (`remainingMl`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_pigment_bottles_pigmentName_pigmentBrand` ON `pigment_bottles` (`pigmentName`, `pigmentBrand`)")
         }
     }
 }

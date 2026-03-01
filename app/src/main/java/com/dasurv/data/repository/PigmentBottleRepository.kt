@@ -22,7 +22,13 @@ class PigmentBottleRepository @Inject constructor(
 
     suspend fun insertBottle(bottle: PigmentBottle): Long = pigmentBottleDao.insertBottle(bottle)
 
+    suspend fun getBottlesByIds(ids: List<Long>): List<PigmentBottle> =
+        pigmentBottleDao.getBottlesByIds(ids)
+
     suspend fun updateBottle(bottle: PigmentBottle) = pigmentBottleDao.updateBottle(bottle)
+
+    suspend fun updateBottleBatch(bottles: List<PigmentBottle>) =
+        pigmentBottleDao.updateBottleBatch(bottles)
 
     suspend fun deleteBottle(bottle: PigmentBottle) = pigmentBottleDao.deleteBottle(bottle)
 

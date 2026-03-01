@@ -22,8 +22,8 @@ internal fun NavGraphBuilder.sessionRoutes(
             clientId = clientId,
             onNavigateBack = { navController.popBackStack() },
             onSessionCreated = { sessionId ->
-                navController.navigate("session/$sessionId") {
-                    popUpTo("session/new/$clientId") { inclusive = true }
+                navController.navigate(Routes.sessionDetail(sessionId)) {
+                    popUpTo(Routes.newSession(clientId)) { inclusive = true }
                 }
             },
             timerViewModel = timerViewModel

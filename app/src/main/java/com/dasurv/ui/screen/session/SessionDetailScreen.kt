@@ -5,14 +5,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.*
-import com.dasurv.ui.component.DasurvConfirmDialog
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,6 +19,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.ui.component.ColorSwatch
+import com.dasurv.ui.component.DasurvBackButton
+import com.dasurv.ui.component.DasurvConfirmDialog
+import com.dasurv.ui.component.DasurvTopAppBarTitle
+import com.dasurv.ui.component.M3ListCard
+import com.dasurv.ui.component.M3ListDivider
+import com.dasurv.ui.component.M3OnSurface
+import com.dasurv.ui.component.M3OnSurfaceVariant
+import com.dasurv.ui.component.M3Primary
+import com.dasurv.ui.component.M3SnackbarHost
+import com.dasurv.ui.theme.DasurvTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -39,7 +48,9 @@ fun SessionDetailScreen(
     val sessionBottleUsages by viewModel.sessionBottleUsages.collectAsStateWithLifecycle()
     val allBottles by viewModel.allBottles.collectAsStateWithLifecycle(initialValue = emptyList())
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val spacing = DasurvTheme.spacing
 
     if (showDeleteDialog && session != null) {
         DasurvConfirmDialog(
@@ -53,17 +64,15 @@ fun SessionDetailScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = Color(0xFFF1F5F9),
+        snackbarHost = { M3SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Session Details") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
+                title = { DasurvTopAppBarTitle("Session Details") },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = {
                     IconButton(onClick = { showDeleteDialog = true }) {
-                        Icon(Icons.Default.Delete, "Delete")
+                        Icon(Icons.Default.Delete, "Delete", tint = M3OnSurfaceVariant)
                     }
                 },
                 scrollBehavior = scrollBehavior
@@ -77,52 +86,64 @@ fun SessionDetailScreen(
         ) { isLoading ->
             if (isLoading) {
                 Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = M3Primary)
                 }
             } else {
-                val dateFormat = SimpleDateFormat("MMMM dd, yyyy 'at' hh:mm a", Locale.getDefault())
+                val dateFormat = remember { SimpleDateFormat("MMMM dd, yyyy 'at' hh:mm a", Locale.getDefault()) }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(16.dp)
+                        .padding(vertical = spacing.lg)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(spacing.md)
                 ) {
-                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                    // Date & procedure card
+                    M3ListCard {
+                        Column(modifier = Modifier.padding(spacing.lg)) {
                             Text(
                                 dateFormat.format(Date(session!!.date)),
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                color = M3OnSurface
                             )
                             if (session!!.procedure.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text("Procedure: ${session!!.procedure}")
+                                Spacer(modifier = Modifier.height(spacing.xs))
+                                Text(
+                                    "Procedure: ${session!!.procedure}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = M3OnSurface
+                                )
                             }
                         }
                     }
 
+                    // Lip color card
                     if (session!!.lipColorHex != null) {
-                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                        M3ListCard {
                             Row(
-                                modifier = Modifier.padding(16.dp),
+                                modifier = Modifier.padding(spacing.lg),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 ColorSwatch(
                                     colorHex = session!!.lipColorHex!!,
                                     label = ""
                                 )
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(spacing.md))
                                 Column {
-                                    Text("Lip Color Analysis", style = MaterialTheme.typography.titleSmall)
+                                    Text(
+                                        "Lip Color Analysis",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = M3OnSurface
+                                    )
                                     Text(
                                         session!!.lipColorCategory ?: "Unknown",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = M3OnSurface
                                     )
                                     Text(
                                         session!!.lipColorHex!!,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = M3OnSurfaceVariant
                                     )
                                 }
                             }
@@ -131,10 +152,15 @@ fun SessionDetailScreen(
 
                     // Equipment used in this session
                     if (sessionEquipment.isNotEmpty()) {
-                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text("Equipment Used", style = MaterialTheme.typography.titleSmall)
-                                Spacer(modifier = Modifier.height(8.dp))
+                        M3ListCard {
+                            Column(modifier = Modifier.padding(spacing.lg)) {
+                                Text(
+                                    "Equipment Used",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = M3OnSurface,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(spacing.sm))
                                 sessionEquipment.forEach { se ->
                                     val eqName = allEquipment.find { it.id == se.equipmentId }?.name ?: "Unknown"
                                     Row(
@@ -142,30 +168,42 @@ fun SessionDetailScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(eqName, style = MaterialTheme.typography.bodyMedium)
+                                            Text(
+                                                eqName,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = M3OnSurface
+                                            )
                                             Text(
                                                 "${se.quantityUsed.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() }} x $${String.format("%.4f", se.costPerPiece)}",
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = M3OnSurfaceVariant
                                             )
                                         }
                                         Text(
                                             "$${String.format("%.2f", se.quantityUsed * se.costPerPiece)}",
-                                            style = MaterialTheme.typography.bodyMedium
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = M3OnSurface
                                         )
                                     }
                                 }
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                Spacer(modifier = Modifier.height(spacing.sm))
+                                M3ListDivider()
+                                Spacer(modifier = Modifier.height(spacing.sm))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Equipment Total", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        "Equipment Total",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = M3OnSurface
+                                    )
                                     Text(
                                         "$${String.format("%.2f", sessionEquipment.sumOf { it.quantityUsed * it.costPerPiece })}",
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = M3Primary
                                     )
                                 }
                             }
@@ -174,10 +212,15 @@ fun SessionDetailScreen(
 
                     // Pigments used in this session
                     if (sessionBottleUsages.isNotEmpty()) {
-                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text("Pigments Used", style = MaterialTheme.typography.titleSmall)
-                                Spacer(modifier = Modifier.height(8.dp))
+                        M3ListCard {
+                            Column(modifier = Modifier.padding(spacing.lg)) {
+                                Text(
+                                    "Pigments Used",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = M3OnSurface,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(spacing.sm))
                                 sessionBottleUsages.forEach { usage ->
                                     val bottleName = allBottles.find { it.id == usage.bottleId }?.pigmentName ?: "Unknown"
                                     val lipAreaText = when (usage.lipArea) {
@@ -190,82 +233,118 @@ fun SessionDetailScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(bottleName, style = MaterialTheme.typography.bodyMedium)
+                                            Text(
+                                                bottleName,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = M3OnSurface
+                                            )
                                             Text(
                                                 "${String.format("%.2f", usage.mlUsed)} ml - $lipAreaText",
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = M3OnSurfaceVariant
                                             )
                                         }
                                         if (usage.costAtTimeOfUse > 0) {
                                             Text(
                                                 "$${String.format("%.2f", usage.costAtTimeOfUse)}",
-                                                style = MaterialTheme.typography.bodyMedium
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = M3OnSurface
                                             )
                                         }
                                     }
                                 }
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                Spacer(modifier = Modifier.height(spacing.sm))
+                                M3ListDivider()
+                                Spacer(modifier = Modifier.height(spacing.sm))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Pigment Total", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        "Pigment Total",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = M3OnSurface
+                                    )
                                     Text(
                                         "$${String.format("%.2f", sessionBottleUsages.sumOf { it.costAtTimeOfUse })}",
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = M3Primary
                                     )
                                 }
                             }
                         }
                     }
 
+                    // Total cost card
                     if (session!!.totalCost > 0) {
-                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text("Total Cost", style = MaterialTheme.typography.titleSmall)
+                        M3ListCard {
+                            Column(modifier = Modifier.padding(spacing.lg)) {
+                                Text(
+                                    "Total Cost",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = M3OnSurfaceVariant
+                                )
                                 Text(
                                     "$${String.format("%.2f", session!!.totalCost)}",
                                     style = MaterialTheme.typography.headlineMedium,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = M3Primary,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
                     }
 
+                    // Duration card
                     if (session!!.durationSeconds > 0) {
-                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text("Session Duration", style = MaterialTheme.typography.titleSmall)
-                                Spacer(modifier = Modifier.height(8.dp))
+                        M3ListCard {
+                            Column(modifier = Modifier.padding(spacing.lg)) {
+                                Text(
+                                    "Session Duration",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = M3OnSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(spacing.sm))
                                 Text(
                                     "Total: ${formatDuration(session!!.durationSeconds)}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    color = M3OnSurface
                                 )
                                 if (session!!.upperLipSeconds > 0) {
                                     Text(
                                         "Upper Lip: ${formatDuration(session!!.upperLipSeconds)}",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = M3OnSurface
                                     )
                                 }
                                 if (session!!.lowerLipSeconds > 0) {
                                     Text(
                                         "Lower Lip: ${formatDuration(session!!.lowerLipSeconds)}",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = M3OnSurface
                                     )
                                 }
                             }
                         }
                     }
 
+                    // Notes card
                     if (session!!.notes.isNotBlank()) {
-                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text("Notes", style = MaterialTheme.typography.titleSmall)
-                                Text(session!!.notes, style = MaterialTheme.typography.bodyMedium)
+                        M3ListCard {
+                            Column(modifier = Modifier.padding(spacing.lg)) {
+                                Text(
+                                    "Notes",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = M3OnSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(spacing.xs))
+                                Text(
+                                    session!!.notes,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = M3OnSurface
+                                )
                             }
                         }
                     }
@@ -275,10 +354,4 @@ fun SessionDetailScreen(
     }
 }
 
-private fun formatDuration(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
-    return if (h > 0) String.format("%02d:%02d:%02d", h, m, s)
-    else String.format("%02d:%02d", m, s)
-}
+private fun formatDuration(seconds: Long): String = com.dasurv.util.formatDurationTimer(seconds)

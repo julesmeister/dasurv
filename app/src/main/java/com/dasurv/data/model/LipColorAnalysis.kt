@@ -1,5 +1,8 @@
 package com.dasurv.data.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class LipColorAnalysis(
     val dominantColorHex: String,
     val category: LipColorCategory,
@@ -22,6 +25,7 @@ enum class LipColorCategory(val displayName: String) {
     PALE("Pale/Colorless")
 }
 
+@Immutable
 data class DualLipAnalysis(
     val upperLip: LipColorAnalysis?,
     val lowerLip: LipColorAnalysis?

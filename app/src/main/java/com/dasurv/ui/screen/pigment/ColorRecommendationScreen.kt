@@ -3,13 +3,10 @@ package com.dasurv.ui.screen.pigment
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dasurv.ui.component.ColorSwatch
+import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +26,7 @@ fun ColorRecommendationScreen(
     viewModel: PigmentViewModel = hiltViewModel()
 ) {
     val recommendations by viewModel.desiredColorRecommendations.collectAsStateWithLifecycle()
+    val spacing = DasurvTheme.spacing
 
     val presetColors = listOf(
         "#F4A7B9" to "Light Pink",
@@ -44,12 +43,8 @@ fun ColorRecommendationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Color Recommendation") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                }
+                title = { DasurvTopAppBarTitle(title = "Color Recommendation") },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) }
             )
         }
     ) { padding ->
@@ -57,18 +52,19 @@ fun ColorRecommendationScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(spacing.md)
         ) {
             item {
                 Text(
                     "Select Desired Lip Color",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    color = M3OnSurface
                 )
                 Text(
                     "Choose the result color you want to achieve",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = M3OnSurfaceVariant
                 )
             }
 
@@ -93,51 +89,66 @@ fun ColorRecommendationScreen(
 
             if (recommendations.isNotEmpty()) {
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(spacing.sm))
                     Text(
                         "Recommended Pigments",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        color = M3OnSurface
                     )
                 }
 
-                items(recommendations) { rec ->
-                    Card(modifier = Modifier.fillMaxWidth().animateItem()) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
+                item {
+                    M3ListCard {
+                        recommendations.forEachIndexed { index, rec ->
+                            Row(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        try {
-                                            Color(android.graphics.Color.parseColor(rec.pigment.colorHex))
-                                        } catch (e: Exception) {
-                                            Color.Gray
-                                        }
-                                    )
-                                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(rec.pigment.name, style = MaterialTheme.typography.titleSmall)
-                                Text(
-                                    rec.pigment.brand.displayName,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    .fillMaxWidth()
+                                    .animateItem()
+                                    .padding(horizontal = spacing.lg, vertical = spacing.md),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            remember(rec.pigment.colorHex) {
+                                                try {
+                                                    Color(android.graphics.Color.parseColor(rec.pigment.colorHex))
+                                                } catch (e: Exception) {
+                                                    Color.Gray
+                                                }
+                                            }
+                                        )
+                                        .border(1.dp, M3Outline, CircleShape)
                                 )
+                                Spacer(modifier = Modifier.width(spacing.md))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        rec.pigment.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = M3OnSurface
+                                    )
+                                    Text(
+                                        rec.pigment.brand.displayName,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = M3OnSurfaceVariant
+                                    )
+                                    Text(
+                                        rec.reason,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = M3OnSurfaceVariant
+                                    )
+                                }
                                 Text(
-                                    rec.reason,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    "${(rec.matchScore * 100).toInt()}%",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = M3Primary
                                 )
                             }
-                            Text(
-                                "${(rec.matchScore * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            if (index < recommendations.lastIndex) {
+                                M3ListDivider()
+                            }
                         }
                     }
                 }

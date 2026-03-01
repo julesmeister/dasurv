@@ -18,6 +18,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @Composable
@@ -29,19 +30,28 @@ internal fun CameraPreview(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    val faceDetector = androidx.compose.runtime.remember {
+        val options = FaceDetectorOptions.Builder()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+            .setMinFaceSize(0.3f)
+            .build()
+        FaceDetection.getClient(options)
+    }
+    val executor = androidx.compose.runtime.remember { Executors.newSingleThreadExecutor() as ExecutorService }
+
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose {
+            faceDetector.close()
+            executor.shutdown()
+        }
+    }
+
     AndroidView(
         factory = { ctx ->
             val previewView = PreviewView(ctx)
             val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-            val executor = Executors.newSingleThreadExecutor()
-
-            val faceDetectorOptions = FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-                .setMinFaceSize(0.3f)
-                .build()
-            val faceDetector = FaceDetection.getClient(faceDetectorOptions)
 
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()

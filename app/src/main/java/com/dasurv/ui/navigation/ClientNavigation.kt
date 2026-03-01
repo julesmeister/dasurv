@@ -15,7 +15,7 @@ internal fun NavGraphBuilder.clientRoutes(navController: NavController) {
     composable(Routes.CLIENT_LIST) {
         ClientListScreen(
             onNavigateBack = { navController.popBackStack() },
-            onNavigateToClient = { id -> navController.navigate("client/$id") },
+            onNavigateToClient = { id -> navController.navigate(Routes.clientDetail(id)) },
             onNavigateToAddClient = { navController.navigate(Routes.ADD_CLIENT) }
         )
     }
@@ -46,15 +46,15 @@ internal fun NavGraphBuilder.clientRoutes(navController: NavController) {
         ClientDetailScreen(
             clientId = clientId,
             onNavigateBack = { navController.popBackStack() },
-            onNavigateToEditClient = { id -> navController.navigate("client/edit/$id") },
-            onNavigateToSession = { id -> navController.navigate("session/$id") },
-            onNavigateToNewSession = { id -> navController.navigate("session/new/$id") },
-            onNavigateToBookAppointment = { id -> navController.navigate("appointment/add/client/$id") },
-            onNavigateToAppointmentDetail = { id -> navController.navigate("appointment/$id") },
-            onNavigateToLipCamera = { id -> navController.navigate("camera/$id") },
-            onNavigateToLipPhotoGallery = { id -> navController.navigate("client/$id/lip-photos") },
-            onNavigateToTryOn = { id -> navController.navigate("client/$id/try-on") },
-            onNavigateToTransactions = { id -> navController.navigate("client/$id/transactions") }
+            onNavigateToEditClient = { id -> navController.navigate(Routes.editClient(id)) },
+            onNavigateToSession = { id -> navController.navigate(Routes.sessionDetail(id)) },
+            onNavigateToNewSession = { id -> navController.navigate(Routes.newSession(id)) },
+            onNavigateToBookAppointment = { id -> navController.navigate(Routes.addAppointmentForClient(id)) },
+            onNavigateToAppointmentDetail = { id -> navController.navigate(Routes.appointmentDetail(id)) },
+            onNavigateToLipCamera = { id -> navController.navigate(Routes.cameraWithClient(id)) },
+            onNavigateToLipPhotoGallery = { id -> navController.navigate(Routes.lipPhotoGallery(id)) },
+            onNavigateToTryOn = { id -> navController.navigate(Routes.clientTryOn(id)) },
+            onNavigateToTransactions = { id -> navController.navigate(Routes.clientTransactions(id)) }
         )
     }
 
@@ -66,7 +66,7 @@ internal fun NavGraphBuilder.clientRoutes(navController: NavController) {
         TransactionListScreen(
             clientId = clientId,
             onNavigateBack = { navController.popBackStack() },
-            onNavigateToAddTransaction = { id -> navController.navigate("client/$id/transactions/add") }
+            onNavigateToAddTransaction = { id -> navController.navigate(Routes.addTransaction(id)) }
         )
     }
 

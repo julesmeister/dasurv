@@ -37,7 +37,7 @@ internal fun LipPhotoCard(
     onUpdateCaptureType: (CaptureType, String?) -> Unit,
     onDelete: () -> Unit
 ) {
-    val dateFormat = SimpleDateFormat("MMM dd, yyyy h:mm a", Locale.getDefault())
+    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy h:mm a", Locale.getDefault()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showNotesDialog by remember { mutableStateOf(false) }
     var showCaptureTypeMenu by remember { mutableStateOf(false) }

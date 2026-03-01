@@ -13,7 +13,7 @@ internal fun NavGraphBuilder.equipmentRoutes(navController: NavController) {
         EquipmentListScreen(
             onNavigateBack = { navController.popBackStack() },
             onNavigateToAddEquipment = { navController.navigate(Routes.ADD_EQUIPMENT) },
-            onNavigateToEditEquipment = { id -> navController.navigate("equipment/edit/$id") }
+            onNavigateToEditEquipment = { id -> navController.navigate(Routes.editEquipment(id)) }
         )
     }
 

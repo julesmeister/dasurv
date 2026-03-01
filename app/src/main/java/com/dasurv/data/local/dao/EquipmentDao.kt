@@ -22,8 +22,14 @@ interface EquipmentDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEquipment(equipment: Equipment): Long
 
+    @Query("SELECT * FROM equipment WHERE id IN (:ids)")
+    suspend fun getEquipmentByIds(ids: List<Long>): List<Equipment>
+
     @Update
     suspend fun updateEquipment(equipment: Equipment)
+
+    @Update
+    suspend fun updateEquipmentBatch(equipment: List<Equipment>)
 
     @Delete
     suspend fun deleteEquipment(equipment: Equipment)
@@ -37,4 +43,11 @@ interface EquipmentDao {
 
     @Delete
     suspend fun deleteUsage(usage: EquipmentUsage)
+
+    @Transaction
+    suspend fun insertUsageAndDeductStock(usage: EquipmentUsage) {
+        insertUsage(usage)
+        val eq = getEquipmentById(usage.equipmentId) ?: return
+        updateEquipment(eq.copy(stockQuantity = (eq.stockQuantity - usage.quantityUsed.toInt()).coerceAtLeast(0)))
+    }
 }

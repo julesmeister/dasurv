@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dasurv.data.local.entity.ClientTransaction
 import com.dasurv.data.repository.TransactionRepository
-import com.dasurv.ui.screen.client.FinancialSummary
+import com.dasurv.data.model.FinancialSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -25,13 +25,7 @@ class TransactionViewModel @Inject constructor(
 
     val summary: StateFlow<FinancialSummary> = _clientId.flatMapLatest { id ->
         if (id == 0L) flowOf(FinancialSummary())
-        else combine(
-            transactionRepository.getTotalChargedForClient(id),
-            transactionRepository.getTotalPaidForClient(id),
-            transactionRepository.getBalanceForClient(id)
-        ) { charged, paid, balance ->
-            FinancialSummary(totalCharged = charged, totalPaid = paid, balance = balance)
-        }
+        else transactionRepository.getFinancialSummary(id)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), FinancialSummary())
 
     fun loadClient(clientId: Long) {

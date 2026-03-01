@@ -51,6 +51,33 @@ object Routes {
     const val PIGMENT_SUMMARY = "pigment-summary/{photoId}"
     const val CLIENT_TRANSACTIONS = "client/{clientId}/transactions"
     const val ADD_TRANSACTION = "client/{clientId}/transactions/add"
+
+    // Builder functions for parameterized routes
+    fun cameraWithClient(clientId: Long) = "camera/$clientId"
+    fun clientDetail(clientId: Long) = "client/$clientId"
+    fun editClient(clientId: Long) = "client/edit/$clientId"
+    fun newSession(clientId: Long) = "session/new/$clientId"
+    fun sessionDetail(sessionId: Long) = "session/$sessionId"
+    fun appointmentDetail(appointmentId: Long) = "appointment/$appointmentId"
+    fun editAppointment(appointmentId: Long) = "appointment/edit/$appointmentId"
+    fun addAppointmentForClient(clientId: Long) = "appointment/add/client/$clientId"
+    fun addAppointmentForDay(dateTime: Long) = "appointment/add/day/$dateTime"
+    fun lipPhotoGallery(clientId: Long) = "client/$clientId/lip-photos"
+    fun clientTryOn(clientId: Long) = "client/$clientId/try-on"
+    fun captureResult(photoId: Long) = "capture-result/$photoId"
+    fun demoResult(photoPath: String) = "demo-result?path=${java.net.URLEncoder.encode(photoPath, "UTF-8")}"
+    fun editEquipment(equipmentId: Long) = "equipment/edit/$equipmentId"
+    fun editPigmentStock(equipmentId: Long) = "pigment-inventory/edit-stock/$equipmentId"
+    fun editPigmentBottle(bottleId: Long) = "pigment-inventory/edit/$bottleId"
+    fun pigmentSummary(photoId: Long) = "pigment-summary/$photoId"
+    fun clientTransactions(clientId: Long) = "client/$clientId/transactions"
+    fun addTransaction(clientId: Long) = "client/$clientId/transactions/add"
+    fun addPigmentStockFromCatalog(name: String, brand: String, colorHex: String): String {
+        val encodedName = java.net.URLEncoder.encode(name, "UTF-8")
+        val encodedBrand = java.net.URLEncoder.encode(brand, "UTF-8")
+        val encodedColor = java.net.URLEncoder.encode(colorHex, "UTF-8")
+        return "pigment-inventory/add-stock?name=$encodedName&brand=$encodedBrand&colorHex=$encodedColor"
+    }
 }
 
 private const val TRANSITION_DURATION = 300
@@ -63,7 +90,7 @@ fun NavGraph(appointmentId: Long? = null) {
 
     LaunchedEffect(appointmentId) {
         if (appointmentId != null) {
-            navController.navigate("appointment/$appointmentId") {
+            navController.navigate(Routes.appointmentDetail(appointmentId)) {
                 launchSingleTop = true
             }
         }

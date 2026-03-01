@@ -6,9 +6,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material3.*
@@ -16,13 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.model.Pigment
 import com.dasurv.data.model.PigmentBrand
-import com.dasurv.ui.component.ColorSwatch
+import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +34,7 @@ fun PigmentCatalogueScreen(
     val pigments by viewModel.pigments.collectAsStateWithLifecycle()
     val selectedBrand by viewModel.selectedBrand.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val spacing = DasurvTheme.spacing
 
     var selectedPigment by remember { mutableStateOf<Pigment?>(null) }
 
@@ -55,15 +54,11 @@ fun PigmentCatalogueScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text("Pigment Catalogue") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
+                title = { DasurvTopAppBarTitle(title = "Pigment Catalogue") },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = {
                     IconButton(onClick = onNavigateToPigmentInventory) {
-                        Icon(Icons.Default.Opacity, "Pigment Inventory")
+                        Icon(Icons.Default.Opacity, "Pigment Inventory", tint = M3OnSurface)
                     }
                 },
                 scrollBehavior = scrollBehavior
@@ -72,11 +67,8 @@ fun PigmentCatalogueScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNavigateToRecommendation,
-                shape = RoundedCornerShape(16.dp),
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp
-                )
+                containerColor = M3Primary,
+                contentColor = androidx.compose.ui.graphics.Color.White
             ) {
                 Text("Color Match")
             }
@@ -92,8 +84,8 @@ fun PigmentCatalogueScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = spacing.lg, vertical = spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
             ) {
                 val allBrands = listOf<PigmentBrand?>(null) + PigmentBrand.entries
                 allBrands.forEach { brand ->
@@ -101,16 +93,12 @@ fun PigmentCatalogueScreen(
                     FilledTonalButton(
                         onClick = { viewModel.selectBrand(brand) },
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = if (isSelected)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = if (isSelected)
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
+                            containerColor = if (isSelected) M3PrimaryContainer
+                            else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = if (isSelected) M3Primary
+                            else M3OnSurfaceVariant
                         ),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
                     ) {
                         Text(
                             text = brand?.displayName ?: "All",
@@ -122,16 +110,16 @@ fun PigmentCatalogueScreen(
 
             Text(
                 "${pigments.size} colors",
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = spacing.lg),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = M3OnSurfaceVariant
             )
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(4),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(spacing.lg),
+                horizontalArrangement = Arrangement.spacedBy(spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(spacing.sm)
             ) {
                 items(pigments) { pigment ->
                     ColorSwatch(
@@ -151,22 +139,30 @@ private fun PigmentDetailDialog(
     onDismiss: () -> Unit,
     onAddToInventory: () -> Unit
 ) {
+    val spacing = DasurvTheme.spacing
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(pigment.name) },
+        title = { Text(pigment.name, color = M3OnSurface) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ColorSwatch(colorHex = pigment.colorHex, label = "")
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(spacing.md))
                     Column {
-                        Text(pigment.brand.displayName, style = MaterialTheme.typography.bodyMedium)
-                        Text(pigment.colorHex, style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            pigment.brand.displayName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = M3OnSurface
+                        )
+                        Text(
+                            pigment.colorHex,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = M3OnSurfaceVariant
+                        )
                     }
                 }
                 if (pigment.undertone.isNotBlank() || pigment.intensity.isNotBlank()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                         if (pigment.undertone.isNotBlank()) {
                             AssistChip(
                                 onClick = {},
@@ -184,20 +180,26 @@ private fun PigmentDetailDialog(
                     }
                 }
                 if (pigment.description.isNotBlank()) {
-                    Text(pigment.description, style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        pigment.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = M3OnSurfaceVariant
+                    )
                 }
             }
         },
         confirmButton = {
-            Button(onClick = onAddToInventory) {
+            Button(
+                onClick = onAddToInventory,
+                colors = ButtonDefaults.buttonColors(containerColor = M3Primary)
+            ) {
                 Icon(Icons.Default.Opacity, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Add to Inventory")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text("Close", color = M3OnSurfaceVariant) }
         }
     )
 }

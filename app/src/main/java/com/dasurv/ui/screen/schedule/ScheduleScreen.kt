@@ -7,25 +7,29 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.AppointmentStatus
 import com.dasurv.data.model.AppointmentWithClient
 import com.dasurv.data.model.CalendarDay
-import com.dasurv.ui.component.CardPosition
+import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,112 +42,139 @@ fun ScheduleScreen(
     onNavigateToAppointmentDetail: (Long) -> Unit,
     viewModel: ScheduleViewModel = hiltViewModel()
 ) {
+    val spacing = DasurvTheme.spacing
     val calendarMonth by viewModel.calendarMonth.collectAsStateWithLifecycle()
     val selectedDay by viewModel.selectedDayOfMonth.collectAsStateWithLifecycle()
     val selectedDayAppointments by viewModel.selectedDayAppointments.collectAsStateWithLifecycle()
     val year by viewModel.currentYear.collectAsStateWithLifecycle()
     val month by viewModel.currentMonth.collectAsStateWithLifecycle()
 
-    val monthName = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).run {
-        val cal = Calendar.getInstance().apply { set(year, month, 1) }
-        format(cal.time)
+    val monthName = remember(year, month) {
+        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).run {
+            val cal = Calendar.getInstance().apply { set(year, month, 1) }
+            format(cal.time)
+        }
     }
 
     Scaffold(
+        containerColor = M3SurfaceContainer,
         topBar = {
             TopAppBar(
-                title = { Text("Schedule") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                }
+                title = { DasurvTopAppBarTitle("Schedule") },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = M3SurfaceContainer
+                )
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            DasurvAddFab(
                 onClick = onNavigateToAddAppointment,
-                shape = RoundedCornerShape(16.dp),
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp
-                )
-            ) {
-                Icon(Icons.Default.Add, "Add Appointment")
-            }
+                contentDescription = "Add Appointment"
+            )
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            contentPadding = PaddingValues(spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
-            // Month navigation
+            // Calendar card: month navigation + grid
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { viewModel.navigateMonth(-1) }) {
-                        Icon(Icons.Default.ChevronLeft, "Previous month")
-                    }
-                    Text(
-                        text = monthName,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    IconButton(onClick = { viewModel.navigateMonth(1) }) {
-                        Icon(Icons.Default.ChevronRight, "Next month")
-                    }
-                }
-            }
-
-            // Day of week headers
-            item {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
+                M3ListCard {
+                    // Month navigation
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = spacing.sm, vertical = spacing.xs),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { viewModel.navigateMonth(-1) }) {
+                            Icon(
+                                Icons.Default.ChevronLeft,
+                                contentDescription = "Previous month",
+                                tint = M3OnSurface
+                            )
+                        }
                         Text(
-                            text = day,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = monthName,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = M3OnSurface
                         )
+                        IconButton(onClick = { viewModel.navigateMonth(1) }) {
+                            Icon(
+                                Icons.Default.ChevronRight,
+                                contentDescription = "Next month",
+                                tint = M3OnSurface
+                            )
+                        }
                     }
-                }
-            }
 
-            // Calendar grid (6 rows)
-            val rows = calendarMonth.days.chunked(7)
-            items(rows.size) { rowIndex ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    rows[rowIndex].forEach { day ->
-                        CalendarDayCell(
-                            day = day,
-                            isSelected = day.isCurrentMonth && day.dayOfMonth == selectedDay,
-                            onClick = {
-                                if (day.isCurrentMonth) viewModel.selectDay(day.dayOfMonth)
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
+                    // Day of week headers
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = spacing.sm)
+                    ) {
+                        listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
+                            Text(
+                                text = day,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Center,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = M3OnSurfaceVariant
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(spacing.xs))
+
+                    // Calendar grid (6 rows)
+                    val rows = calendarMonth.days.chunked(7)
+                    rows.forEach { row ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = spacing.xs)
+                        ) {
+                            row.forEach { day ->
+                                CalendarDayCell(
+                                    day = day,
+                                    isSelected = day.isCurrentMonth && day.dayOfMonth == selectedDay,
+                                    onClick = {
+                                        if (day.isCurrentMonth) viewModel.selectDay(day.dayOfMonth)
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(spacing.xs))
                 }
             }
 
             // Selected day appointments
             if (selectedDay != null) {
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(spacing.xs))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = spacing.xs),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = "Appointments",
-                            style = MaterialTheme.typography.titleMedium
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = M3OnSurface
                         )
                         TextButton(onClick = {
                             val cal = Calendar.getInstance().apply {
@@ -152,33 +183,36 @@ fun ScheduleScreen(
                             }
                             onNavigateToAddAppointmentForDay(cal.timeInMillis)
                         }) {
-                            Text("+ Add")
+                            Text(
+                                "+ Add",
+                                color = M3Primary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
                         }
                     }
                 }
 
                 if (selectedDayAppointments.isEmpty()) {
                     item {
-                        Text(
-                            "No appointments",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        DasurvEmptyState(
+                            icon = Icons.Default.CalendarToday,
+                            message = "No appointments for this day"
                         )
                     }
                 } else {
-                    items(selectedDayAppointments.size, key = { selectedDayAppointments[it].appointment.id }) { index ->
-                        val awc = selectedDayAppointments[index]
-                        val position = when {
-                            selectedDayAppointments.size == 1 -> CardPosition.Only
-                            index == 0 -> CardPosition.First
-                            index == selectedDayAppointments.lastIndex -> CardPosition.Last
-                            else -> CardPosition.Middle
+                    item {
+                        M3ListCard {
+                            selectedDayAppointments.forEachIndexed { index, awc ->
+                                AppointmentListRow(
+                                    awc = awc,
+                                    onClick = { onNavigateToAppointmentDetail(awc.appointment.id) }
+                                )
+                                if (index < selectedDayAppointments.lastIndex) {
+                                    M3ListDivider()
+                                }
+                            }
                         }
-                        AppointmentCard(
-                            awc = awc,
-                            onClick = { onNavigateToAppointmentDetail(awc.appointment.id) },
-                            position = position
-                        )
                     }
                 }
             }
@@ -193,22 +227,22 @@ private fun CalendarDayCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = MaterialTheme.shapes.small
     val bgColor = when {
-        isSelected -> MaterialTheme.colorScheme.primaryContainer
-        day.isToday -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-        else -> MaterialTheme.colorScheme.surface
+        isSelected -> M3PrimaryContainer
+        day.isToday -> M3PrimaryContainer.copy(alpha = 0.4f)
+        else -> Color.Transparent
     }
     val textColor = when {
-        !day.isCurrentMonth -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-        isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
-        else -> MaterialTheme.colorScheme.onSurface
+        !day.isCurrentMonth -> M3OnSurface.copy(alpha = 0.25f)
+        isSelected -> M3Primary
+        day.isToday -> M3Primary
+        else -> M3OnSurface
     }
 
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .clip(shape)
+            .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
             .clickable(enabled = day.isCurrentMonth, onClick = onClick),
         contentAlignment = Alignment.Center
@@ -216,7 +250,8 @@ private fun CalendarDayCell(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = day.dayOfMonth.toString(),
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 13.sp,
+                fontWeight = if (isSelected || day.isToday) FontWeight.Bold else FontWeight.Normal,
                 color = textColor
             )
             if (day.appointments.isNotEmpty() && day.isCurrentMonth) {
@@ -224,7 +259,7 @@ private fun CalendarDayCell(
                     modifier = Modifier
                         .size(4.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
+                        .background(if (isSelected) M3Primary else M3AmberColor)
                 )
             }
         }
@@ -232,86 +267,71 @@ private fun CalendarDayCell(
 }
 
 @Composable
-private fun AppointmentCard(
+private fun AppointmentListRow(
     awc: AppointmentWithClient,
-    onClick: () -> Unit,
-    position: CardPosition
+    onClick: () -> Unit
 ) {
-    val largeRadius = 24.dp
-    val smallRadius = 6.dp
-
-    val shape = when (position) {
-        CardPosition.Only -> RoundedCornerShape(largeRadius)
-        CardPosition.First -> RoundedCornerShape(
-            topStart = largeRadius, topEnd = largeRadius,
-            bottomStart = smallRadius, bottomEnd = smallRadius
-        )
-        CardPosition.Middle -> RoundedCornerShape(smallRadius)
-        CardPosition.Last -> RoundedCornerShape(
-            topStart = smallRadius, topEnd = smallRadius,
-            bottomStart = largeRadius, bottomEnd = largeRadius
-        )
-    }
-
     val statusColor = when (awc.appointment.status) {
-        AppointmentStatus.SCHEDULED -> MaterialTheme.colorScheme.primary
-        AppointmentStatus.COMPLETED -> MaterialTheme.colorScheme.tertiary
-        AppointmentStatus.CANCELLED -> MaterialTheme.colorScheme.outline
-        AppointmentStatus.NO_SHOW -> MaterialTheme.colorScheme.error
+        AppointmentStatus.SCHEDULED -> M3Primary
+        AppointmentStatus.COMPLETED -> M3GreenColor
+        AppointmentStatus.CANCELLED -> M3OnSurfaceVariant
+        AppointmentStatus.NO_SHOW -> M3RedColor
+    }
+    val statusContainerColor = when (awc.appointment.status) {
+        AppointmentStatus.SCHEDULED -> M3PrimaryContainer
+        AppointmentStatus.COMPLETED -> M3GreenContainer
+        AppointmentStatus.CANCELLED -> M3FieldBg
+        AppointmentStatus.NO_SHOW -> M3RedContainer
     }
 
-    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+    val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
     val durationText = formatDuration(awc.appointment.durationMinutes)
 
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = shape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // Time badge
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(statusContainerColor)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center
         ) {
-            // Status indicator
-            Box(
-                modifier = Modifier
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(statusColor.copy(alpha = 0.12f))
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
+            Text(
+                text = timeFormat.format(Date(awc.appointment.scheduledDateTime)),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = statusColor
+            )
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = awc.clientName,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = M3OnSurface
+            )
+            if (awc.appointment.procedureType.isNotBlank()) {
                 Text(
-                    timeFormat.format(Date(awc.appointment.scheduledDateTime)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = statusColor
+                    text = awc.appointment.procedureType,
+                    fontSize = 12.sp,
+                    color = M3OnSurfaceVariant
                 )
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = awc.clientName,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                if (awc.appointment.procedureType.isNotBlank()) {
-                    Text(
-                        text = awc.appointment.procedureType,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Text(
-                    text = "$durationText  ·  ${awc.appointment.status.name.lowercase()
-                        .replaceFirstChar { it.uppercase() }}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Text(
+                text = "$durationText  ·  ${awc.appointment.status.name.lowercase()
+                    .replaceFirstChar { it.uppercase() }}",
+                fontSize = 12.sp,
+                color = M3OnSurfaceVariant
+            )
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.dasurv.data.local.entity
 
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -13,6 +14,7 @@ enum class PaymentMethod {
     CASH, CARD, E_TRANSFER, OTHER
 }
 
+@Stable
 @Entity(
     tableName = "client_transactions",
     foreignKeys = [

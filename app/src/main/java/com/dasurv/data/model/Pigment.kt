@@ -1,5 +1,8 @@
 package com.dasurv.data.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class Pigment(
     val name: String,
     val brand: PigmentBrand,

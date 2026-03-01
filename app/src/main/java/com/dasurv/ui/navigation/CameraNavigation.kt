@@ -13,10 +13,10 @@ internal fun NavGraphBuilder.cameraRoutes(navController: NavController) {
             onNavigateBack = { navController.popBackStack() },
             preselectedClientId = null,
             onNavigateToCaptureResult = { photoId ->
-                navController.navigate("capture-result/$photoId")
+                navController.navigate(Routes.captureResult(photoId))
             },
             onNavigateToDemoResult = { path ->
-                navController.navigate("demo-result?path=${java.net.URLEncoder.encode(path, "UTF-8")}")
+                navController.navigate(Routes.demoResult(path))
             }
         )
     }
@@ -30,10 +30,10 @@ internal fun NavGraphBuilder.cameraRoutes(navController: NavController) {
             onNavigateBack = { navController.popBackStack() },
             preselectedClientId = clientId,
             onNavigateToCaptureResult = { photoId ->
-                navController.navigate("capture-result/$photoId")
+                navController.navigate(Routes.captureResult(photoId))
             },
             onNavigateToDemoResult = { path ->
-                navController.navigate("demo-result?path=${java.net.URLEncoder.encode(path, "UTF-8")}")
+                navController.navigate(Routes.demoResult(path))
             }
         )
     }

@@ -170,10 +170,10 @@ class ScheduleViewModel @Inject constructor(
         cal.add(Calendar.MONTH, -1)
         val daysInPrevMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
 
+        val groupCal = Calendar.getInstance()
         val appointmentsByDay = appointments.groupBy { appt ->
-            val c = Calendar.getInstance()
-            c.timeInMillis = appt.scheduledDateTime
-            c.get(Calendar.DAY_OF_MONTH)
+            groupCal.timeInMillis = appt.scheduledDateTime
+            groupCal.get(Calendar.DAY_OF_MONTH)
         }
 
         val days = mutableListOf<CalendarDay>()

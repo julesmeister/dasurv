@@ -1,10 +1,16 @@
 package com.dasurv.data.local.entity
 
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.Ignore
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "pigment_bottles")
+@Stable
+@Entity(
+    tableName = "pigment_bottles",
+    indices = [Index("remainingMl"), Index("pigmentName", "pigmentBrand")]
+)
 data class PigmentBottle(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val pigmentName: String,

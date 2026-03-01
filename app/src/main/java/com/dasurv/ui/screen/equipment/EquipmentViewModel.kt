@@ -54,20 +54,13 @@ class EquipmentViewModel @Inject constructor(
 
     fun logUsage(equipmentId: Long, quantity: Double, notes: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            equipmentRepository.insertUsage(
+            equipmentRepository.insertUsageAndDeductStock(
                 EquipmentUsage(
                     equipmentId = equipmentId,
                     quantityUsed = quantity,
                     notes = notes
                 )
             )
-            // Deduct from stock
-            val eq = equipmentRepository.getEquipmentById(equipmentId)
-            if (eq != null) {
-                equipmentRepository.updateEquipment(
-                    eq.copy(stockQuantity = (eq.stockQuantity - quantity.toInt()).coerceAtLeast(0))
-                )
-            }
             onSuccess()
         }
     }

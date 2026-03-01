@@ -12,13 +12,18 @@ import com.dasurv.util.ColorMatcher
 import com.dasurv.util.LipColorAnalyzer
 import com.google.mlkit.vision.face.Face
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class LipCameraViewModel @Inject constructor(
     private val lipColorAnalyzer: LipColorAnalyzer,
@@ -28,6 +33,11 @@ class LipCameraViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val faceDetectionHelper = FaceDetectionHelper(lipColorAnalyzer)
+
+    override fun onCleared() {
+        super.onCleared()
+        faceDetectionHelper.close()
+    }
 
     private val _lipAnalysis = MutableStateFlow<LipColorAnalysis?>(null)
     val lipAnalysis: StateFlow<LipColorAnalysis?> = _lipAnalysis
@@ -48,8 +58,12 @@ class LipCameraViewModel @Inject constructor(
     private val _clientSearchQuery = MutableStateFlow("")
     val clientSearchQuery: StateFlow<String> = _clientSearchQuery
 
-    private val _clientSearchResults = MutableStateFlow<List<Client>>(emptyList())
-    val clientSearchResults: StateFlow<List<Client>> = _clientSearchResults
+    val clientSearchResults: StateFlow<List<Client>> = _clientSearchQuery
+        .flatMapLatest { query ->
+            if (query.isBlank()) clientRepository.getAllClients()
+            else clientRepository.searchClients("%$query%")
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Capture settings
     private val _captureType = MutableStateFlow(CaptureType.BEFORE)
@@ -88,6 +102,9 @@ class LipCameraViewModel @Inject constructor(
     private val _captureSuccess = MutableStateFlow(false)
     val captureSuccess: StateFlow<Boolean> = _captureSuccess
 
+    private val _captureError = MutableStateFlow<String?>(null)
+    val captureError: StateFlow<String?> = _captureError
+
     // Gallery mode
     private val _galleryMode = MutableStateFlow(false)
     val galleryMode: StateFlow<Boolean> = _galleryMode
@@ -124,19 +141,10 @@ class LipCameraViewModel @Inject constructor(
 
     fun updateClientSearch(query: String) {
         _clientSearchQuery.value = query
-        viewModelScope.launch {
-            if (query.isBlank()) {
-                clientRepository.getAllClients().collect { _clientSearchResults.value = it }
-            } else {
-                clientRepository.searchClients("%$query%").collect { _clientSearchResults.value = it }
-            }
-        }
     }
 
     fun loadAllClients() {
-        viewModelScope.launch {
-            clientRepository.getAllClients().collect { _clientSearchResults.value = it }
-        }
+        _clientSearchQuery.value = ""
     }
 
     fun setImageRotation(rotation: Int, isFrontCamera: Boolean) {
@@ -151,30 +159,32 @@ class LipCameraViewModel @Inject constructor(
         _detectedFace.value = face
         lastBitmap = bitmap
 
-        // Try dual analysis first (contour-based)
-        val dual = lipColorAnalyzer.analyzeDualLipColor(bitmap, face)
-        if (dual != null) {
-            _dualAnalysis.value = dual
-            // Use upper lip for legacy single analysis display
-            _lipAnalysis.value = dual.upperLip ?: dual.lowerLip
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            // Try dual analysis first (contour-based)
+            val dual = lipColorAnalyzer.analyzeDualLipColor(bitmap, face)
+            if (dual != null) {
+                _dualAnalysis.value = dual
+                // Use upper lip for legacy single analysis display
+                _lipAnalysis.value = dual.upperLip ?: dual.lowerLip
 
-            dual.upperLip?.let { upper ->
-                _upperLipRecommendations.value = colorMatcher.getCorrectiveRecommendations(upper)
-            }
-            dual.lowerLip?.let { lower ->
-                _lowerLipRecommendations.value = colorMatcher.getCorrectiveRecommendations(lower)
-            }
-            // Combined recommendations
-            val primary = dual.upperLip ?: dual.lowerLip
-            if (primary != null) {
-                _recommendations.value = colorMatcher.getCorrectiveRecommendations(primary)
-            }
-        } else {
-            // Fallback to landmark-based analysis
-            val analysis = lipColorAnalyzer.analyzeLipColor(bitmap, face)
-            if (analysis != null) {
-                _lipAnalysis.value = analysis
-                _recommendations.value = colorMatcher.getCorrectiveRecommendations(analysis)
+                dual.upperLip?.let { upper ->
+                    _upperLipRecommendations.value = colorMatcher.getCorrectiveRecommendations(upper)
+                }
+                dual.lowerLip?.let { lower ->
+                    _lowerLipRecommendations.value = colorMatcher.getCorrectiveRecommendations(lower)
+                }
+                // Combined recommendations
+                val primary = dual.upperLip ?: dual.lowerLip
+                if (primary != null) {
+                    _recommendations.value = colorMatcher.getCorrectiveRecommendations(primary)
+                }
+            } else {
+                // Fallback to landmark-based analysis
+                val analysis = lipColorAnalyzer.analyzeLipColor(bitmap, face)
+                if (analysis != null) {
+                    _lipAnalysis.value = analysis
+                    _recommendations.value = colorMatcher.getCorrectiveRecommendations(analysis)
+                }
             }
         }
     }
@@ -263,7 +273,7 @@ class LipCameraViewModel @Inject constructor(
                 _navigationEvent.value = NavigationEvent.ToCaptureResult(photoId)
                 _captureSuccess.value = true
             } catch (e: Exception) {
-                // Capture failed silently
+                _captureError.value = e.message ?: "Capture failed"
             } finally {
                 _captureInProgress.value = false
             }
@@ -284,8 +294,8 @@ class LipCameraViewModel @Inject constructor(
                 )
                 _navigationEvent.value = NavigationEvent.ToDemoResult(path)
                 _captureSuccess.value = true
-            } catch (_: Exception) {
-                // Demo capture failed silently
+            } catch (e: Exception) {
+                _captureError.value = e.message ?: "Capture failed"
             } finally {
                 _captureInProgress.value = false
             }
@@ -294,6 +304,10 @@ class LipCameraViewModel @Inject constructor(
 
     fun dismissCaptureSuccess() {
         _captureSuccess.value = false
+    }
+
+    fun dismissCaptureError() {
+        _captureError.value = null
     }
 
     fun analyzeGalleryPhoto(bitmap: Bitmap) {

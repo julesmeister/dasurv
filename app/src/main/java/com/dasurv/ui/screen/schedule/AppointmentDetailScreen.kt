@@ -1,21 +1,30 @@
 package com.dasurv.ui.screen.schedule
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import com.dasurv.ui.component.DasurvConfirmDialog
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.AppointmentStatus
+import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,6 +37,7 @@ fun AppointmentDetailScreen(
     onNavigateToSession: (Long) -> Unit,
     viewModel: ScheduleViewModel = hiltViewModel()
 ) {
+    val spacing = DasurvTheme.spacing
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     // Reload when screen resumes (including returning from edit)
@@ -63,109 +73,248 @@ fun AppointmentDetailScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        containerColor = M3SurfaceContainer,
         topBar = {
             TopAppBar(
-                title = { Text("Appointment") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
+                title = { DasurvTopAppBarTitle("Appointment") },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = {
                     IconButton(onClick = { onNavigateToEdit(appointmentId) }) {
-                        Icon(Icons.Default.Edit, "Edit")
+                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = M3OnSurface)
                     }
                     IconButton(onClick = { showDeleteDialog = true }) {
-                        Icon(Icons.Default.Delete, "Delete")
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = M3RedColor)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                    containerColor = M3SurfaceContainer
                 )
             )
         }
     ) { padding ->
         val appt = appointment
         if (appt == null) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = M3Primary)
             }
         } else {
-            val dateFormat = SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
-            val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+            val dateFormat = remember { SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault()) }
+            val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
+
+            val statusColor = when (appt.status) {
+                AppointmentStatus.SCHEDULED -> M3Primary
+                AppointmentStatus.COMPLETED -> M3GreenColor
+                AppointmentStatus.CANCELLED -> M3OnSurfaceVariant
+                AppointmentStatus.NO_SHOW -> M3RedColor
+            }
+            val statusContainerColor = when (appt.status) {
+                AppointmentStatus.SCHEDULED -> M3PrimaryContainer
+                AppointmentStatus.COMPLETED -> M3GreenContainer
+                AppointmentStatus.CANCELLED -> M3FieldBg
+                AppointmentStatus.NO_SHOW -> M3RedContainer
+            }
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(spacing.lg)
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    )
-                ) {
+                // Main info card
+                M3ListCard {
+                    // Client name header
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.lg)
                     ) {
-                        Text(clientName, style = MaterialTheme.typography.headlineSmall)
                         Text(
-                            dateFormat.format(Date(appt.scheduledDateTime)),
-                            style = MaterialTheme.typography.titleMedium
+                            text = clientName,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = M3OnSurface
                         )
+                        Spacer(modifier = Modifier.height(spacing.xs))
                         Text(
-                            "${timeFormat.format(Date(appt.scheduledDateTime))} - ${appt.durationMinutes} min",
-                            style = MaterialTheme.typography.bodyLarge
+                            text = dateFormat.format(Date(appt.scheduledDateTime)),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = M3OnSurfaceVariant
                         )
-                        if (appt.procedureType.isNotBlank()) {
-                            Text("Procedure: ${appt.procedureType}", style = MaterialTheme.typography.bodyMedium)
-                        }
-                        if (appt.notes.isNotBlank()) {
-                            Text("Notes: ${appt.notes}", style = MaterialTheme.typography.bodyMedium)
-                        }
+                    }
 
-                        HorizontalDivider()
+                    M3ListDivider()
 
+                    // Time + duration row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = spacing.lg, vertical = spacing.md),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "Time",
+                                fontSize = 12.sp,
+                                color = M3OnSurfaceVariant
+                            )
+                            Text(
+                                text = timeFormat.format(Date(appt.scheduledDateTime)),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = M3OnSurface
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "Duration",
+                                fontSize = 12.sp,
+                                color = M3OnSurfaceVariant
+                            )
+                            Text(
+                                text = "${appt.durationMinutes} min",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = M3OnSurface
+                            )
+                        }
+                    }
+
+                    if (appt.procedureType.isNotBlank()) {
+                        M3ListDivider()
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = spacing.lg, vertical = spacing.md)
                         ) {
-                            Text("Status: ${appt.status.name}", style = MaterialTheme.typography.bodyMedium)
-                            Box {
-                                TextButton(onClick = { showStatusMenu = true }) {
-                                    Text("Change")
-                                }
-                                DropdownMenu(
-                                    expanded = showStatusMenu,
-                                    onDismissRequest = { showStatusMenu = false },
-                                    scrollState = rememberScrollState(),
-                                    shadowElevation = 0.dp
-                                ) {
-                                    AppointmentStatus.entries.forEach { status ->
-                                        DropdownMenuItem(
-                                            text = { Text(status.name) },
-                                            onClick = {
-                                                showStatusMenu = false
-                                                viewModel.updateAppointmentStatus(appt, status) {
-                                                    viewModel.loadAppointment(appointmentId)
-                                                }
+                            Column {
+                                Text(
+                                    text = "Procedure",
+                                    fontSize = 12.sp,
+                                    color = M3OnSurfaceVariant
+                                )
+                                Text(
+                                    text = appt.procedureType,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = M3OnSurface
+                                )
+                            }
+                        }
+                    }
+
+                    if (appt.notes.isNotBlank()) {
+                        M3ListDivider()
+                        Column(
+                            modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.md)
+                        ) {
+                            Text(
+                                text = "Notes",
+                                fontSize = 12.sp,
+                                color = M3OnSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(spacing.xs))
+                            Text(
+                                text = appt.notes,
+                                fontSize = 14.sp,
+                                color = M3OnSurface
+                            )
+                        }
+                    }
+
+                    M3ListDivider()
+
+                    // Status row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = spacing.lg, vertical = spacing.md),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Status",
+                                fontSize = 12.sp,
+                                color = M3OnSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(spacing.xs))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(statusContainerColor)
+                                    .padding(horizontal = 12.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = appt.status.name.lowercase()
+                                        .replaceFirstChar { it.uppercase() },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = statusColor
+                                )
+                            }
+                        }
+                        Box {
+                            TextButton(onClick = { showStatusMenu = true }) {
+                                Text(
+                                    "Change",
+                                    color = M3Primary,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showStatusMenu,
+                                onDismissRequest = { showStatusMenu = false },
+                                scrollState = rememberScrollState(),
+                                shadowElevation = 0.dp
+                            ) {
+                                AppointmentStatus.entries.forEach { status ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                status.name.lowercase()
+                                                    .replaceFirstChar { it.uppercase() },
+                                                color = M3OnSurface
+                                            )
+                                        },
+                                        onClick = {
+                                            showStatusMenu = false
+                                            viewModel.updateAppointmentStatus(appt, status) {
+                                                viewModel.loadAppointment(appointmentId)
                                             }
-                                        )
-                                    }
+                                        }
+                                    )
                                 }
                             }
                         }
+                    }
 
-                        if (appt.reminderEnabled) {
+                    if (appt.reminderEnabled) {
+                        M3ListDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = spacing.lg, vertical = spacing.md),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = M3OnSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(spacing.sm))
                             Text(
-                                "Reminder: ${appt.reminderMinutesBefore} min before",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = "Reminder ${appt.reminderMinutesBefore} min before",
+                                fontSize = 13.sp,
+                                color = M3OnSurfaceVariant
                             )
                         }
                     }
@@ -179,9 +328,19 @@ fun AppointmentDetailScreen(
                                 onNavigateToSession(sessionId)
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = M3Primary,
+                            contentColor = Color.White
+                        ),
+                        contentPadding = PaddingValues(vertical = 16.dp)
                     ) {
-                        Text("Start Session")
+                        Text(
+                            "Start Session",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
                     }
                 }
 
@@ -189,9 +348,15 @@ fun AppointmentDetailScreen(
                 if (appt.sessionId != null) {
                     FilledTonalButton(
                         onClick = { onNavigateToSession(appt.sessionId!!) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(50),
+                        contentPadding = PaddingValues(vertical = 16.dp)
                     ) {
-                        Text("View Session")
+                        Text(
+                            "View Session",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
                     }
                 }
 
@@ -199,27 +364,37 @@ fun AppointmentDetailScreen(
                 if (appt.status == AppointmentStatus.SCHEDULED) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm)
                     ) {
-                        FilledTonalButton(
+                        OutlinedButton(
                             onClick = {
                                 viewModel.updateAppointmentStatus(appt, AppointmentStatus.CANCELLED) {
                                     viewModel.loadAppointment(appointmentId)
                                 }
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = M3OnSurface
+                            ),
+                            contentPadding = PaddingValues(vertical = 14.dp)
                         ) {
-                            Text("Cancel")
+                            Text("Cancel", fontWeight = FontWeight.Medium)
                         }
-                        FilledTonalButton(
+                        OutlinedButton(
                             onClick = {
                                 viewModel.updateAppointmentStatus(appt, AppointmentStatus.NO_SHOW) {
                                     viewModel.loadAppointment(appointmentId)
                                 }
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = M3AmberColor
+                            ),
+                            contentPadding = PaddingValues(vertical = 14.dp)
                         ) {
-                            Text("No Show")
+                            Text("No Show", fontWeight = FontWeight.Medium)
                         }
                     }
                 }

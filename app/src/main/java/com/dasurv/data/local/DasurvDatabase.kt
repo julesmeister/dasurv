@@ -41,8 +41,8 @@ import com.dasurv.data.local.entity.SessionPigment
         PigmentBottleUsage::class,
         ClientTransaction::class
     ],
-    version = 10,
-    exportSchema = false
+    version = 11,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class DasurvDatabase : RoomDatabase() {

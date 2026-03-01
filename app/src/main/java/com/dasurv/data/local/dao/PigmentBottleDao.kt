@@ -23,8 +23,14 @@ interface PigmentBottleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBottle(bottle: PigmentBottle): Long
 
+    @Query("SELECT * FROM pigment_bottles WHERE id IN (:ids)")
+    suspend fun getBottlesByIds(ids: List<Long>): List<PigmentBottle>
+
     @Update
     suspend fun updateBottle(bottle: PigmentBottle)
+
+    @Update
+    suspend fun updateBottleBatch(bottles: List<PigmentBottle>)
 
     @Delete
     suspend fun deleteBottle(bottle: PigmentBottle)

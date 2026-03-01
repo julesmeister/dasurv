@@ -14,9 +14,15 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -52,11 +58,24 @@ class ClientTryOnViewModel @Inject constructor(
     private val _selectedPigment = MutableStateFlow<Pigment?>(null)
     val selectedPigment: StateFlow<Pigment?> = _selectedPigment
 
-    private val _favorites = MutableStateFlow<Set<String>>(emptySet())
-    val favorites: StateFlow<Set<String>> = _favorites
+    private val _clientId = MutableStateFlow<Long?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val favorites: StateFlow<Set<String>> = _clientId
+        .filterNotNull()
+        .flatMapLatest { preferenceRepository.getPreferencesForClient(it) }
+        .map { prefs -> prefs.map { "${it.pigmentName}|${it.pigmentBrand}" }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     private val _showFavoritesOnly = MutableStateFlow(false)
     val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly
+
+    init {
+        // Re-apply filters whenever favorites change
+        viewModelScope.launch {
+            favorites.collect { applyFilters() }
+        }
+    }
 
     private val _detectedFace = MutableStateFlow<Face?>(null)
     val detectedFace: StateFlow<Face?> = _detectedFace
@@ -73,17 +92,15 @@ class ClientTryOnViewModel @Inject constructor(
     private val _dualAnalysis = MutableStateFlow<DualLipAnalysis?>(null)
     val dualAnalysis: StateFlow<DualLipAnalysis?> = _dualAnalysis
 
+    private val _detectionError = MutableStateFlow<String?>(null)
+    val detectionError: StateFlow<String?> = _detectionError
+
     fun loadClient(clientId: Long) {
+        _clientId.value = clientId
         viewModelScope.launch {
             _client.value = clientRepository.getClientById(clientId)
             _allPigments.value = pigmentRepository.getAllPigments()
             applyFilters()
-
-            // Observe favorites
-            preferenceRepository.getPreferencesForClient(clientId).collect { prefs ->
-                _favorites.value = prefs.map { "${it.pigmentName}|${it.pigmentBrand}" }.toSet()
-                applyFilters()
-            }
         }
     }
 
@@ -112,10 +129,11 @@ class ClientTryOnViewModel @Inject constructor(
         _detectedFace.value = face
         _imageWidth.value = bitmap.width
         _imageHeight.value = bitmap.height
-        // Run lip color analysis for blended preview
-        val dual = lipColorAnalyzer.analyzeDualLipColor(bitmap, face)
-        if (dual != null) {
-            _dualAnalysis.value = dual
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            val dual = lipColorAnalyzer.analyzeDualLipColor(bitmap, face)
+            if (dual != null) {
+                _dualAnalysis.value = dual
+            }
         }
     }
 
@@ -155,13 +173,17 @@ class ClientTryOnViewModel @Inject constructor(
                 }
                 detector.close()
             } catch (_: Exception) {
-                // Detection failed silently
+                _detectionError.value = "No face detected in photo"
             }
         }
     }
 
+    fun dismissDetectionError() {
+        _detectionError.value = null
+    }
+
     fun isFavorite(pigment: Pigment): Boolean {
-        return "${pigment.name}|${pigment.brand.displayName}" in _favorites.value
+        return "${pigment.name}|${pigment.brand.displayName}" in favorites.value
     }
 
     private fun applyFilters() {
@@ -171,7 +193,7 @@ class ClientTryOnViewModel @Inject constructor(
             filtered = filtered.filter { it.brand == brand }
         }
         if (_showFavoritesOnly.value) {
-            filtered = filtered.filter { "${it.name}|${it.brand.displayName}" in _favorites.value }
+            filtered = filtered.filter { "${it.name}|${it.brand.displayName}" in favorites.value }
         }
         _pigments.value = filtered
     }

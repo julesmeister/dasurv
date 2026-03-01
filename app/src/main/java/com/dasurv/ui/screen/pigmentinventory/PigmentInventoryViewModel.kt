@@ -11,11 +11,17 @@ import com.dasurv.data.repository.EquipmentRepository
 import com.dasurv.data.repository.PigmentBottleRepository
 import com.dasurv.data.repository.PigmentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PigmentInventoryViewModel @Inject constructor(
     private val pigmentBottleRepository: PigmentBottleRepository,
@@ -38,21 +44,21 @@ class PigmentInventoryViewModel @Inject constructor(
     private val _selectedStock = MutableStateFlow<Equipment?>(null)
     val selectedStock: StateFlow<Equipment?> = _selectedStock
 
-    private val _usageHistory = MutableStateFlow<List<PigmentBottleUsage>>(emptyList())
-    val usageHistory: StateFlow<List<PigmentBottleUsage>> = _usageHistory
+    private val _selectedBottleId = MutableStateFlow<Long?>(null)
+
+    val usageHistory: StateFlow<List<PigmentBottleUsage>> = _selectedBottleId
+        .filterNotNull()
+        .flatMapLatest { pigmentBottleRepository.getUsageForBottle(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun setBrandFilter(brand: String?) {
         _brandFilter.value = brand
     }
 
     fun loadBottle(id: Long) {
+        _selectedBottleId.value = id
         viewModelScope.launch {
             _selectedBottle.value = pigmentBottleRepository.getBottleById(id)
-        }
-        viewModelScope.launch {
-            pigmentBottleRepository.getUsageForBottle(id).collect {
-                _usageHistory.value = it
-            }
         }
     }
 

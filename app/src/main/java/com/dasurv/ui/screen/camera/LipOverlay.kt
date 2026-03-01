@@ -4,6 +4,7 @@ import android.graphics.PointF
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
@@ -34,6 +35,24 @@ fun LipOverlay(
     lowerHorizontalScale: Float = 1.0f
 ) {
     if (face == null) return
+
+    val upperFillColor = remember(naturalUpperLipHex, upperLipPigmentHex) {
+        if (upperLipPigmentHex != null) {
+            val hex = if (naturalUpperLipHex != null) {
+                ColorMatcher.blendPigmentResultStatic(naturalUpperLipHex, upperLipPigmentHex)
+            } else upperLipPigmentHex
+            parseHexColor(hex).copy(alpha = 0.50f)
+        } else null
+    }
+
+    val lowerFillColor = remember(naturalLowerLipHex, lowerLipPigmentHex) {
+        if (lowerLipPigmentHex != null) {
+            val hex = if (naturalLowerLipHex != null) {
+                ColorMatcher.blendPigmentResultStatic(naturalLowerLipHex, lowerLipPigmentHex)
+            } else lowerLipPigmentHex
+            parseHexColor(hex).copy(alpha = 0.50f)
+        } else null
+    }
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val scaleX = size.width / imageWidth
@@ -66,22 +85,16 @@ fun LipOverlay(
         val lowerBottom = face.getContour(FaceContour.LOWER_LIP_BOTTOM)?.points
 
         // Draw upper lip — only when a pigment is selected for it
-        if (upperTop != null && upperBottom != null && upperLipPigmentHex != null) {
+        if (upperTop != null && upperBottom != null && upperFillColor != null) {
             val upperPath = buildSmoothLipPath(upperTop, upperBottom, ::translateXUpper, ::translateY)
-            val fillHex = if (naturalUpperLipHex != null) {
-                ColorMatcher.blendPigmentResultStatic(naturalUpperLipHex, upperLipPigmentHex)
-            } else upperLipPigmentHex
-            drawPath(upperPath, parseHexColor(fillHex).copy(alpha = 0.50f), style = Fill, blendMode = BlendMode.SrcOver)
+            drawPath(upperPath, upperFillColor, style = Fill, blendMode = BlendMode.SrcOver)
             drawPath(upperPath, RoseTertiary, style = Stroke(width = 2.5f))
         }
 
         // Draw lower lip — only when a pigment is selected for it
-        if (lowerTop != null && lowerBottom != null && lowerLipPigmentHex != null) {
+        if (lowerTop != null && lowerBottom != null && lowerFillColor != null) {
             val lowerPath = buildSmoothLipPath(lowerTop, lowerBottom, ::translateXLower, ::translateY)
-            val fillHex = if (naturalLowerLipHex != null) {
-                ColorMatcher.blendPigmentResultStatic(naturalLowerLipHex, lowerLipPigmentHex)
-            } else lowerLipPigmentHex
-            drawPath(lowerPath, parseHexColor(fillHex).copy(alpha = 0.50f), style = Fill, blendMode = BlendMode.SrcOver)
+            drawPath(lowerPath, lowerFillColor, style = Fill, blendMode = BlendMode.SrcOver)
             drawPath(lowerPath, RoseTertiary, style = Stroke(width = 2.5f))
         }
 

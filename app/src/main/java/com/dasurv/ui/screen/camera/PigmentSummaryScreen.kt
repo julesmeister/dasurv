@@ -1,6 +1,6 @@
 package com.dasurv.ui.screen.camera
 
-import android.graphics.BitmapFactory
+import coil.compose.AsyncImage
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -84,18 +84,15 @@ fun PigmentSummaryScreen(
             ) {
                 // 1. Photo Preview
                 photoUri?.let { uri ->
-                    val bmp = remember(uri) { BitmapFactory.decodeFile(uri) }
-                    if (bmp != null) {
-                        Image(
-                            bitmap = bmp.asImageBitmap(),
-                            contentDescription = "Lip photo",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                        )
-                    }
+                    AsyncImage(
+                        model = uri,
+                        contentDescription = "Lip photo",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                    )
                 }
 
                 // 2. Treatment Phase

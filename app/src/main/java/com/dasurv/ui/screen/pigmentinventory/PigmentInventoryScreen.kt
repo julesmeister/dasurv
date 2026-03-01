@@ -4,22 +4,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import com.dasurv.ui.component.DasurvConfirmDialog
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Client
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.data.local.entity.PigmentBottle
+import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +35,7 @@ fun PigmentInventoryScreen(
     val brandFilter by viewModel.brandFilter.collectAsStateWithLifecycle()
     val allPigments = viewModel.allPigments
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val spacing = DasurvTheme.spacing
 
     // Group bottles by equipmentId
     val bottlesByEquipmentId = remember(bottles) {
@@ -126,40 +125,34 @@ fun PigmentInventoryScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text("Pigment Inventory") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
+                title = { DasurvTopAppBarTitle(title = "Pigment Inventory") },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = {
                     IconButton(onClick = onNavigateToCatalogue) {
-                        Icon(Icons.Default.Palette, "Pigment Catalogue")
+                        Icon(Icons.Default.Palette, "Pigment Catalogue", tint = M3OnSurface)
                     }
                 },
                 scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            DasurvAddFab(
                 onClick = onNavigateToAddStock,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Default.Add, "Add Pigment")
-            }
+                contentDescription = "Add Pigment"
+            )
         }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             // Brand filter chips
             if (brands.isNotEmpty()) {
                 item {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                         item {
                             FilterChip(
                                 selected = brandFilter == null,
@@ -183,38 +176,17 @@ fun PigmentInventoryScreen(
                 Text(
                     "${filteredStock.size} pigments | $totalStock in stock | $totalOpenBottles open",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = M3OnSurfaceVariant
                 )
             }
 
             // Empty state
             if (filteredStock.isEmpty() && filteredStandalone.isEmpty()) {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(48.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Default.Opacity,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "No pigments tracked yet",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            TextButton(onClick = onNavigateToCatalogue) {
-                                Text("Browse Catalogue")
-                            }
-                        }
-                    }
+                    DasurvEmptyState(
+                        icon = Icons.Default.Opacity,
+                        message = "No pigments tracked yet"
+                    )
                 }
             }
 
@@ -263,11 +235,11 @@ fun PigmentInventoryScreen(
             // Standalone bottles (not linked to stock)
             if (filteredStandalone.isNotEmpty()) {
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(spacing.sm))
                     Text(
                         "Other Bottles",
                         style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = M3OnSurfaceVariant
                     )
                 }
                 items(filteredStandalone, key = { it.id }) { bottle ->

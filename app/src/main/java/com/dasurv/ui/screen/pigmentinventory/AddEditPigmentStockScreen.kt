@@ -14,6 +14,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +28,7 @@ fun AddEditPigmentStockScreen(
 ) {
     val isEditing = equipmentId != null && equipmentId != 0L
     val existingStock by viewModel.selectedStock.collectAsStateWithLifecycle()
+    val spacing = DasurvTheme.spacing
 
     LaunchedEffect(equipmentId) {
         if (isEditing) viewModel.loadStock(equipmentId!!)
@@ -89,7 +91,7 @@ fun AddEditPigmentStockScreen(
         actions = {
             if (isEditing) {
                 IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(Icons.Default.Delete, "Delete")
+                    Icon(Icons.Default.Delete, "Delete", tint = M3OnSurface)
                 }
             }
         },
@@ -115,7 +117,7 @@ fun AddEditPigmentStockScreen(
         if (!isEditing) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
             ) {
                 FilterChip(
                     selected = !isCustom,
@@ -134,13 +136,13 @@ fun AddEditPigmentStockScreen(
         if (name.isNotBlank()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ColorSwatch(colorHex = colorHex, label = "")
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(spacing.md))
                 Column {
-                    Text(name, style = MaterialTheme.typography.titleSmall)
+                    Text(name, style = MaterialTheme.typography.titleSmall, color = M3OnSurface)
                     Text(
                         brand,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = M3OnSurfaceVariant
                     )
                 }
             }
@@ -184,13 +186,13 @@ fun AddEditPigmentStockScreen(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         ColorSwatch(colorHex = pigment.colorHex, label = "")
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Spacer(modifier = Modifier.width(spacing.sm))
                                         Column {
-                                            Text(pigment.name)
+                                            Text(pigment.name, color = M3OnSurface)
                                             Text(
                                                 pigment.brand.displayName,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = M3OnSurfaceVariant
                                             )
                                         }
                                     }
@@ -229,8 +231,8 @@ fun AddEditPigmentStockScreen(
                 Text(
                     "Cost per ml: \$${String.format("%.4f", pricePerMl)} (15ml bottle)",
                     style = MaterialTheme.typography.bodySmall.copy(fontFamily = InterFontFamily),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = FormDefaults.LabelWidth, bottom = 4.dp)
+                    color = M3Primary,
+                    modifier = Modifier.padding(start = FormDefaults.LabelWidth, bottom = spacing.xs)
                 )
             }
         }

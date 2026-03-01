@@ -37,25 +37,26 @@ fun imageProxyToBitmap(imageProxy: ImageProxy): Bitmap? {
 
 fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
     return try {
+        // Read entire stream once into a byte array to avoid opening the URI 3 times
+        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: return null
+
         // First pass: decode bounds only for downsampling
-        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(uri)?.use { stream ->
-            BitmapFactory.decodeStream(stream, null, options)
-        }
+        val boundsOptions = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, boundsOptions)
 
         // Calculate sample size for large images (target max 1920px)
-        val maxDim = maxOf(options.outWidth, options.outHeight)
+        val maxDim = maxOf(boundsOptions.outWidth, boundsOptions.outHeight)
         var sampleSize = 1
         while (maxDim / sampleSize > 1920) sampleSize *= 2
 
         // Second pass: decode with downsampling
         val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-        val bitmap = context.contentResolver.openInputStream(uri)?.use { stream ->
-            BitmapFactory.decodeStream(stream, null, decodeOptions)
-        } ?: return null
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
+            ?: return null
 
         // Handle EXIF rotation
-        val rotation = context.contentResolver.openInputStream(uri)?.use { stream ->
+        val rotation = java.io.ByteArrayInputStream(bytes).use { stream ->
             val exif = ExifInterface(stream)
             when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
                 ExifInterface.ORIENTATION_ROTATE_90 -> 90f
@@ -63,11 +64,13 @@ fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
                 ExifInterface.ORIENTATION_ROTATE_270 -> 270f
                 else -> 0f
             }
-        } ?: 0f
+        }
 
         if (rotation != 0f) {
             val matrix = Matrix().apply { postRotate(rotation) }
-            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            if (rotated !== bitmap) bitmap.recycle()
+            rotated
         } else {
             bitmap
         }

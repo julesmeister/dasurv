@@ -15,9 +15,9 @@ internal fun NavGraphBuilder.scheduleRoutes(navController: NavController) {
             onNavigateBack = { navController.popBackStack() },
             onNavigateToAddAppointment = { navController.navigate(Routes.ADD_APPOINTMENT) },
             onNavigateToAddAppointmentForDay = { dateTime ->
-                navController.navigate("appointment/add/day/$dateTime")
+                navController.navigate(Routes.addAppointmentForDay(dateTime))
             },
-            onNavigateToAppointmentDetail = { id -> navController.navigate("appointment/$id") }
+            onNavigateToAppointmentDetail = { id -> navController.navigate(Routes.appointmentDetail(id)) }
         )
     }
 
@@ -77,8 +77,8 @@ internal fun NavGraphBuilder.scheduleRoutes(navController: NavController) {
         AppointmentDetailScreen(
             appointmentId = appointmentId,
             onNavigateBack = { navController.popBackStack() },
-            onNavigateToEdit = { id -> navController.navigate("appointment/edit/$id") },
-            onNavigateToSession = { id -> navController.navigate("session/$id") }
+            onNavigateToEdit = { id -> navController.navigate(Routes.editAppointment(id)) },
+            onNavigateToSession = { id -> navController.navigate(Routes.sessionDetail(id)) }
         )
     }
 }

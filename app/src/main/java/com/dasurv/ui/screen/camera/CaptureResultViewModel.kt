@@ -21,8 +21,12 @@ import com.dasurv.util.ColorMatcher
 import com.dasurv.util.LipColorAnalyzer
 import com.google.mlkit.vision.face.Face
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -30,6 +34,7 @@ import javax.inject.Inject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CaptureResultViewModel @Inject constructor(
     private val lipPhotoRepository: LipPhotoRepository,
@@ -41,6 +46,20 @@ class CaptureResultViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val faceDetectionHelper = FaceDetectionHelper(lipColorAnalyzer)
+
+    private fun decodeBitmapDownsampled(path: String, maxDim: Int = 1920): Bitmap? {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, options)
+        var sampleSize = 1
+        while (maxOf(options.outWidth, options.outHeight) / sampleSize > maxDim) sampleSize *= 2
+        val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+        return BitmapFactory.decodeFile(path, decodeOptions)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        faceDetectionHelper.close()
+    }
 
     private val _photo = MutableStateFlow<LipPhoto?>(null)
     val photo: StateFlow<LipPhoto?> = _photo
@@ -92,8 +111,13 @@ class CaptureResultViewModel @Inject constructor(
     // Client picker state for demo photos
     private val _clientSearchQuery = MutableStateFlow("")
     val clientSearchQuery: StateFlow<String> = _clientSearchQuery
-    private val _clientSearchResults = MutableStateFlow<List<Client>>(emptyList())
-    val clientSearchResults: StateFlow<List<Client>> = _clientSearchResults
+
+    val clientSearchResults: StateFlow<List<Client>> = _clientSearchQuery
+        .flatMapLatest { query ->
+            if (query.isBlank()) clientRepository.getAllClients()
+            else clientRepository.searchClients("%$query%")
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Tracks the demo photo path for saveDemoAsClientPhoto
     private var demoPhotoPath: String? = null
@@ -111,7 +135,7 @@ class CaptureResultViewModel @Inject constructor(
             _allPigments.value = pigmentRepository.getAllPigments()
             _filteredPigments.value = _allPigments.value
 
-            val bmp = BitmapFactory.decodeFile(lipPhoto.photoUri)
+            val bmp = decodeBitmapDownsampled(lipPhoto.photoUri)
             if (bmp != null) {
                 _bitmap.value = bmp
                 reconstructAnalysis(lipPhoto)?.let { dual ->
@@ -161,7 +185,7 @@ class CaptureResultViewModel @Inject constructor(
             _isLoading.value = true
             _allPigments.value = pigmentRepository.getAllPigments()
             _filteredPigments.value = _allPigments.value
-            val bmp = BitmapFactory.decodeFile(photoPath)
+            val bmp = decodeBitmapDownsampled(photoPath)
             if (bmp != null) {
                 _bitmap.value = bmp
                 detectFaceAndAnalyze(bmp)
@@ -319,20 +343,11 @@ class CaptureResultViewModel @Inject constructor(
 
     // Client picker
     fun loadAllClients() {
-        viewModelScope.launch {
-            clientRepository.getAllClients().collect { _clientSearchResults.value = it }
-        }
+        _clientSearchQuery.value = ""
     }
 
     fun updateClientSearch(query: String) {
         _clientSearchQuery.value = query
-        viewModelScope.launch {
-            if (query.isBlank()) {
-                clientRepository.getAllClients().collect { _clientSearchResults.value = it }
-            } else {
-                clientRepository.searchClients("%$query%").collect { _clientSearchResults.value = it }
-            }
-        }
     }
 
     fun toggleArOverlay() { _arOverlayVisible.value = !_arOverlayVisible.value }
@@ -365,6 +380,7 @@ class CaptureResultViewModel @Inject constructor(
             }
             val rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
             _bitmap.value = rotated
+            if (rotated !== bmp) bmp.recycle()
             _detectedFace.value = null
             detectFaceAndAnalyze(rotated)
             persistBitmapAndAnalysis(rotated)
@@ -380,6 +396,7 @@ class CaptureResultViewModel @Inject constructor(
                 cropRect.width().coerceIn(1, bmp.width - l),
                 cropRect.height().coerceIn(1, bmp.height - t))
             _bitmap.value = cropped
+            if (cropped !== bmp) bmp.recycle()
             _detectedFace.value = null
             _isCropMode.value = false
             detectFaceAndAnalyze(cropped)

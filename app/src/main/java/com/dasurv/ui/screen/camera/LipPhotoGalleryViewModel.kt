@@ -7,12 +7,18 @@ import com.dasurv.data.local.entity.LipPhoto
 import com.dasurv.data.local.entity.LipPhotoPigment
 import com.dasurv.data.repository.LipPhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class LipPhotoGalleryViewModel @Inject constructor(
     private val lipPhotoRepository: LipPhotoRepository
@@ -20,8 +26,12 @@ class LipPhotoGalleryViewModel @Inject constructor(
 
     private var clientId: Long = 0
 
-    private val _photos = MutableStateFlow<List<LipPhoto>>(emptyList())
-    val photos: StateFlow<List<LipPhoto>> = _photos
+    private val _clientId = MutableStateFlow<Long?>(null)
+
+    val photos: StateFlow<List<LipPhoto>> = _clientId
+        .filterNotNull()
+        .flatMapLatest { lipPhotoRepository.getPhotosForClient(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _pigmentsByPhoto = MutableStateFlow<Map<Long, List<LipPhotoPigment>>>(emptyMap())
     val pigmentsByPhoto: StateFlow<Map<Long, List<LipPhotoPigment>>> = _pigmentsByPhoto
@@ -29,21 +39,21 @@ class LipPhotoGalleryViewModel @Inject constructor(
     private val _expandedPhotoId = MutableStateFlow<Long?>(null)
     val expandedPhotoId: StateFlow<Long?> = _expandedPhotoId
 
-    fun loadPhotos(clientId: Long) {
-        this.clientId = clientId
+    init {
         viewModelScope.launch {
-            lipPhotoRepository.getPhotosForClient(clientId).collect { photoList ->
-                _photos.value = photoList
-                // Load pigments for all photos
+            photos.collect { photoList ->
                 val pigmentsMap = mutableMapOf<Long, List<LipPhotoPigment>>()
                 for (photo in photoList) {
-                    lipPhotoRepository.getPigmentsForPhoto(photo.id).collect { pigments ->
-                        pigmentsMap[photo.id] = pigments
-                    }
+                    pigmentsMap[photo.id] = lipPhotoRepository.getPigmentsForPhotoOnce(photo.id)
                 }
                 _pigmentsByPhoto.value = pigmentsMap
             }
         }
+    }
+
+    fun loadPhotos(clientId: Long) {
+        this.clientId = clientId
+        _clientId.value = clientId
     }
 
     fun toggleExpanded(photoId: Long) {
@@ -65,8 +75,6 @@ class LipPhotoGalleryViewModel @Inject constructor(
     }
 
     fun deletePhoto(photo: LipPhoto) {
-        // Optimistically remove from UI immediately
-        _photos.value = _photos.value.filter { it.id != photo.id }
         _pigmentsByPhoto.value = _pigmentsByPhoto.value - photo.id
         if (_expandedPhotoId.value == photo.id) _expandedPhotoId.value = null
 

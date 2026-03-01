@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+private val FieldBgColor = Color(0xFFF0F1FA)
+
 @Composable
 fun DasurvTextField(
     value: String,
@@ -36,15 +38,15 @@ fun DasurvTextField(
         minLines = minLines,
         readOnly = readOnly,
         enabled = enabled,
-        shape = MaterialTheme.shapes.extraSmall,
+        shape = MaterialTheme.shapes.small,
         colors = colors ?: TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            focusedIndicatorColor = Color.Transparent,
+            focusedContainerColor = FieldBgColor,
+            unfocusedContainerColor = FieldBgColor,
+            disabledContainerColor = FieldBgColor,
+            focusedIndicatorColor = M3Primary,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
-            errorIndicatorColor = Color.Transparent
+            errorIndicatorColor = M3RedColor,
         )
     )
 }
@@ -70,15 +72,15 @@ fun DasurvDropdownTextField(
         enabled = enabled,
         trailingIcon = trailingIcon,
         singleLine = true,
-        shape = MaterialTheme.shapes.extraSmall,
+        shape = MaterialTheme.shapes.small,
         colors = colors ?: TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            focusedIndicatorColor = Color.Transparent,
+            focusedContainerColor = FieldBgColor,
+            unfocusedContainerColor = FieldBgColor,
+            disabledContainerColor = FieldBgColor,
+            focusedIndicatorColor = M3Primary,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
-            errorIndicatorColor = Color.Transparent
+            errorIndicatorColor = M3RedColor,
         )
     )
 }

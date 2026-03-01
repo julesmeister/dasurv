@@ -93,10 +93,12 @@ internal fun LazyListScope.pigmentBottleItems(
 
     items(bottles, key = { it.id }) { bottle ->
         val isSelected = bottle.id in selectedBottleIds
-        val bottleColor = try {
-            Color(android.graphics.Color.parseColor(bottle.colorHex))
-        } catch (e: Exception) {
-            Color.Gray
+        val bottleColor = remember(bottle.colorHex) {
+            try {
+                Color(android.graphics.Color.parseColor(bottle.colorHex))
+            } catch (e: Exception) {
+                Color.Gray
+            }
         }
 
         Column {

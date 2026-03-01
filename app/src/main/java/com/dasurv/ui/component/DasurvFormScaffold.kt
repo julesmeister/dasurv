@@ -3,18 +3,18 @@ package com.dasurv.ui.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dasurv.ui.theme.DasurvTheme
 import kotlinx.coroutines.launch
 
-val FormScreenBackground = Color(0xFFEEEEEE)
-private val SaveButtonColor = Color(0xFF263238)
+val FormScreenBackground = Color(0xFFF1F5F9)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,15 +37,11 @@ fun DasurvFormScaffold(
     Scaffold(
         modifier = modifier,
         containerColor = FormScreenBackground,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { M3SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
+                title = { DasurvTopAppBarTitle(title) },
+                navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = actions,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = FormScreenBackground
@@ -57,14 +53,14 @@ fun DasurvFormScaffold(
             .fillMaxSize()
             .padding(padding)
             .background(FormScreenBackground)
-            .padding(16.dp)
+            .padding(DasurvTheme.spacing.lg)
         Column(
             modifier = if (scrollable) columnModifier.verticalScroll(rememberScrollState()) else columnModifier,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.lg)
         ) {
             content()
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(DasurvTheme.spacing.sm))
 
             Button(
                 onClick = {
@@ -82,9 +78,12 @@ fun DasurvFormScaffold(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SaveButtonColor,
-                    contentColor = Color.White
+                    containerColor = M3Primary,
+                    contentColor = Color.White,
+                    disabledContainerColor = M3Primary.copy(alpha = 0.4f),
+                    disabledContentColor = Color.White.copy(alpha = 0.7f),
                 ),
                 contentPadding = PaddingValues(vertical = 16.dp),
                 enabled = saveEnabled && !isSaving
@@ -96,7 +95,7 @@ fun DasurvFormScaffold(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text(saveText)
+                    Text(saveText, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

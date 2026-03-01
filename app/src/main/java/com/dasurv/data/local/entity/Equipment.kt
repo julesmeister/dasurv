@@ -1,10 +1,16 @@
 package com.dasurv.data.local.entity
 
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.Ignore
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "equipment")
+@Stable
+@Entity(
+    tableName = "equipment",
+    indices = [Index("category"), Index("type")]
+)
 data class Equipment(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

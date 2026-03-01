@@ -12,7 +12,8 @@ import com.dasurv.data.local.entity.Client
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.data.local.entity.UsageLipArea
-import com.dasurv.ui.component.DasurvTextField
+import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @Composable
 internal fun RestockDialog(
@@ -21,16 +22,17 @@ internal fun RestockDialog(
     onConfirm: (Int) -> Unit
 ) {
     var countText by remember { mutableStateOf("1") }
+    val spacing = DasurvTheme.spacing
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Restock ${equipment.name}") },
+        title = { Text("Restock ${equipment.name}", color = M3OnSurface) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 Text(
                     "Current stock: ${equipment.stockQuantity}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = M3OnSurfaceVariant
                 )
                 DasurvTextField(
                     value = countText,
@@ -49,10 +51,10 @@ internal fun RestockDialog(
                     if (count != null && count > 0) onConfirm(count)
                 },
                 enabled = (countText.toIntOrNull() ?: 0) > 0
-            ) { Text("Add") }
+            ) { Text("Add", color = M3Primary) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = M3OnSurfaceVariant) }
         }
     )
 }
@@ -70,16 +72,17 @@ internal fun LogUsageDialog(
     var mlUsedText by remember { mutableStateOf("0.5") }
     var notes by remember { mutableStateOf("") }
     var clientDropdownExpanded by remember { mutableStateOf(false) }
+    val spacing = DasurvTheme.spacing
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Log Usage: ${bottle.pigmentName}") },
+        title = { Text("Log Usage: ${bottle.pigmentName}", color = M3OnSurface) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.md)) {
                 Text(
                     "Remaining: ${String.format("%.1f", bottle.remainingMl)} ml",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = M3OnSurfaceVariant
                 )
 
                 // Client picker
@@ -105,7 +108,7 @@ internal fun LogUsageDialog(
                     ) {
                         clients.forEach { client ->
                             DropdownMenuItem(
-                                text = { Text(client.name) },
+                                text = { Text(client.name, color = M3OnSurface) },
                                 onClick = {
                                     selectedClientId = client.id
                                     clientDropdownExpanded = false
@@ -116,8 +119,8 @@ internal fun LogUsageDialog(
                 }
 
                 // Lip area
-                Text("Lip Area", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Lip Area", style = MaterialTheme.typography.labelMedium, color = M3OnSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                     UsageLipArea.entries.forEach { area ->
                         FilterChip(
                             selected = selectedLipArea == area,
@@ -164,11 +167,11 @@ internal fun LogUsageDialog(
                 },
                 enabled = selectedClientId != null && (mlUsedText.toDoubleOrNull() ?: 0.0) > 0.0
             ) {
-                Text("Log")
+                Text("Log", color = M3Primary)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = M3OnSurfaceVariant) }
         }
     )
 }

@@ -11,6 +11,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @Composable
 fun AddEditEquipmentScreen(
@@ -114,8 +115,11 @@ fun AddEditEquipmentScreen(
                     Text(
                         "Cost per piece: \$${String.format("%.4f", costPerPiece)}",
                         style = MaterialTheme.typography.bodySmall.copy(fontFamily = InterFontFamily),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = FormDefaults.LabelWidth, bottom = 4.dp)
+                        color = M3Primary,
+                        modifier = Modifier.padding(
+                            start = FormDefaults.LabelWidth,
+                            bottom = DasurvTheme.spacing.xs
+                        )
                     )
                 }
             } else {

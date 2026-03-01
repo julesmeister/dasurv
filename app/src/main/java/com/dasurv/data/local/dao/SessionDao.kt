@@ -14,6 +14,9 @@ interface SessionDao {
     @Query("SELECT * FROM sessions ORDER BY date DESC")
     fun getAllSessions(): Flow<List<Session>>
 
+    @Query("SELECT COUNT(*) FROM sessions")
+    fun getSessionCount(): Flow<Int>
+
     @Query("SELECT * FROM sessions WHERE id = :id")
     suspend fun getSessionById(id: Long): Session?
 

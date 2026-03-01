@@ -32,6 +32,16 @@ import androidx.compose.ui.unit.sp
 import com.dasurv.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dasurv.ui.component.M3ListCard
+import com.dasurv.ui.component.M3ListDivider
+import com.dasurv.ui.component.M3OnSurface
+import com.dasurv.ui.component.M3OnSurfaceVariant
+import com.dasurv.ui.component.M3Primary
+import com.dasurv.ui.component.M3PrimaryContainer
+import com.dasurv.ui.component.M3SurfaceContainer
+import com.dasurv.ui.component.M3ValueBadge
+import com.dasurv.data.model.AppointmentWithClient
+import com.dasurv.ui.theme.DasurvTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -47,9 +57,10 @@ fun HomeScreen(
     onNavigateToPigmentInventory: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val clients by viewModel.clients.collectAsStateWithLifecycle(initialValue = emptyList())
-    val sessions by viewModel.recentSessions.collectAsStateWithLifecycle(initialValue = emptyList())
+    val clients by viewModel.clients.collectAsStateWithLifecycle()
+    val sessionCount by viewModel.sessionCount.collectAsStateWithLifecycle()
     val upcomingAppointments by viewModel.upcomingAppointments.collectAsStateWithLifecycle()
+    val spacing = DasurvTheme.spacing
 
     Scaffold(
         topBar = {
@@ -59,54 +70,56 @@ fun HomeScreen(
                         Text(
                             "Dasurv",
                             fontFamily = FontFamily(Font(R.font.bodoni_moda)),
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = M3OnSurface
                         )
                         Text(
                             "STUDIOS",
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = M3OnSurfaceVariant,
                             fontFamily = FontFamily(Font(R.font.bodoni_moda)),
                             letterSpacing = 6.sp,
-                            modifier = Modifier.offset(x = 4.dp, y = (-8).dp)
+                            modifier = Modifier.offset(x = spacing.xs, y = (-8).dp)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = M3SurfaceContainer,
+                    scrolledContainerColor = M3SurfaceContainer
                 )
             )
-        }
+        },
+        containerColor = M3SurfaceContainer
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(spacing.md)
         ) {
             item {
                 AnimatedContent(
-                    targetState = "${clients.size} clients | ${sessions.size} sessions",
+                    targetState = "${clients.size} clients | $sessionCount sessions",
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     label = "stats"
                 ) { stats ->
                     Text(
                         text = stats,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = M3OnSurfaceVariant
                     )
                 }
             }
 
             item {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(spacing.xs))
             }
 
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md)
                 ) {
                     HomeCard(
                         title = "Schedule",
@@ -127,7 +140,7 @@ fun HomeScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md)
                 ) {
                     HomeCard(
                         title = "Clients",
@@ -147,7 +160,7 @@ fun HomeScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md)
                 ) {
                     HomeCard(
                         title = "Equipment",
@@ -167,56 +180,75 @@ fun HomeScreen(
             // Upcoming appointments section with animated visibility
             if (upcomingAppointments.isNotEmpty()) {
                 item {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(spacing.xs))
                     Text(
                         text = "Upcoming Appointments",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = M3OnSurface
                     )
                 }
 
-                items(upcomingAppointments, key = { it.appointment.id }) { awc ->
-                    val dateFormat = SimpleDateFormat("MMM dd, h:mm a", Locale.getDefault())
-                    Card(
-                        modifier = Modifier.fillMaxWidth().animateItem(),
-                        onClick = { onNavigateToAppointmentDetail(awc.appointment.id) },
-                        shape = MaterialTheme.shapes.medium,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    awc.clientName,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                if (awc.appointment.procedureType.isNotBlank()) {
-                                    Text(
-                                        awc.appointment.procedureType,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Text(
-                                    dateFormat.format(Date(awc.appointment.scheduledDateTime)),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
+                item {
+                    M3ListCard {
+                        val dateFormat = remember { SimpleDateFormat("MMM dd, h:mm a", Locale.getDefault()) }
+                        upcomingAppointments.forEachIndexed { index, awc ->
+                            AppointmentRow(
+                                awc = awc,
+                                dateFormat = dateFormat,
+                                onClick = { onNavigateToAppointmentDetail(awc.appointment.id) }
+                            )
+                            if (index < upcomingAppointments.lastIndex) {
+                                M3ListDivider()
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AppointmentRow(
+    awc: AppointmentWithClient,
+    dateFormat: SimpleDateFormat,
+    onClick: () -> Unit
+) {
+    val spacing = DasurvTheme.spacing
+    Surface(
+        onClick = onClick,
+        color = androidx.compose.ui.graphics.Color.Transparent,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = spacing.lg, vertical = spacing.md)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    awc.clientName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = M3OnSurface
+                )
+                if (awc.appointment.procedureType.isNotBlank()) {
+                    Text(
+                        awc.appointment.procedureType,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = M3OnSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(spacing.sm))
+            M3ValueBadge(
+                text = dateFormat.format(Date(awc.appointment.scheduledDateTime)),
+                color = M3Primary,
+                containerColor = M3PrimaryContainer
+            )
         }
     }
 }
@@ -230,6 +262,7 @@ private fun HomeCard(
     modifier: Modifier = Modifier,
     badge: String? = null
 ) {
+    val spacing = DasurvTheme.spacing
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -246,14 +279,15 @@ private fun HomeCard(
             .height(120.dp)
             .scale(scale),
         interactionSource = interactionSource,
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(spacing.lg),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -261,20 +295,22 @@ private fun HomeCard(
                     icon,
                     contentDescription = title,
                     modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = M3Primary
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.sm))
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = M3OnSurface
                 )
             }
             if (badge != null) {
                 Badge(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(8.dp)
+                        .padding(spacing.sm),
+                    containerColor = M3Primary
                 ) {
                     Text(badge)
                 }

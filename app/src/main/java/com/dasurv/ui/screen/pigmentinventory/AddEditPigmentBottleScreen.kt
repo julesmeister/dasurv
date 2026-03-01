@@ -14,6 +14,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.ui.component.*
+import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +29,7 @@ fun AddEditPigmentBottleScreen(
     val isEditing = bottleId != null
     val existingBottle by viewModel.selectedBottle.collectAsStateWithLifecycle()
     val usageHistory by viewModel.usageHistory.collectAsStateWithLifecycle()
+    val spacing = DasurvTheme.spacing
 
     LaunchedEffect(bottleId) {
         if (bottleId != null) viewModel.loadBottle(bottleId)
@@ -105,7 +107,7 @@ fun AddEditPigmentBottleScreen(
         actions = {
             if (isEditing) {
                 IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(Icons.Default.Delete, "Delete")
+                    Icon(Icons.Default.Delete, "Delete", tint = M3OnSurface)
                 }
             }
         },
@@ -132,7 +134,7 @@ fun AddEditPigmentBottleScreen(
         // Pigment source picker (above cards)
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             FilterChip(
                 selected = !isCustom,
@@ -150,13 +152,13 @@ fun AddEditPigmentBottleScreen(
         if (pigmentName.isNotBlank()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ColorSwatch(colorHex = colorHex, label = "")
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(spacing.md))
                 Column {
-                    Text(pigmentName, style = MaterialTheme.typography.titleSmall)
+                    Text(pigmentName, style = MaterialTheme.typography.titleSmall, color = M3OnSurface)
                     Text(
                         pigmentBrand,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = M3OnSurfaceVariant
                     )
                 }
             }
@@ -199,13 +201,13 @@ fun AddEditPigmentBottleScreen(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         ColorSwatch(colorHex = pigment.colorHex, label = "")
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Spacer(modifier = Modifier.width(spacing.sm))
                                         Column {
-                                            Text(pigment.name)
+                                            Text(pigment.name, color = M3OnSurface)
                                             Text(
                                                 pigment.brand.displayName,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = M3OnSurfaceVariant
                                             )
                                         }
                                     }
@@ -277,10 +279,19 @@ fun AddEditPigmentBottleScreen(
 
         // Usage history (editing only)
         if (isEditing && usageHistory.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Usage History", style = MaterialTheme.typography.titleMedium)
-            usageHistory.forEach { usage ->
-                UsageHistoryRow(usage)
+            Spacer(modifier = Modifier.height(spacing.sm))
+            Text(
+                "Usage History",
+                style = MaterialTheme.typography.titleMedium,
+                color = M3OnSurface
+            )
+            M3ListCard {
+                usageHistory.forEachIndexed { index, usage ->
+                    UsageHistoryRow(usage)
+                    if (index < usageHistory.lastIndex) {
+                        M3ListDivider()
+                    }
+                }
             }
         }
     }

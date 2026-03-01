@@ -1,8 +1,10 @@
 package com.dasurv.data.local.entity
 
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+@Stable
 @Entity(tableName = "clients")
 data class Client(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
