@@ -30,22 +30,47 @@ import com.dasurv.ui.theme.DasurvTheme
 fun ClientDetailScreen(
     clientId: Long,
     onNavigateBack: () -> Unit,
-    onNavigateToEditClient: (Long) -> Unit,
     onNavigateToSession: (Long) -> Unit,
-    onNavigateToNewSession: (Long) -> Unit,
-    onNavigateToBookAppointment: (Long) -> Unit,
     onNavigateToAppointmentDetail: (Long) -> Unit,
     onNavigateToLipCamera: (Long) -> Unit = {},
     onNavigateToLipPhotoGallery: (Long) -> Unit = {},
     onNavigateToTryOn: (Long) -> Unit = {},
+    onNavigateToSessions: (Long) -> Unit = {},
     onNavigateToTransactions: (Long) -> Unit = {},
     viewModel: ClientViewModel = hiltViewModel()
 ) {
+    var showEditClientDialog by remember { mutableStateOf(false) }
+    var showAppointmentDialog by remember { mutableStateOf(false) }
+    var showNewSessionDialog by remember { mutableStateOf(false) }
+
+    if (showEditClientDialog) {
+        com.dasurv.ui.screen.client.ClientFormDialog(
+            clientId = clientId,
+            onDismiss = {
+                showEditClientDialog = false
+                viewModel.loadClient(clientId)
+            }
+        )
+    }
+
+    if (showAppointmentDialog) {
+        com.dasurv.ui.screen.schedule.AppointmentFormDialog(
+            appointmentId = null,
+            preselectedClientId = clientId,
+            preselectedDateTime = null,
+            onDismiss = { showAppointmentDialog = false }
+        )
+    }
+
+    if (showNewSessionDialog) {
+        com.dasurv.ui.screen.session.NewSessionDialog(
+            clientId = clientId,
+            onDismiss = { showNewSessionDialog = false }
+        )
+    }
     LaunchedEffect(clientId) { viewModel.loadClient(clientId) }
 
     val client by viewModel.selectedClient.collectAsStateWithLifecycle()
-    val sessions by viewModel.getSessionsForClient(clientId)
-        .collectAsStateWithLifecycle(initialValue = emptyList())
     val appointments by viewModel.getAppointmentsForClient(clientId)
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val financialSummary by viewModel.getFinancialSummary(clientId)
@@ -76,7 +101,7 @@ fun ClientDetailScreen(
                 },
                 navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = {
-                    IconButton(onClick = { onNavigateToEditClient(clientId) }) {
+                    IconButton(onClick = { showEditClientDialog = true }) {
                         Icon(Icons.Default.Edit, "Edit", tint = M3OnSurface)
                     }
                     IconButton(onClick = { showDeleteDialog = true }) {
@@ -88,7 +113,7 @@ fun ClientDetailScreen(
         },
         floatingActionButton = {
             DasurvAddFab(
-                onClick = { onNavigateToNewSession(clientId) },
+                onClick = { showNewSessionDialog = true },
                 contentDescription = "New Session"
             )
         },
@@ -115,7 +140,9 @@ fun ClientDetailScreen(
                     contentPadding = PaddingValues(vertical = spacing.lg),
                     verticalArrangement = Arrangement.spacedBy(spacing.sm)
                 ) {
-                    item { ClientContactCard(client!!) }
+                    if (client!!.phone.isNotBlank() || client!!.email.isNotBlank() || client!!.notes.isNotBlank()) {
+                        item { ClientContactCard(client!!) }
+                    }
 
                     item {
                         LipPhotosCard(
@@ -129,7 +156,8 @@ fun ClientDetailScreen(
                     item {
                         BookAppointmentCard(
                             clientId = clientId,
-                            onNavigateToBookAppointment = onNavigateToBookAppointment
+                            onNavigateToBookAppointment = { _ -> showAppointmentDialog = true },
+                            onNavigateToSessions = onNavigateToSessions
                         )
                     }
 
@@ -163,23 +191,6 @@ fun ClientDetailScreen(
                         }
                     }
 
-                    // Sessions
-                    item {
-                        Spacer(modifier = Modifier.height(spacing.sm))
-                        Text(
-                            "Sessions (${sessions.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = M3OnSurface,
-                            modifier = Modifier.padding(horizontal = spacing.lg)
-                        )
-                    }
-
-                    item {
-                        SessionsList(
-                            sessions = sessions,
-                            onNavigateToSession = onNavigateToSession
-                        )
-                    }
                 }
             }
         }
