@@ -12,6 +12,8 @@ import javax.inject.Singleton
 class TransactionRepository @Inject constructor(
     private val transactionDao: TransactionDao
 ) {
+    fun getAllTransactions(): Flow<List<ClientTransaction>> = transactionDao.getAllTransactions()
+
     fun getTransactionsForClient(clientId: Long): Flow<List<ClientTransaction>> =
         transactionDao.getTransactionsForClient(clientId)
 

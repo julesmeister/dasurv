@@ -23,7 +23,8 @@ data class Equipment(
     val type: String = "consumable", // "studio" or "consumable"
     val piecesPerPackage: Int = 1,
     val purchaseSource: String = "",  // app/platform (e.g. Shopee, Lazada)
-    val seller: String = ""           // seller name within the platform
+    val seller: String = "",          // seller name within the platform
+    val minStockThreshold: Int = 0
 ) {
     @get:Ignore
     val costPerPiece: Double

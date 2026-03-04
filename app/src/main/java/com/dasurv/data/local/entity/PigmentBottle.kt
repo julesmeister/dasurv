@@ -23,7 +23,8 @@ data class PigmentBottle(
     val pricePerMl: Double = 0.0,
     val purchaseDate: Long = System.currentTimeMillis(),
     val notes: String = "",
-    val equipmentId: Long? = null
+    val equipmentId: Long? = null,
+    val minRemainingMl: Double = 0.0
 ) {
     @get:Ignore
     val usedMl: Double
@@ -36,4 +37,8 @@ data class PigmentBottle(
     @get:Ignore
     val usagePercentage: Float
         get() = if (bottleSizeMl > 0) (remainingMl / bottleSizeMl).toFloat() else 0f
+
+    @get:Ignore
+    val isLowStock: Boolean
+        get() = remainingMl > 0 && minRemainingMl > 0 && remainingMl <= minRemainingMl
 }

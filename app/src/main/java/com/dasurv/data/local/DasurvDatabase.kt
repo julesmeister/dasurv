@@ -10,6 +10,8 @@ import com.dasurv.data.local.dao.ClientPigmentPreferenceDao
 import com.dasurv.data.local.dao.LipPhotoDao
 import com.dasurv.data.local.dao.PigmentBottleDao
 import com.dasurv.data.local.dao.SessionDao
+import com.dasurv.data.local.dao.SessionTemplateDao
+import com.dasurv.data.local.dao.StaffDao
 import com.dasurv.data.local.dao.TransactionDao
 import com.dasurv.data.local.entity.Appointment
 import com.dasurv.data.local.entity.Client
@@ -25,6 +27,9 @@ import com.dasurv.data.local.entity.PigmentBottleUsage
 import com.dasurv.data.local.entity.Session
 import com.dasurv.data.local.entity.SessionEquipment
 import com.dasurv.data.local.entity.SessionPigment
+import com.dasurv.data.local.entity.SessionTemplate
+import com.dasurv.data.local.entity.SessionTemplateEquipment
+import com.dasurv.data.local.entity.Staff
 
 @Database(
     entities = [
@@ -41,9 +46,12 @@ import com.dasurv.data.local.entity.SessionPigment
         PigmentBottle::class,
         PigmentBottleUsage::class,
         ClientTransaction::class,
-        EquipmentPurchase::class
+        EquipmentPurchase::class,
+        Staff::class,
+        SessionTemplate::class,
+        SessionTemplateEquipment::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -56,4 +64,6 @@ abstract class DasurvDatabase : RoomDatabase() {
     abstract fun clientPigmentPreferenceDao(): ClientPigmentPreferenceDao
     abstract fun pigmentBottleDao(): PigmentBottleDao
     abstract fun transactionDao(): TransactionDao
+    abstract fun staffDao(): StaffDao
+    abstract fun sessionTemplateDao(): SessionTemplateDao
 }

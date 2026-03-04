@@ -5,13 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.dasurv.data.local.entity.Appointment
 import com.dasurv.data.local.entity.AppointmentStatus
 import com.dasurv.data.local.entity.Client
+import com.dasurv.data.local.entity.RecurrenceType
 import com.dasurv.data.local.entity.Session
+import com.dasurv.data.local.entity.Staff
 import com.dasurv.data.model.AppointmentWithClient
 import com.dasurv.data.model.CalendarDay
 import com.dasurv.data.model.CalendarMonth
 import com.dasurv.data.repository.AppointmentRepository
 import com.dasurv.data.repository.ClientRepository
 import com.dasurv.data.repository.SessionRepository
+import com.dasurv.data.repository.StaffRepository
 import com.dasurv.util.AppointmentAlarmScheduler
 import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,8 +29,12 @@ class ScheduleViewModel @Inject constructor(
     private val appointmentRepository: AppointmentRepository,
     private val clientRepository: ClientRepository,
     private val sessionRepository: SessionRepository,
+    private val staffRepository: StaffRepository,
     private val alarmScheduler: AppointmentAlarmScheduler
 ) : ViewModel() {
+
+    val activeStaff: StateFlow<List<Staff>> = staffRepository.getActiveStaff()
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     private val _currentYear = MutableStateFlow(Calendar.getInstance().get(Calendar.YEAR))
     private val _currentMonth = MutableStateFlow(Calendar.getInstance().get(Calendar.MONTH))
@@ -117,6 +124,30 @@ class ScheduleViewModel @Inject constructor(
                 alarmScheduler.cancelReminder(id)
             }
             onSuccess(id)
+        }
+    }
+
+    fun saveRecurringAppointment(appointment: Appointment, onSuccess: (Long) -> Unit) {
+        viewModelScope.launch {
+            val id = appointmentRepository.createRecurringSeries(appointment)
+            if (appointment.reminderEnabled && appointment.status == AppointmentStatus.SCHEDULED) {
+                val triggerAt = appointment.scheduledDateTime - appointment.reminderMinutesBefore * 60_000L
+                if (triggerAt > System.currentTimeMillis()) {
+                    alarmScheduler.scheduleReminder(id, triggerAt)
+                }
+            }
+            onSuccess(id)
+        }
+    }
+
+    fun deleteAppointmentSeries(appointment: Appointment, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            // Delete children first
+            appointmentRepository.deleteRecurringSeries(appointment.id)
+            // Delete parent
+            alarmScheduler.cancelReminder(appointment.id)
+            appointmentRepository.deleteAppointment(appointment)
+            onSuccess()
         }
     }
 

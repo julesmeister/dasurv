@@ -32,5 +32,6 @@ data class Session(
     val totalCost: Double = 0.0,
     val durationSeconds: Long = 0,
     val upperLipSeconds: Long = 0,
-    val lowerLipSeconds: Long = 0
+    val lowerLipSeconds: Long = 0,
+    val staffId: Long? = null
 )

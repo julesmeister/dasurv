@@ -6,6 +6,8 @@ import com.dasurv.data.local.entity.Client
 import com.dasurv.data.model.AppointmentWithClient
 import com.dasurv.data.repository.AppointmentRepository
 import com.dasurv.data.repository.ClientRepository
+import com.dasurv.data.repository.EquipmentRepository
+import com.dasurv.data.repository.PigmentBottleRepository
 import com.dasurv.data.repository.SessionRepository
 import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +19,9 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     clientRepository: ClientRepository,
     sessionRepository: SessionRepository,
-    appointmentRepository: AppointmentRepository
+    appointmentRepository: AppointmentRepository,
+    equipmentRepository: EquipmentRepository,
+    pigmentBottleRepository: PigmentBottleRepository
 ) : ViewModel() {
     val clients: StateFlow<List<Client>> = clientRepository.getAllClients()
         .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
@@ -29,7 +33,6 @@ class HomeViewModel @Inject constructor(
     val upcomingAppointments: StateFlow<List<AppointmentWithClient>> = clients
         .flatMapLatest { allClients ->
             val clientMap = allClients.associateBy { it.id }
-            // Use current time at subscription — re-evaluated when WhileSubscribed restarts
             appointmentRepository.getUpcomingAppointments(System.currentTimeMillis(), 5)
                 .map { appointments ->
                     appointments.map { appt ->
@@ -37,4 +40,11 @@ class HomeViewModel @Inject constructor(
                     }
                 }
         }.stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
+
+    val lowStockCount: StateFlow<Int> = combine(
+        equipmentRepository.getLowStockEquipmentCount(),
+        pigmentBottleRepository.getLowStockBottleCount()
+    ) { eqCount, bottleCount ->
+        eqCount + bottleCount
+    }.stateIn(viewModelScope, DefaultSubscribePolicy, 0)
 }

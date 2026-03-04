@@ -42,7 +42,7 @@ fun SessionDetailScreen(
     sessionId: Long,
     onNavigateBack: () -> Unit,
     timerViewModel: SessionTimerViewModel,
-    viewModel: SessionViewModel = hiltViewModel()
+    viewModel: SessionDetailViewModel = hiltViewModel()
 ) {
     LaunchedEffect(sessionId) { viewModel.loadSession(sessionId) }
 
@@ -51,6 +51,7 @@ fun SessionDetailScreen(
     val allEquipment by viewModel.allEquipment.collectAsStateWithLifecycle(initialValue = emptyList())
     val sessionBottleUsages by viewModel.sessionBottleUsages.collectAsStateWithLifecycle()
     val allBottles by viewModel.allBottles.collectAsStateWithLifecycle(initialValue = emptyList())
+    val activeStaff by viewModel.activeStaff.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -117,6 +118,28 @@ fun SessionDetailScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = M3OnSurface
                                 )
+                            }
+                        }
+                    }
+
+                    // Staff card
+                    if (session!!.staffId != null) {
+                        val staffName = activeStaff.find { it.id == session!!.staffId }?.name
+                        if (staffName != null) {
+                            M3ListCard {
+                                Column(modifier = Modifier.padding(spacing.lg)) {
+                                    Text(
+                                        "Staff",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = M3OnSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(spacing.xs))
+                                    Text(
+                                        staffName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = M3OnSurface
+                                    )
+                                }
                             }
                         }
                     }

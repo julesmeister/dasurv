@@ -20,6 +20,7 @@ internal fun stockBadgeText(item: Equipment): String {
 internal fun stockBadgeColor(item: Equipment): Color {
     return when {
         item.stockQuantity == 0 -> M3RedColor
+        item.minStockThreshold > 0 && item.stockQuantity <= item.minStockThreshold -> M3AmberColor
         item.stockQuantity <= 5 -> M3AmberColor
         else -> M3GreenColor
     }
@@ -28,7 +29,14 @@ internal fun stockBadgeColor(item: Equipment): Color {
 internal fun stockBadgeContainer(item: Equipment): Color {
     return when {
         item.stockQuantity == 0 -> M3RedContainer
+        item.minStockThreshold > 0 && item.stockQuantity <= item.minStockThreshold -> M3AmberContainer
         item.stockQuantity <= 5 -> M3AmberContainer
         else -> M3GreenContainer
     }
+}
+
+internal fun isLowStock(item: Equipment): Boolean {
+    if (item.type != "consumable") return false
+    if (item.minStockThreshold > 0) return item.stockQuantity <= item.minStockThreshold
+    return item.stockQuantity > 0 && item.stockQuantity <= 5
 }

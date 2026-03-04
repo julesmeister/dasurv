@@ -33,6 +33,10 @@ class EquipmentViewModel @Inject constructor(
         _typeFilter.value = type
     }
 
+    fun clearSelectedEquipment() {
+        _selectedEquipment.value = null
+    }
+
     fun loadEquipment(id: Long) {
         viewModelScope.launch {
             _selectedEquipment.value = equipmentRepository.getEquipmentById(id)

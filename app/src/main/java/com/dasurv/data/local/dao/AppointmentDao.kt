@@ -27,9 +27,21 @@ interface AppointmentDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAppointment(appointment: Appointment): Long
 
+    @Insert
+    suspend fun insertAppointments(appointments: List<Appointment>): List<Long>
+
     @Update
     suspend fun updateAppointment(appointment: Appointment)
 
     @Delete
     suspend fun deleteAppointment(appointment: Appointment)
+
+    @Query("SELECT * FROM appointments WHERE parentAppointmentId = :parentId ORDER BY scheduledDateTime ASC")
+    fun getRecurringSeries(parentId: Long): Flow<List<Appointment>>
+
+    @Query("DELETE FROM appointments WHERE parentAppointmentId = :parentId")
+    suspend fun deleteRecurringSeries(parentId: Long)
+
+    @Query("SELECT * FROM appointments WHERE procedureType LIKE '%' || :query || '%' OR notes LIKE '%' || :query || '%'")
+    fun searchAppointments(query: String): Flow<List<Appointment>>
 }

@@ -50,4 +50,7 @@ interface SessionDao {
 
     @Query("DELETE FROM session_equipment WHERE sessionId = :sessionId")
     suspend fun deleteSessionEquipmentBySession(sessionId: Long)
+
+    @Query("SELECT * FROM sessions WHERE procedure LIKE '%' || :query || '%' OR notes LIKE '%' || :query || '%'")
+    fun searchSessions(query: String): Flow<List<Session>>
 }

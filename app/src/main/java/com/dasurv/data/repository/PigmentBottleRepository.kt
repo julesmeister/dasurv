@@ -20,6 +20,10 @@ class PigmentBottleRepository @Inject constructor(
 
     fun getInStockBottles(): Flow<List<PigmentBottle>> = pigmentBottleDao.getInStockBottles()
 
+    fun getLowStockBottles(): Flow<List<PigmentBottle>> = pigmentBottleDao.getLowStockBottles()
+
+    fun getLowStockBottleCount(): Flow<Int> = pigmentBottleDao.getLowStockBottleCount()
+
     suspend fun insertBottle(bottle: PigmentBottle): Long = pigmentBottleDao.insertBottle(bottle)
 
     suspend fun getBottlesByIds(ids: List<Long>): List<PigmentBottle> =

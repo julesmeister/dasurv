@@ -21,6 +21,12 @@ class EquipmentRepository @Inject constructor(
 
     fun getByType(type: String): Flow<List<Equipment>> = equipmentDao.getByType(type)
 
+    fun getLowStockEquipment(): Flow<List<Equipment>> = equipmentDao.getLowStockEquipment()
+
+    fun getLowStockEquipmentCount(): Flow<Int> = equipmentDao.getLowStockEquipmentCount()
+
+    fun searchEquipment(query: String): Flow<List<Equipment>> = equipmentDao.searchEquipment(query)
+
     suspend fun insertEquipment(equipment: Equipment): Long =
         equipmentDao.insertEquipment(equipment)
 

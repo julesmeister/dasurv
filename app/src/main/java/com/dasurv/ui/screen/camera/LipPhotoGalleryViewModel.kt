@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import android.content.Context
+import com.dasurv.util.PhotoShareHelper
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -73,6 +75,10 @@ class LipPhotoGalleryViewModel @Inject constructor(
                 photo.copy(captureType = type, followUpInterval = followUpInterval)
             )
         }
+    }
+
+    fun sharePhoto(context: Context, photo: LipPhoto) {
+        PhotoShareHelper.sharePhoto(context, photo.photoUri, "Dasurv Studios")
     }
 
     fun deletePhoto(photo: LipPhoto) {

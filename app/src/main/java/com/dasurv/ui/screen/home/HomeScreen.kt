@@ -44,6 +44,7 @@ import com.dasurv.ui.component.M3OnSurfaceVariant
 import com.dasurv.ui.component.M3Primary
 import com.dasurv.ui.component.M3PrimaryContainer
 import com.dasurv.ui.component.M3SurfaceContainer
+import com.dasurv.ui.component.M3AmberColor
 import com.dasurv.ui.component.M3ValueBadge
 import com.dasurv.data.model.AppointmentWithClient
 import com.dasurv.ui.theme.DasurvTheme
@@ -60,11 +61,15 @@ fun HomeScreen(
     onNavigateToSchedule: () -> Unit,
     onNavigateToAppointmentDetail: (Long) -> Unit,
     onNavigateToPigmentInventory: () -> Unit,
+    onNavigateToStaff: () -> Unit = {},
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToExport: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val clients by viewModel.clients.collectAsStateWithLifecycle()
     val sessionCount by viewModel.sessionCount.collectAsStateWithLifecycle()
     val upcomingAppointments by viewModel.upcomingAppointments.collectAsStateWithLifecycle()
+    val lowStockCount by viewModel.lowStockCount.collectAsStateWithLifecycle()
     val spacing = DasurvTheme.spacing
 
     Scaffold(
@@ -171,6 +176,67 @@ fun HomeScreen(
                         onClick = onNavigateToPigmentInventory,
                         modifier = Modifier.weight(1f)
                     )
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md)
+                ) {
+                    HomeCard(
+                        title = "Staff",
+                        icon = Icons.Default.Groups,
+                        onClick = onNavigateToStaff,
+                        modifier = Modifier.weight(1f)
+                    )
+                    HomeCard(
+                        title = "Search",
+                        icon = Icons.Default.Search,
+                        onClick = onNavigateToSearch,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.md)
+                ) {
+                    HomeCard(
+                        title = "Export",
+                        icon = Icons.Default.FileDownload,
+                        onClick = onNavigateToExport,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+
+            // Low stock warning
+            if (lowStockCount > 0) {
+                item {
+                    M3ListCard {
+                        androidx.compose.foundation.layout.Row(
+                            modifier = Modifier.padding(spacing.lg),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = M3AmberColor,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(spacing.md))
+                            Text(
+                                text = "$lowStockCount item${if (lowStockCount > 1) "s" else ""} low on stock",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = M3AmberColor
+                            )
+                        }
+                    }
                 }
             }
 

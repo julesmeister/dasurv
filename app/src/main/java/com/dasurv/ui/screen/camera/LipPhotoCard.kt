@@ -36,7 +36,8 @@ internal fun LipPhotoCard(
     onOpenAnalysis: () -> Unit,
     onUpdateNotes: (String) -> Unit,
     onUpdateCaptureType: (CaptureType, String?) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShare: () -> Unit = {}
 ) {
     val dateFormat = remember { SimpleDateFormat(FMT_DATETIME, Locale.getDefault()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -159,6 +160,14 @@ internal fun LipPhotoCard(
                                     onUpdateCaptureType(type, interval)
                                     showCaptureTypeMenu = false
                                 }
+                            )
+                        }
+
+                        IconButton(onClick = onShare) {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = "Share photo",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 

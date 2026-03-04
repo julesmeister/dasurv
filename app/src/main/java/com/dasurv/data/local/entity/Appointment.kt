@@ -10,6 +10,10 @@ enum class AppointmentStatus {
     SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
 }
 
+enum class RecurrenceType {
+    NONE, DAILY, WEEKLY, BIWEEKLY, MONTHLY
+}
+
 @Stable
 @Entity(
     tableName = "appointments",
@@ -39,5 +43,10 @@ data class Appointment(
     val status: AppointmentStatus = AppointmentStatus.SCHEDULED,
     val sessionId: Long? = null,
     val reminderEnabled: Boolean = true,
-    val reminderMinutesBefore: Int = 30
+    val reminderMinutesBefore: Int = 30,
+    val recurrenceType: RecurrenceType = RecurrenceType.NONE,
+    val recurrenceIntervalDays: Int = 0,
+    val recurrenceEndDate: Long? = null,
+    val parentAppointmentId: Long? = null,
+    val staffId: Long? = null
 )

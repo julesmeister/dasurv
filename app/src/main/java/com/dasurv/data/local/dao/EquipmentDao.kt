@@ -20,6 +20,15 @@ interface EquipmentDao {
     @Query("SELECT * FROM equipment WHERE type = :type ORDER BY category, name ASC")
     fun getByType(type: String): Flow<List<Equipment>>
 
+    @Query("SELECT * FROM equipment WHERE minStockThreshold > 0 AND stockQuantity <= minStockThreshold AND stockQuantity > 0")
+    fun getLowStockEquipment(): Flow<List<Equipment>>
+
+    @Query("SELECT COUNT(*) FROM equipment WHERE minStockThreshold > 0 AND stockQuantity <= minStockThreshold AND stockQuantity > 0")
+    fun getLowStockEquipmentCount(): Flow<Int>
+
+    @Query("SELECT * FROM equipment WHERE name LIKE '%' || :query || '%' OR brand LIKE '%' || :query || '%'")
+    fun searchEquipment(query: String): Flow<List<Equipment>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEquipment(equipment: Equipment): Long
 

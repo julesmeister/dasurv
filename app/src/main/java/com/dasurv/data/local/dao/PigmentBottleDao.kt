@@ -20,6 +20,12 @@ interface PigmentBottleDao {
     @Query("SELECT * FROM pigment_bottles WHERE remainingMl > 0 ORDER BY pigmentBrand, pigmentName ASC")
     fun getInStockBottles(): Flow<List<PigmentBottle>>
 
+    @Query("SELECT * FROM pigment_bottles WHERE minRemainingMl > 0 AND remainingMl <= minRemainingMl AND remainingMl > 0")
+    fun getLowStockBottles(): Flow<List<PigmentBottle>>
+
+    @Query("SELECT COUNT(*) FROM pigment_bottles WHERE minRemainingMl > 0 AND remainingMl <= minRemainingMl AND remainingMl > 0")
+    fun getLowStockBottleCount(): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBottle(bottle: PigmentBottle): Long
 

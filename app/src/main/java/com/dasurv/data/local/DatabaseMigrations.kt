@@ -266,4 +266,56 @@ object DatabaseMigrations {
             try { db.execSQL("ALTER TABLE `equipment_purchases` ADD COLUMN `seller` TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
         }
     }
+
+    val MIGRATION_13_14 = object : Migration(13, 14) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // New staff table
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `staff` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `phone` TEXT NOT NULL DEFAULT '',
+                    `email` TEXT NOT NULL DEFAULT '',
+                    `notes` TEXT NOT NULL DEFAULT '',
+                    `isActive` INTEGER NOT NULL DEFAULT 1,
+                    `createdAt` INTEGER NOT NULL DEFAULT 0
+                )
+            """.trimIndent())
+
+            // New session_templates table
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `session_templates` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `procedure` TEXT NOT NULL DEFAULT '',
+                    `notes` TEXT NOT NULL DEFAULT '',
+                    `createdAt` INTEGER NOT NULL DEFAULT 0
+                )
+            """.trimIndent())
+
+            // New session_template_equipment junction table
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `session_template_equipment` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `templateId` INTEGER NOT NULL,
+                    `equipmentId` INTEGER NOT NULL,
+                    `quantity` INTEGER NOT NULL DEFAULT 1,
+                    FOREIGN KEY(`templateId`) REFERENCES `session_templates`(`id`) ON DELETE CASCADE,
+                    FOREIGN KEY(`equipmentId`) REFERENCES `equipment`(`id`) ON DELETE CASCADE
+                )
+            """.trimIndent())
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_template_equipment_templateId` ON `session_template_equipment` (`templateId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_template_equipment_equipmentId` ON `session_template_equipment` (`equipmentId`)")
+
+            // ALTER existing tables
+            db.execSQL("ALTER TABLE `equipment` ADD COLUMN `minStockThreshold` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `pigment_bottles` ADD COLUMN `minRemainingMl` REAL NOT NULL DEFAULT 0.0")
+            db.execSQL("ALTER TABLE `appointments` ADD COLUMN `recurrenceType` TEXT NOT NULL DEFAULT 'NONE'")
+            db.execSQL("ALTER TABLE `appointments` ADD COLUMN `recurrenceIntervalDays` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `appointments` ADD COLUMN `recurrenceEndDate` INTEGER DEFAULT NULL")
+            db.execSQL("ALTER TABLE `appointments` ADD COLUMN `parentAppointmentId` INTEGER DEFAULT NULL")
+            db.execSQL("ALTER TABLE `appointments` ADD COLUMN `staffId` INTEGER DEFAULT NULL")
+            db.execSQL("ALTER TABLE `sessions` ADD COLUMN `staffId` INTEGER DEFAULT NULL")
+        }
+    }
 }

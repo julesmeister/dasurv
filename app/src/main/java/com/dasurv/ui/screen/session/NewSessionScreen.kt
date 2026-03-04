@@ -33,6 +33,7 @@ fun NewSessionDialog(
     val selectedBottleIds by viewModel.selectedBottleIds.collectAsStateWithLifecycle()
     val bottleEntries by viewModel.bottleEntries.collectAsStateWithLifecycle()
 
+    val templates by viewModel.allTemplates.collectAsStateWithLifecycle()
     val consumables = remember(equipment) { equipment.filter { it.type == "consumable" } }
 
     var procedure by remember { mutableStateOf("") }
@@ -105,6 +106,14 @@ fun NewSessionDialog(
                 quantities = quantities,
                 onToggle = viewModel::toggleEquipment,
                 onSetQuantity = { id, qty -> viewModel.setEquipmentQuantity(id, qty.toDouble()) },
+                templates = templates,
+                onLoadTemplate = { template ->
+                    viewModel.loadTemplate(template) { loadedProcedure ->
+                        if (procedure.isBlank() && loadedProcedure.isNotBlank()) {
+                            procedure = loadedProcedure
+                        }
+                    }
+                },
             )
             2 -> PigmentsCostPage(
                 bottles = bottles,

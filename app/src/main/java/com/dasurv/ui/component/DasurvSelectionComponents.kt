@@ -209,12 +209,12 @@ fun DasurvQuantityStepper(
         Surface(
             onClick = { if (value > minValue) onValueChange(value - 1) },
             shape = CircleShape,
-            color = accentColor.copy(alpha = 0.10f),
+            color = accentColor,
             modifier = Modifier.size(36.dp),
             enabled = value > minValue,
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Icon(Icons.Default.Remove, null, modifier = Modifier.size(18.dp), tint = accentColor)
+                Icon(Icons.Default.Remove, null, modifier = Modifier.size(18.dp), tint = Color.White)
             }
         }
         if (valueDisplay != null) {
@@ -230,12 +230,12 @@ fun DasurvQuantityStepper(
         Surface(
             onClick = { if (value < maxValue) onValueChange(value + 1) },
             shape = CircleShape,
-            color = accentColor.copy(alpha = 0.10f),
+            color = accentColor,
             modifier = Modifier.size(36.dp),
             enabled = value < maxValue,
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp), tint = accentColor)
+                Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp), tint = Color.White)
             }
         }
     }

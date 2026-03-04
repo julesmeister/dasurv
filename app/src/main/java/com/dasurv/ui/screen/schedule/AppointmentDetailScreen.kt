@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.AppointmentStatus
+import com.dasurv.data.local.entity.RecurrenceType
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
 import com.dasurv.util.FMT_TIME
@@ -67,8 +68,10 @@ fun AppointmentDetailScreen(
     }
 
     val appointment by viewModel.selectedAppointment.collectAsStateWithLifecycle()
+    val activeStaff by viewModel.activeStaff.collectAsStateWithLifecycle()
     var clientName by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showDeleteSeriesDialog by remember { mutableStateOf(false) }
     var showStatusMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(appointment?.clientId) {
@@ -84,6 +87,16 @@ fun AppointmentDetailScreen(
             title = "Delete Appointment",
             message = "Delete this appointment with $clientName?",
             onConfirm = { viewModel.deleteAppointment(appointment!!) { onNavigateBack() } }
+        )
+    }
+
+    if (showDeleteSeriesDialog && appointment != null) {
+        DasurvConfirmDialog(
+            onDismissRequest = { showDeleteSeriesDialog = false },
+            icon = Icons.Default.DeleteForever,
+            title = "Delete Series",
+            message = "Delete this appointment and all recurring occurrences?",
+            onConfirm = { viewModel.deleteAppointmentSeries(appointment!!) { onNavigateBack() } }
         )
     }
 
@@ -323,6 +336,42 @@ fun AppointmentDetailScreen(
                             )
                         }
                     }
+
+                    // Staff assignment
+                    if (appt.staffId != null) {
+                        val staffName = activeStaff.find { it.id == appt.staffId }?.name ?: "Unknown"
+                        M3ListDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = spacing.lg, vertical = spacing.md)
+                        ) {
+                            Column {
+                                Text("Staff", fontSize = 12.sp, color = M3OnSurfaceVariant)
+                                Text(staffName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = M3OnSurface)
+                            }
+                        }
+                    }
+
+                    // Recurrence info
+                    if (appt.recurrenceType != com.dasurv.data.local.entity.RecurrenceType.NONE) {
+                        M3ListDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = spacing.lg, vertical = spacing.md)
+                        ) {
+                            Column {
+                                Text("Recurrence", fontSize = 12.sp, color = M3OnSurfaceVariant)
+                                Text(
+                                    appt.recurrenceType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = M3OnSurface
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // Start Session button
@@ -401,6 +450,22 @@ fun AppointmentDetailScreen(
                         ) {
                             Text("No Show", fontWeight = FontWeight.Medium)
                         }
+                    }
+                }
+
+                // Delete Series button for recurring appointments
+                if (appt.recurrenceType != com.dasurv.data.local.entity.RecurrenceType.NONE ||
+                    appt.parentAppointmentId != null) {
+                    OutlinedButton(
+                        onClick = { showDeleteSeriesDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = M3RedColor
+                        ),
+                        contentPadding = PaddingValues(vertical = 14.dp)
+                    ) {
+                        Text("Delete Series", fontWeight = FontWeight.Medium)
                     }
                 }
             }

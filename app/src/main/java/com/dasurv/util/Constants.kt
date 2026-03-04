@@ -8,3 +8,6 @@ val EQUIPMENT_CATEGORIES = listOf("Needle", "Numbing", "Aftercare", "Other")
 
 /** Equipment type options. Stored lowercase. */
 val EQUIPMENT_TYPES = listOf("Consumable", "Studio")
+
+/** Recurrence type display labels. */
+val RECURRENCE_TYPES = listOf("None", "Daily", "Weekly", "Biweekly", "Monthly")

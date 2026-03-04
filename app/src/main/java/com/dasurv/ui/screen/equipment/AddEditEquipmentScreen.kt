@@ -31,6 +31,8 @@ fun EquipmentFormDialog(
     LaunchedEffect(equipmentId) {
         if (equipmentId != null && equipmentId != 0L) {
             viewModel.loadEquipment(equipmentId)
+        } else {
+            viewModel.clearSelectedEquipment()
         }
     }
 
@@ -53,6 +55,9 @@ fun EquipmentFormDialog(
     var notes by remember(existingEquipment) { mutableStateOf(existingEquipment?.notes ?: "") }
     var purchaseSource by remember(existingEquipment) { mutableStateOf(existingEquipment?.purchaseSource ?: "") }
     var seller by remember(existingEquipment) { mutableStateOf(existingEquipment?.seller ?: "") }
+    var minStockThreshold by remember(existingEquipment) {
+        mutableStateOf(existingEquipment?.minStockThreshold?.let { if (it > 0) it.toString() else "" } ?: "")
+    }
 
     val purchaseSources by viewModel.purchaseSources.collectAsStateWithLifecycle(initialValue = emptyList())
     val sellers by viewModel.sellers.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -106,7 +111,8 @@ fun EquipmentFormDialog(
                     type = type,
                     piecesPerPackage = piecesPerPackage.toIntOrNull() ?: 1,
                     purchaseSource = purchaseSource.trim(),
-                    seller = seller.trim()
+                    seller = seller.trim(),
+                    minStockThreshold = minStockThreshold.toIntOrNull() ?: 0
                 )
                 viewModel.saveEquipment(equipment) { onDismiss() }
             }
@@ -205,6 +211,13 @@ fun EquipmentFormDialog(
                         label = "Units per Session",
                         autoCapitalize = false,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                    DasurvTextField(
+                        value = minStockThreshold,
+                        onValueChange = { minStockThreshold = it },
+                        label = "Low Stock Alert Threshold",
+                        autoCapitalize = false,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                     DasurvTextField(
                         value = notes,

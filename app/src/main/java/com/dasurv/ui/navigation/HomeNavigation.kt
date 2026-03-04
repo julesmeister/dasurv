@@ -14,7 +14,10 @@ internal fun NavGraphBuilder.homeRoutes(navController: NavController) {
             onNavigateToEquipment = { navController.navigate(Routes.EQUIPMENT_LIST) },
             onNavigateToSchedule = { navController.navigate(Routes.SCHEDULE) },
             onNavigateToAppointmentDetail = { id -> navController.navigate(Routes.appointmentDetail(id)) },
-            onNavigateToPigmentInventory = { navController.navigate(Routes.PIGMENT_INVENTORY) }
+            onNavigateToPigmentInventory = { navController.navigate(Routes.PIGMENT_INVENTORY) },
+            onNavigateToStaff = { navController.navigate(Routes.STAFF_LIST) },
+            onNavigateToSearch = { navController.navigate(Routes.SEARCH) },
+            onNavigateToExport = { navController.navigate(Routes.EXPORT) }
         )
     }
 }

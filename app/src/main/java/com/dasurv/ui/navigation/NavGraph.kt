@@ -42,6 +42,10 @@ object Routes {
     const val PIGMENT_SUMMARY = "pigment-summary/{photoId}"
     const val CLIENT_SESSIONS = "client/{clientId}/sessions"
     const val CLIENT_TRANSACTIONS = "client/{clientId}/transactions"
+    const val STAFF_LIST = "staff"
+    const val SEARCH = "search"
+    const val EXPORT = "export"
+    const val SESSION_TEMPLATES = "session-templates"
 
     // Builder functions for parameterized routes
     fun cameraWithClient(clientId: Long) = "camera/$clientId"
@@ -114,6 +118,10 @@ fun NavGraph(appointmentId: Long? = null) {
         sessionRoutes(navController, timerViewModel)
         scheduleRoutes(navController)
         mediaRoutes(navController)
+        staffRoutes(navController)
+        searchRoutes(navController)
+        exportRoutes(navController)
+        sessionTemplateRoutes(navController)
     }
 
     // Floating timer overlay

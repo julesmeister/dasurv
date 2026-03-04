@@ -168,39 +168,62 @@ internal fun PigmentsCostPage(
 
                     // Line items
                     costSummary.items.forEachIndexed { index, item ->
-                        Row(
+                        val qtyLabel = item.quantity.let {
+                            if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+                        }
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    item.name,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = M3OnSurface,
-                                )
-                                val qtyLabel = item.quantity.let {
-                                    if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
-                                }
-                                Text(
-                                    "Qty: $qtyLabel  @  ₱${item.unitCost.formatPrecise()}",
-                                    fontSize = 12.sp,
-                                    color = M3OnSurfaceVariant,
-                                )
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = M3GreenColor.copy(alpha = 0.08f),
+                            Text(
+                                item.name,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = M3OnSurface,
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(
-                                    "₱${item.totalCost.formatCurrency()}",
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = M3GreenColor,
-                                )
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = M3OnSurfaceVariant.copy(alpha = 0.08f),
+                                ) {
+                                    Text(
+                                        "Qty: $qtyLabel",
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = M3OnSurfaceVariant,
+                                    )
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = M3OnSurfaceVariant.copy(alpha = 0.08f),
+                                ) {
+                                    Text(
+                                        "₱${item.unitCost.formatPrecise()} ea",
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = M3OnSurfaceVariant,
+                                    )
+                                }
+                                Spacer(modifier = Modifier.weight(1f))
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = M3GreenColor.copy(alpha = 0.08f),
+                                ) {
+                                    Text(
+                                        "₱${item.totalCost.formatCurrency()}",
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = M3GreenColor,
+                                    )
+                                }
                             }
                         }
                         if (index < costSummary.items.lastIndex) {
@@ -311,125 +334,121 @@ private fun BottleRow(
             visible = isSelected,
             enter = expandVertically() + fadeIn(),
         ) {
-            Surface(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 56.dp, end = 12.dp, bottom = 10.dp),
-                shape = RoundedCornerShape(14.dp),
-                color = M3FieldBg,
             ) {
-                Column {
-                    // Amount row — icon box + label + input + remaining pill
-                    Row(
+                // Amount row — icon box + label + input + remaining pill
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(M3Primary.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(M3Primary.copy(alpha = 0.10f)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Default.Opacity, null,
-                                modifier = Modifier.size(18.dp),
-                                tint = M3Primary,
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            "Amount",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = M3OnSurface,
-                            modifier = Modifier.weight(1f),
+                        Icon(
+                            Icons.Default.Opacity, null,
+                            modifier = Modifier.size(18.dp),
+                            tint = M3Primary,
                         )
-                        var mlText by remember(bottle.id, entry?.mlUsed) {
-                            mutableStateOf(entry?.mlUsed?.let {
-                                if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
-                            } ?: "0.5")
-                        }
-                        DasurvTextField(
-                            value = mlText,
-                            onValueChange = { newVal ->
-                                mlText = newVal
-                                newVal.toDoubleOrNull()?.let { onSetMlUsed(it) }
-                            },
-                            label = "ml",
-                            modifier = Modifier.width(64.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            autoCapitalize = false,
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        val leftColor = when {
-                            afterPct > 0.5 -> M3GreenColor
-                            afterPct >= 0.2 -> M3AmberColor
-                            else -> M3RedColor
-                        }
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = leftColor.copy(alpha = 0.10f),
-                        ) {
-                            Text(
-                                "${afterUse.formatMl()} left",
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = leftColor,
-                            )
-                        }
                     }
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        color = M3Outline.copy(alpha = 0.5f),
-                        thickness = 0.5.dp,
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        "Amount",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = M3OnSurface,
+                        modifier = Modifier.weight(1f),
                     )
-
-                    // Lip area row — icon box + label + chips
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                    var mlText by remember(bottle.id, entry?.mlUsed) {
+                        mutableStateOf(entry?.mlUsed?.let {
+                            if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+                        } ?: "0.5")
+                    }
+                    DasurvTextField(
+                        value = mlText,
+                        onValueChange = { newVal ->
+                            mlText = newVal
+                            newVal.toDoubleOrNull()?.let { onSetMlUsed(it) }
+                        },
+                        label = "ml",
+                        modifier = Modifier.width(64.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        autoCapitalize = false,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    val leftColor = when {
+                        afterPct > 0.5 -> M3GreenColor
+                        afterPct >= 0.2 -> M3AmberColor
+                        else -> M3RedColor
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = leftColor.copy(alpha = 0.15f),
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(M3Primary.copy(alpha = 0.10f)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Default.Colorize, null,
-                                modifier = Modifier.size(18.dp),
-                                tint = M3Primary,
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            "Lip Area",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = M3OnSurface,
+                            "${afterUse.formatMl()} left",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = leftColor,
                         )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            UsageLipArea.entries.forEach { area ->
-                                val isAreaSelected = (entry?.lipArea ?: UsageLipArea.BOTH) == area
-                                DasurvFilterChip(
-                                    label = when (area) {
-                                        UsageLipArea.UPPER -> "Upper"
-                                        UsageLipArea.LOWER -> "Lower"
-                                        UsageLipArea.BOTH -> "Both"
-                                    },
-                                    selected = isAreaSelected,
-                                    onClick = { onSetLipArea(area) },
-                                )
-                            }
+                    }
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    color = M3Outline.copy(alpha = 0.3f),
+                    thickness = 0.5.dp,
+                )
+
+                // Lip area row — icon box + label + chips
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(M3Primary.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Default.Colorize, null,
+                            modifier = Modifier.size(18.dp),
+                            tint = M3Primary,
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        "Lip Area",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = M3OnSurface,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        UsageLipArea.entries.forEach { area ->
+                            val isAreaSelected = (entry?.lipArea ?: UsageLipArea.BOTH) == area
+                            DasurvFilterChip(
+                                label = when (area) {
+                                    UsageLipArea.UPPER -> "Upper"
+                                    UsageLipArea.LOWER -> "Lower"
+                                    UsageLipArea.BOTH -> "Both"
+                                },
+                                selected = isAreaSelected,
+                                onClick = { onSetLipArea(area) },
+                            )
                         }
                     }
                 }

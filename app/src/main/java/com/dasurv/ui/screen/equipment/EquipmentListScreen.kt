@@ -271,6 +271,13 @@ fun EquipmentListScreen(
                                                     containerColor = M3PrimaryContainer.copy(alpha = 0.5f)
                                                 )
                                             }
+                                            if (isLowStock(item)) {
+                                                M3StatusBadge(
+                                                    text = "Low Stock",
+                                                    color = M3AmberColor,
+                                                    containerColor = M3AmberColor.copy(alpha = 0.1f)
+                                                )
+                                            }
                                         }
                                     }
 

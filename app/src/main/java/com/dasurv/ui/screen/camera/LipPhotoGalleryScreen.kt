@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,6 +29,7 @@ fun LipPhotoGalleryScreen(
     val photos by viewModel.photos.collectAsStateWithLifecycle()
     val pigmentsByPhoto by viewModel.pigmentsByPhoto.collectAsStateWithLifecycle()
     val expandedPhotoId by viewModel.expandedPhotoId.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     val groupedPhotos = photos.groupBy { it.captureType }
 
@@ -86,7 +88,8 @@ fun LipPhotoGalleryScreen(
                             onUpdateCaptureType = { newType, interval ->
                                 viewModel.updateCaptureType(photo, newType, interval)
                             },
-                            onDelete = { viewModel.deletePhoto(photo) }
+                            onDelete = { viewModel.deletePhoto(photo) },
+                            onShare = { viewModel.sharePhoto(context, photo) }
                         )
                     }
                 }

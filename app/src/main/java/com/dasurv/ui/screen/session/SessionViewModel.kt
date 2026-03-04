@@ -4,24 +4,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.data.local.entity.PigmentBottle
-import com.dasurv.data.local.entity.PigmentBottleUsage
-import com.dasurv.data.local.entity.ClientTransaction
 import com.dasurv.data.local.entity.Session
-import com.dasurv.data.local.entity.SessionEquipment
-import com.dasurv.data.local.entity.SessionPigment
-import com.dasurv.data.local.entity.TransactionType
 import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.data.model.CostItem
 import com.dasurv.data.model.CostSummary
 import com.dasurv.data.local.DasurvDatabase
+import com.dasurv.data.local.entity.SessionTemplate
+import com.dasurv.data.local.entity.SessionTemplateEquipment
+import com.dasurv.data.local.entity.Staff
 import com.dasurv.data.repository.EquipmentRepository
 import com.dasurv.data.repository.PigmentBottleRepository
 import com.dasurv.data.repository.SessionRepository
+import com.dasurv.data.repository.SessionTemplateRepository
+import com.dasurv.data.repository.StaffRepository
 import com.dasurv.data.repository.TransactionRepository
-import androidx.room.withTransaction
 import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.dasurv.util.formatCurrency
@@ -33,31 +31,20 @@ data class PigmentBottleSessionEntry(
     val lipArea: UsageLipArea = UsageLipArea.BOTH
 )
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SessionViewModel @Inject constructor(
     private val database: DasurvDatabase,
     private val sessionRepository: SessionRepository,
     private val equipmentRepository: EquipmentRepository,
     private val pigmentBottleRepository: PigmentBottleRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val sessionTemplateRepository: SessionTemplateRepository,
+    private val staffRepository: StaffRepository
 ) : ViewModel() {
-
-    private val _sessionId = MutableStateFlow<Long?>(null)
-
-    private val _selectedSession = MutableStateFlow<Session?>(null)
-    val selectedSession: StateFlow<Session?> = _selectedSession
 
     val allEquipment = equipmentRepository.getAllEquipment()
 
-    val sessionPigments: StateFlow<List<SessionPigment>> = _sessionId
-        .filterNotNull()
-        .flatMapLatest { sessionRepository.getPigmentsForSession(it) }
-        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
-
-    val sessionEquipmentList: StateFlow<List<SessionEquipment>> = _sessionId
-        .filterNotNull()
-        .flatMapLatest { sessionRepository.getEquipmentForSession(it) }
+    val activeStaff: StateFlow<List<Staff>> = staffRepository.getActiveStaff()
         .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     // Map of equipmentId -> quantity used (for new session form)
@@ -75,18 +62,6 @@ class SessionViewModel @Inject constructor(
 
     private val _bottleEntries = MutableStateFlow<Map<Long, PigmentBottleSessionEntry>>(emptyMap())
     val bottleEntries: StateFlow<Map<Long, PigmentBottleSessionEntry>> = _bottleEntries
-
-    val sessionBottleUsages: StateFlow<List<PigmentBottleUsage>> = _sessionId
-        .filterNotNull()
-        .flatMapLatest { pigmentBottleRepository.getUsageForSession(it) }
-        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
-
-    fun loadSession(id: Long) {
-        _sessionId.value = id
-        viewModelScope.launch {
-            _selectedSession.value = sessionRepository.getSessionById(id)
-        }
-    }
 
     fun toggleEquipment(id: Long) {
         _selectedEquipmentIds.value = _selectedEquipmentIds.value.let {
@@ -158,86 +133,18 @@ class SessionViewModel @Inject constructor(
     fun saveSession(session: Session, equipmentList: List<Equipment>, onSuccess: (Long) -> Unit, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
             try {
-                val sessionId = database.withTransaction {
-                    val sid = sessionRepository.insertSession(session)
-
-                    // Persist session equipment
-                    val selectedIds = _selectedEquipmentIds.value
-                    val quantities = _equipmentQuantities.value
-                    val consumables = equipmentList.filter { it.id in selectedIds && it.type == "consumable" }
-
-                    for (eq in consumables) {
-                        val qty = quantities[eq.id] ?: 1.0
-                        sessionRepository.insertSessionEquipment(
-                            SessionEquipment(
-                                sessionId = sid,
-                                equipmentId = eq.id,
-                                quantityUsed = qty,
-                                costPerPiece = eq.costPerPiece
-                            )
-                        )
-                    }
-                    // Batch deduct stock for all consumables
-                    val consumableIds = consumables.map { it.id }
-                    if (consumableIds.isNotEmpty()) {
-                        val currentEquipment = equipmentRepository.getEquipmentByIds(consumableIds)
-                        val updated = currentEquipment.map { eq ->
-                            val qty = quantities[eq.id] ?: 1.0
-                            eq.copy(stockQuantity = (eq.stockQuantity - qty.toInt()).coerceAtLeast(0))
-                        }
-                        equipmentRepository.updateEquipmentBatch(updated)
-                    }
-
-                    // Persist pigment bottle usages
-                    val selectedBottles = _selectedBottleIds.value
-                    val entries = _bottleEntries.value
-                    val bottleIds = selectedBottles.toList()
-                    val bottlesMap = if (bottleIds.isNotEmpty()) {
-                        pigmentBottleRepository.getBottlesByIds(bottleIds).associateBy { it.id }
-                    } else emptyMap()
-
-                    val updatedBottles = mutableListOf<PigmentBottle>()
-                    for (bottleId in selectedBottles) {
-                        val entry = entries[bottleId] ?: continue
-                        val bottle = bottlesMap[bottleId] ?: continue
-                        val costAtUse = entry.mlUsed * bottle.pricePerMl
-
-                        pigmentBottleRepository.insertUsage(
-                            PigmentBottleUsage(
-                                bottleId = bottleId,
-                                clientId = session.clientId,
-                                sessionId = sid,
-                                lipArea = entry.lipArea,
-                                mlUsed = entry.mlUsed,
-                                costAtTimeOfUse = costAtUse
-                            )
-                        )
-                        updatedBottles.add(
-                            bottle.copy(remainingMl = (bottle.remainingMl - entry.mlUsed).coerceAtLeast(0.0))
-                        )
-                    }
-                    // Batch update all bottles
-                    if (updatedBottles.isNotEmpty()) {
-                        pigmentBottleRepository.updateBottleBatch(updatedBottles)
-                    }
-
-                    // Auto-create CHARGE transaction if session has cost
-                    if (session.totalCost > 0) {
-                        transactionRepository.insertTransaction(
-                            ClientTransaction(
-                                clientId = session.clientId,
-                                sessionId = sid,
-                                type = TransactionType.CHARGE,
-                                amount = session.totalCost,
-                                date = session.date,
-                                notes = "Session: ${session.procedure.ifBlank { "Session" }}"
-                            )
-                        )
-                    }
-
-                    sid // return sessionId from transaction
-                }
-
+                val sessionId = sessionRepository.createSessionWithDependencies(
+                    database = database,
+                    session = session,
+                    selectedEquipmentIds = _selectedEquipmentIds.value,
+                    equipmentQuantities = _equipmentQuantities.value,
+                    equipmentList = equipmentList,
+                    selectedBottleIds = _selectedBottleIds.value,
+                    bottleEntries = _bottleEntries.value,
+                    equipmentRepository = equipmentRepository,
+                    pigmentBottleRepository = pigmentBottleRepository,
+                    transactionRepository = transactionRepository
+                )
                 onSuccess(sessionId)
             } catch (e: Exception) {
                 onError(e.message ?: "Failed to save session")
@@ -245,9 +152,37 @@ class SessionViewModel @Inject constructor(
         }
     }
 
-    fun deleteSession(session: Session, onSuccess: () -> Unit) {
+    // Template support
+    val allTemplates = sessionTemplateRepository.getAllTemplates()
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
+
+    fun loadTemplate(template: SessionTemplate, onLoaded: (String) -> Unit = {}) {
         viewModelScope.launch {
-            sessionRepository.deleteSession(session)
+            val templateEquipment = sessionTemplateRepository.getEquipmentForTemplate(template.id)
+            val equipmentIds = templateEquipment.map { it.equipmentId }.toSet()
+            val quantities = templateEquipment.associate { it.equipmentId to it.quantity.toDouble() }
+            _selectedEquipmentIds.value = equipmentIds
+            _equipmentQuantities.value = quantities
+            onLoaded(template.procedure)
+        }
+    }
+
+    fun saveAsTemplate(name: String, procedure: String, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            val template = SessionTemplate(name = name, procedure = procedure)
+            val templateId = sessionTemplateRepository.insertTemplate(template)
+            val selectedIds = _selectedEquipmentIds.value
+            val quantities = _equipmentQuantities.value
+            for (eqId in selectedIds) {
+                val qty = quantities[eqId] ?: 1.0
+                sessionTemplateRepository.insertTemplateEquipment(
+                    SessionTemplateEquipment(
+                        templateId = templateId,
+                        equipmentId = eqId,
+                        quantity = qty.toInt().coerceAtLeast(1)
+                    )
+                )
+            }
             onSuccess()
         }
     }

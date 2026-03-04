@@ -153,6 +153,13 @@ internal fun StockItemCard(
                         containerColor = M3CyanContainer
                     )
                 }
+                if (equipment.minStockThreshold > 0 && equipment.stockQuantity in 1..equipment.minStockThreshold) {
+                    M3StatusBadge(
+                        text = "Low Stock",
+                        color = M3AmberColor,
+                        containerColor = M3AmberColor.copy(alpha = 0.1f)
+                    )
+                }
             }
 
             // Expandable bottles section
@@ -232,7 +239,14 @@ internal fun BottleRow(
                         style = MaterialTheme.typography.labelSmall,
                         color = M3OnSurfaceVariant
                     )
-                    if (bottle.pricePerMl > 0) {
+                    if (bottle.isLowStock) {
+                        Text(
+                            "Low",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = M3AmberColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    } else if (bottle.pricePerMl > 0) {
                         Text(
                             "\$${bottle.remainingValue.formatCurrency()} left",
                             style = MaterialTheme.typography.labelSmall,

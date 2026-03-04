@@ -10,9 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Healing
-import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dasurv.data.local.entity.Equipment
+import com.dasurv.data.local.entity.SessionTemplate
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
 import com.dasurv.util.formatPrecise
@@ -32,7 +32,21 @@ internal fun ConsumablesPage(
     quantities: Map<Long, Double>,
     onToggle: (Long) -> Unit,
     onSetQuantity: (Long, Int) -> Unit,
+    templates: List<SessionTemplate> = emptyList(),
+    onLoadTemplate: (SessionTemplate) -> Unit = {},
 ) {
+    var showTemplatePicker by remember { mutableStateOf(false) }
+
+    if (showTemplatePicker) {
+        SessionTemplatePickerDialog(
+            templates = templates,
+            onSelectTemplate = {
+                onLoadTemplate(it)
+                showTemplatePicker = false
+            },
+            onDismiss = { showTemplatePicker = false }
+        )
+    }
     if (consumables.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -55,7 +69,7 @@ internal fun ConsumablesPage(
     ) {
         // Section header
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -70,7 +84,13 @@ internal fun ConsumablesPage(
                 fontWeight = FontWeight.SemiBold,
                 color = M3CyanColor,
                 letterSpacing = 0.5.sp,
+                modifier = Modifier.weight(1f),
             )
+            if (templates.isNotEmpty()) {
+                TextButton(onClick = { showTemplatePicker = true }) {
+                    Text("Load Template", fontSize = 12.sp, color = M3CyanColor)
+                }
+            }
         }
 
         Card(
@@ -183,60 +203,32 @@ private fun ConsumableRow(
                 remaining >= 1 -> M3AmberColor
                 else -> M3RedColor
             }
-            Surface(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 56.dp, end = 12.dp, bottom = 10.dp),
-                shape = RoundedCornerShape(14.dp),
-                color = M3FieldBg,
+                    .padding(start = 56.dp, end = 12.dp, bottom = 10.dp)
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                DasurvQuantityStepper(
+                    value = qtyInt,
+                    onValueChange = onSetQuantity,
+                    minValue = 1,
+                    maxValue = item.stockQuantity.coerceAtLeast(1),
+                    accentColor = M3CyanColor,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = leftColor.copy(alpha = 0.10f),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(M3CyanColor.copy(alpha = 0.10f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            Icons.Default.Inventory2, null,
-                            modifier = Modifier.size(18.dp),
-                            tint = M3CyanColor,
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        "Quantity",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = M3OnSurface,
-                        modifier = Modifier.weight(1f),
+                        "$remaining left",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = leftColor,
                     )
-                    DasurvQuantityStepper(
-                        value = qtyInt,
-                        onValueChange = onSetQuantity,
-                        minValue = 1,
-                        maxValue = item.stockQuantity.coerceAtLeast(1),
-                        accentColor = M3CyanColor,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = leftColor.copy(alpha = 0.10f),
-                    ) {
-                        Text(
-                            "$remaining left",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = leftColor,
-                        )
-                    }
                 }
             }
         }

@@ -5,6 +5,7 @@ import com.dasurv.data.local.entity.AppointmentStatus
 import com.dasurv.data.local.entity.CaptureType
 import com.dasurv.data.local.entity.LipZone
 import com.dasurv.data.local.entity.PaymentMethod
+import com.dasurv.data.local.entity.RecurrenceType
 import com.dasurv.data.local.entity.TransactionType
 import com.dasurv.data.local.entity.UsageLipArea
 
@@ -38,6 +39,12 @@ class Converters {
 
     @TypeConverter
     fun toTransactionType(value: String): TransactionType = TransactionType.valueOf(value)
+
+    @TypeConverter
+    fun fromRecurrenceType(type: RecurrenceType): String = type.name
+
+    @TypeConverter
+    fun toRecurrenceType(value: String): RecurrenceType = RecurrenceType.valueOf(value)
 
     @TypeConverter
     fun fromPaymentMethod(method: PaymentMethod?): String? = method?.name
