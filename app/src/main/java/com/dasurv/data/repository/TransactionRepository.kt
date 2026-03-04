@@ -44,4 +44,21 @@ class TransactionRepository @Inject constructor(
         ) { charged, paid, balance ->
             FinancialSummary(totalCharged = charged, totalPaid = paid, balance = balance)
         }
+
+    fun getTransactionsForClientInRange(clientId: Long, startMs: Long, endMs: Long): Flow<List<ClientTransaction>> =
+        transactionDao.getTransactionsForClientInRange(clientId, startMs, endMs)
+
+    fun getTotalChargedInRange(clientId: Long, startMs: Long, endMs: Long): Flow<Double> =
+        transactionDao.getTotalChargedInRange(clientId, startMs, endMs)
+
+    fun getTotalPaidInRange(clientId: Long, startMs: Long, endMs: Long): Flow<Double> =
+        transactionDao.getTotalPaidInRange(clientId, startMs, endMs)
+
+    fun getFinancialSummaryInRange(clientId: Long, startMs: Long, endMs: Long): Flow<FinancialSummary> =
+        combine(
+            getTotalChargedInRange(clientId, startMs, endMs),
+            getTotalPaidInRange(clientId, startMs, endMs),
+        ) { charged, paid ->
+            FinancialSummary(totalCharged = charged, totalPaid = paid, balance = charged - paid)
+        }
 }

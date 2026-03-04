@@ -14,13 +14,14 @@ import com.dasurv.ui.component.M3OnSurface
 import com.dasurv.ui.component.M3OnSurfaceVariant
 import com.dasurv.ui.component.M3Primary
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.FMT_DATE
 import com.dasurv.util.formatCurrency
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 internal fun UsageHistoryRow(usage: PigmentBottleUsage) {
-    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat(FMT_DATE, Locale.getDefault()) }
     val spacing = DasurvTheme.spacing
 
     Row(

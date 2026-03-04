@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,79 +50,139 @@ internal fun ConsumablesPage(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = DasurvTheme.spacing.md),
+            .padding(DasurvTheme.spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.sm),
     ) {
-        consumables.forEachIndexed { index, item ->
-            val isSelected = item.id in selectedIds
-            val qty = quantities[item.id] ?: 1.0
-            val qtyInt = qty.toInt().coerceAtLeast(1)
-            val remaining = item.stockQuantity - qtyInt
+        Text(
+            "Select Items",
+            style = MaterialTheme.typography.labelLarge,
+            color = M3OnSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp),
+        )
 
-            Row(
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        ) {
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                consumables.forEachIndexed { index, item ->
+                    val isSelected = item.id in selectedIds
+                    val qty = quantities[item.id] ?: 1.0
+                    val qtyInt = qty.toInt().coerceAtLeast(1)
+                    val remaining = item.stockQuantity - qtyInt
+
+                    ConsumableRow(
+                        item = item,
+                        isSelected = isSelected,
+                        qtyInt = qtyInt,
+                        remaining = remaining,
+                        onToggle = { onToggle(item.id) },
+                        onSetQuantity = { onSetQuantity(item.id, it) },
+                    )
+                    if (index < consumables.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = M3Outline.copy(alpha = 0.5f),
+                            thickness = 0.5.dp,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConsumableRow(
+    item: Equipment,
+    isSelected: Boolean,
+    qtyInt: Int,
+    remaining: Int,
+    onToggle: () -> Unit,
+    onSetQuantity: (Int) -> Unit,
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = { onToggle() },
+                colors = CheckboxDefaults.colors(checkedColor = M3CyanColor),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(M3CyanContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Default.Healing, null, modifier = Modifier.size(18.dp), tint = M3CyanColor)
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    item.name,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = M3OnSurface,
+                )
+                Text(
+                    "₱${item.costPerPiece.formatPrecise()} / piece" +
+                        if (item.piecesPerPackage > 1) " · ${item.piecesPerPackage}/pkg" else "",
+                    fontSize = 13.sp,
+                    color = M3OnSurfaceVariant,
+                )
+            }
+            if (!isSelected) {
+                Text(
+                    "${item.stockQuantity} in stock",
+                    fontSize = 12.sp,
+                    color = M3OnSurfaceVariant,
+                )
+            }
+        }
+
+        // Expanded stepper panel
+        AnimatedVisibility(
+            visible = isSelected,
+            enter = expandVertically() + fadeIn(),
+        ) {
+            val leftColor = when {
+                remaining > 5 -> M3GreenColor
+                remaining >= 1 -> M3AmberColor
+                else -> M3RedColor
+            }
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .padding(start = 56.dp, end = 12.dp, bottom = 10.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = M3FieldBg,
             ) {
-                Checkbox(
-                    checked = isSelected,
-                    onCheckedChange = { onToggle(item.id) },
-                    colors = CheckboxDefaults.colors(checkedColor = M3Primary),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(M3CyanContainer),
-                    contentAlignment = Alignment.Center,
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Default.Healing, null, modifier = Modifier.size(18.dp), tint = M3CyanColor)
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        item.name,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = M3OnSurface,
-                    )
-                    Text(
-                        "₱${item.costPerPiece.formatPrecise()} / piece" +
-                            if (item.piecesPerPackage > 1) " · ${item.piecesPerPackage}/pkg" else "",
+                        "Quantity",
                         fontSize = 13.sp,
                         color = M3OnSurfaceVariant,
                     )
-                }
-                if (!isSelected) {
-                    Text(
-                        "${item.stockQuantity} in stock",
-                        fontSize = 12.sp,
-                        color = M3OnSurfaceVariant,
-                    )
-                }
-            }
-            AnimatedVisibility(
-                visible = isSelected,
-                enter = expandVertically() + fadeIn(),
-            ) {
-                val leftColor = when {
-                    remaining > 5 -> M3GreenColor
-                    remaining >= 1 -> M3AmberColor
-                    else -> M3RedColor
-                }
-                Row(
-                    modifier = Modifier.padding(start = 92.dp, end = 16.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
+                    Spacer(modifier = Modifier.weight(1f))
                     DasurvQuantityStepper(
                         value = qtyInt,
-                        onValueChange = { onSetQuantity(item.id, it) },
+                        onValueChange = onSetQuantity,
                         minValue = 1,
                         maxValue = item.stockQuantity.coerceAtLeast(1),
                         accentColor = M3CyanColor,
                     )
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         "$remaining left",
                         fontSize = 12.sp,
@@ -129,9 +190,6 @@ internal fun ConsumablesPage(
                         color = leftColor,
                     )
                 }
-            }
-            if (index < consumables.lastIndex) {
-                M3ListDivider()
             }
         }
     }

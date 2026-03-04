@@ -42,9 +42,7 @@ fun DasurvFormScaffold(
                 title = { DasurvTopAppBarTitle(title) },
                 navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = actions,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = M3FieldBg
-                )
+                colors = TopAppBarDefaults.topAppBarColors()
             )
         }
     ) { padding ->

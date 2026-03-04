@@ -19,6 +19,7 @@ import com.dasurv.data.local.entity.Appointment
 import com.dasurv.data.local.entity.Client
 import com.dasurv.data.local.entity.Session
 import com.dasurv.data.model.FinancialSummary
+import com.dasurv.ui.component.ChargedPaidRow
 import com.dasurv.ui.component.DasurvEmptyState
 import com.dasurv.ui.component.M3ListCard
 import com.dasurv.ui.component.M3ListDivider
@@ -35,6 +36,8 @@ import com.dasurv.ui.component.M3RedColor
 import com.dasurv.ui.component.M3RedContainer
 import com.dasurv.ui.component.M3FieldBg
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.FMT_DATE
+import com.dasurv.util.FMT_DATETIME
 import com.dasurv.util.formatCurrency
 import java.text.SimpleDateFormat
 import java.util.*
@@ -147,27 +150,49 @@ internal fun LipPhotosCard(
 @Composable
 internal fun BookAppointmentCard(
     clientId: Long,
-    onNavigateToBookAppointment: (Long) -> Unit
+    onNavigateToBookAppointment: (Long) -> Unit,
+    onNavigateToSessions: (Long) -> Unit = {}
 ) {
     val spacing = DasurvTheme.spacing
     M3ListCard {
-        FilledTonalButton(
-            onClick = { onNavigateToBookAppointment(clientId) },
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(spacing.lg),
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = M3AmberColor.copy(alpha = 0.10f),
-                contentColor = M3AmberColor
-            )
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
-            Icon(
-                Icons.Default.CalendarMonth,
-                null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(Modifier.width(spacing.xs))
-            Text("Book Appointment")
+            FilledTonalButton(
+                onClick = { onNavigateToBookAppointment(clientId) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = M3AmberColor.copy(alpha = 0.10f),
+                    contentColor = M3AmberColor
+                )
+            ) {
+                Icon(
+                    Icons.Default.CalendarMonth,
+                    null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(spacing.xs))
+                Text("Book Appt")
+            }
+            FilledTonalButton(
+                onClick = { onNavigateToSessions(clientId) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = M3Primary.copy(alpha = 0.10f),
+                    contentColor = M3Primary
+                )
+            ) {
+                Icon(
+                    Icons.Default.EventNote,
+                    null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(spacing.xs))
+                Text("Sessions")
+            }
         }
     }
 }
@@ -221,58 +246,10 @@ internal fun FinancialSummaryCard(
 
             Spacer(modifier = Modifier.height(spacing.md))
 
-            // Charged / Paid stat row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
-            ) {
-                Surface(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    color = M3FieldBg
-                ) {
-                    Column(
-                        modifier = Modifier.padding(spacing.md),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            "Charged",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = M3OnSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            "$${financialSummary.totalCharged.formatCurrency()}",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = M3OnSurface
-                        )
-                    }
-                }
-                Surface(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    color = M3FieldBg
-                ) {
-                    Column(
-                        modifier = Modifier.padding(spacing.md),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            "Paid",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = M3OnSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            "$${financialSummary.totalPaid.formatCurrency()}",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = M3OnSurface
-                        )
-                    }
-                }
-            }
+            ChargedPaidRow(
+                charged = financialSummary.totalCharged,
+                paid = financialSummary.totalPaid
+            )
 
             Spacer(modifier = Modifier.height(spacing.md))
 
@@ -298,7 +275,7 @@ internal fun AppointmentsList(
 ) {
     val spacing = DasurvTheme.spacing
     val appointmentDateFormat = remember {
-        SimpleDateFormat("MMM dd, yyyy h:mm a", Locale.getDefault())
+        SimpleDateFormat(FMT_DATETIME, Locale.getDefault())
     }
 
     M3ListCard {
@@ -336,7 +313,7 @@ internal fun AppointmentsList(
 }
 
 @Composable
-internal fun SessionsList(
+fun SessionsList(
     sessions: List<Session>,
     onNavigateToSession: (Long) -> Unit
 ) {
@@ -350,7 +327,7 @@ internal fun SessionsList(
     } else {
         M3ListCard {
             val sessionDateFormat = remember {
-                SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                SimpleDateFormat(FMT_DATE, Locale.getDefault())
             }
             sessions.forEachIndexed { index, session ->
                 Surface(

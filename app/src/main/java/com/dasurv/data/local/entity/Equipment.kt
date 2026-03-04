@@ -21,7 +21,9 @@ data class Equipment(
     val stockQuantity: Int = 0,
     val notes: String = "",
     val type: String = "consumable", // "studio" or "consumable"
-    val piecesPerPackage: Int = 1
+    val piecesPerPackage: Int = 1,
+    val purchaseSource: String = "",  // app/platform (e.g. Shopee, Lazada)
+    val seller: String = ""           // seller name within the platform
 ) {
     @get:Ignore
     val costPerPiece: Double

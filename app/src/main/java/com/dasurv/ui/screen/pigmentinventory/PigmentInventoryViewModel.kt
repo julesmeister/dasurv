@@ -8,6 +8,7 @@ import com.dasurv.data.local.entity.PigmentBottleUsage
 import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.data.repository.ClientRepository
 import com.dasurv.data.repository.EquipmentRepository
+import com.dasurv.util.DefaultSubscribePolicy
 import com.dasurv.data.repository.PigmentBottleRepository
 import com.dasurv.data.repository.PigmentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,7 +50,7 @@ class PigmentInventoryViewModel @Inject constructor(
     val usageHistory: StateFlow<List<PigmentBottleUsage>> = _selectedBottleId
         .filterNotNull()
         .flatMapLatest { pigmentBottleRepository.getUsageForBottle(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     fun setBrandFilter(brand: String?) {
         _brandFilter.value = brand

@@ -7,6 +7,7 @@ import com.dasurv.data.model.AppointmentWithClient
 import com.dasurv.data.repository.AppointmentRepository
 import com.dasurv.data.repository.ClientRepository
 import com.dasurv.data.repository.SessionRepository
+import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -19,10 +20,10 @@ class HomeViewModel @Inject constructor(
     appointmentRepository: AppointmentRepository
 ) : ViewModel() {
     val clients: StateFlow<List<Client>> = clientRepository.getAllClients()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     val sessionCount: StateFlow<Int> = sessionRepository.getSessionCount()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+        .stateIn(viewModelScope, DefaultSubscribePolicy, 0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val upcomingAppointments: StateFlow<List<AppointmentWithClient>> = clients
@@ -35,5 +36,5 @@ class HomeViewModel @Inject constructor(
                         AppointmentWithClient(appt, clientMap[appt.clientId]?.name ?: "Unknown")
                     }
                 }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        }.stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 }

@@ -9,7 +9,9 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,9 +42,16 @@ import com.dasurv.ui.theme.DasurvTheme
 fun ClientListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToClient: (Long) -> Unit,
-    onNavigateToAddClient: () -> Unit,
     viewModel: ClientViewModel = hiltViewModel()
 ) {
+    var showClientDialog by remember { mutableStateOf(false) }
+
+    if (showClientDialog) {
+        ClientFormDialog(
+            clientId = null,
+            onDismiss = { showClientDialog = false }
+        )
+    }
     val clients by viewModel.filteredClients.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -59,7 +68,7 @@ fun ClientListScreen(
         },
         floatingActionButton = {
             DasurvAddFab(
-                onClick = onNavigateToAddClient,
+                onClick = { showClientDialog = true },
                 contentDescription = "Add Client"
             )
         }

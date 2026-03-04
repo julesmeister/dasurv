@@ -25,6 +25,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.AppointmentStatus
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.FMT_TIME
+import com.dasurv.ui.util.statusColor
+import com.dasurv.ui.util.statusContainerColor
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,10 +36,22 @@ import java.util.*
 fun AppointmentDetailScreen(
     appointmentId: Long,
     onNavigateBack: () -> Unit,
-    onNavigateToEdit: (Long) -> Unit,
     onNavigateToSession: (Long) -> Unit,
     viewModel: ScheduleViewModel = hiltViewModel()
 ) {
+    var showEditDialog by remember { mutableStateOf(false) }
+
+    if (showEditDialog) {
+        AppointmentFormDialog(
+            appointmentId = appointmentId,
+            preselectedClientId = null,
+            preselectedDateTime = null,
+            onDismiss = {
+                showEditDialog = false
+                viewModel.loadAppointment(appointmentId)
+            }
+        )
+    }
     val spacing = DasurvTheme.spacing
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
@@ -79,7 +94,7 @@ fun AppointmentDetailScreen(
                 title = { DasurvTopAppBarTitle("Appointment") },
                 navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = {
-                    IconButton(onClick = { onNavigateToEdit(appointmentId) }) {
+                    IconButton(onClick = { showEditDialog = true }) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit", tint = M3OnSurface)
                     }
                     IconButton(onClick = { showDeleteDialog = true }) {
@@ -104,20 +119,10 @@ fun AppointmentDetailScreen(
             }
         } else {
             val dateFormat = remember { SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault()) }
-            val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
+            val timeFormat = remember { SimpleDateFormat(FMT_TIME, Locale.getDefault()) }
 
-            val statusColor = when (appt.status) {
-                AppointmentStatus.SCHEDULED -> M3Primary
-                AppointmentStatus.COMPLETED -> M3GreenColor
-                AppointmentStatus.CANCELLED -> M3OnSurfaceVariant
-                AppointmentStatus.NO_SHOW -> M3RedColor
-            }
-            val statusContainerColor = when (appt.status) {
-                AppointmentStatus.SCHEDULED -> M3PrimaryContainer
-                AppointmentStatus.COMPLETED -> M3GreenContainer
-                AppointmentStatus.CANCELLED -> M3FieldBg
-                AppointmentStatus.NO_SHOW -> M3RedContainer
-            }
+            val statusColor = appt.status.statusColor()
+            val statusContainerColor = appt.status.statusContainerColor()
 
             Column(
                 modifier = Modifier

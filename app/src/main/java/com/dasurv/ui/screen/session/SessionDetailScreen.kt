@@ -31,6 +31,7 @@ import com.dasurv.ui.component.M3SnackbarHost
 import com.dasurv.ui.component.M3FieldBg
 import com.dasurv.ui.theme.DasurvTheme
 import com.dasurv.util.formatCurrency
+import com.dasurv.util.formatDurationTimer
 import com.dasurv.util.formatPrecise
 import java.text.SimpleDateFormat
 import java.util.*
@@ -310,21 +311,21 @@ fun SessionDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.height(spacing.sm))
                                 Text(
-                                    "Total: ${formatDuration(session!!.durationSeconds)}",
+                                    "Total: ${formatDurationTimer(session!!.durationSeconds)}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium,
                                     color = M3OnSurface
                                 )
                                 if (session!!.upperLipSeconds > 0) {
                                     Text(
-                                        "Upper Lip: ${formatDuration(session!!.upperLipSeconds)}",
+                                        "Upper Lip: ${formatDurationTimer(session!!.upperLipSeconds)}",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = M3OnSurface
                                     )
                                 }
                                 if (session!!.lowerLipSeconds > 0) {
                                     Text(
-                                        "Lower Lip: ${formatDuration(session!!.lowerLipSeconds)}",
+                                        "Lower Lip: ${formatDurationTimer(session!!.lowerLipSeconds)}",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = M3OnSurface
                                     )
@@ -356,5 +357,3 @@ fun SessionDetailScreen(
         }
     }
 }
-
-private fun formatDuration(seconds: Long): String = com.dasurv.util.formatDurationTimer(seconds)

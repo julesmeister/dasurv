@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +28,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.formatCurrency
 
 // M3 Expressive Color System
 val SkyBlue = M3Primary
@@ -159,5 +163,61 @@ fun M3AmountDisplay(
             color = color,
             lineHeight = (amountSize + 4).sp,
         )
+    }
+}
+
+@Composable
+fun ChargedPaidRow(charged: Double, paid: Double, modifier: Modifier = Modifier) {
+    val spacing = DasurvTheme.spacing
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+    ) {
+        Surface(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            color = M3FieldBg
+        ) {
+            Column(
+                modifier = Modifier.padding(spacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Charged",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = M3OnSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "$${charged.formatCurrency()}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = M3OnSurface
+                )
+            }
+        }
+        Surface(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            color = M3FieldBg
+        ) {
+            Column(
+                modifier = Modifier.padding(spacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Paid",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = M3OnSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "$${paid.formatCurrency()}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = M3OnSurface
+                )
+            }
+        }
     }
 }

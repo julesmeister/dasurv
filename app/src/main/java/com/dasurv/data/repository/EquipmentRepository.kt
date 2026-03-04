@@ -2,6 +2,7 @@ package com.dasurv.data.repository
 
 import com.dasurv.data.local.dao.EquipmentDao
 import com.dasurv.data.local.entity.Equipment
+import com.dasurv.data.local.entity.EquipmentPurchase
 import com.dasurv.data.local.entity.EquipmentUsage
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -43,4 +44,18 @@ class EquipmentRepository @Inject constructor(
         equipmentDao.insertUsageAndDeductStock(usage)
 
     suspend fun deleteUsage(usage: EquipmentUsage) = equipmentDao.deleteUsage(usage)
+
+    // Purchases
+    fun getAllPurchases(): Flow<List<EquipmentPurchase>> = equipmentDao.getAllPurchases()
+
+    fun getPurchasesBetween(start: Long, end: Long): Flow<List<EquipmentPurchase>> =
+        equipmentDao.getPurchasesBetween(start, end)
+
+    suspend fun insertPurchaseAndAddStock(purchase: EquipmentPurchase) =
+        equipmentDao.insertPurchaseAndAddStock(purchase)
+
+    suspend fun deletePurchase(purchase: EquipmentPurchase) = equipmentDao.deletePurchase(purchase)
+
+    fun getDistinctPurchaseSources(): Flow<List<String>> = equipmentDao.getDistinctPurchaseSources()
+    fun getDistinctSellers(): Flow<List<String>> = equipmentDao.getDistinctSellers()
 }

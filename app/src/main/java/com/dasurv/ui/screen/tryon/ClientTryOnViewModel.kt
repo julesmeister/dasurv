@@ -6,6 +6,7 @@ import com.dasurv.data.model.DualLipAnalysis
 import com.dasurv.data.model.Pigment
 import com.dasurv.data.model.PigmentBrand
 import com.dasurv.data.repository.ClientPigmentPreferenceRepository
+import com.dasurv.util.DefaultSubscribePolicy
 import com.dasurv.data.repository.ClientRepository
 import com.dasurv.data.repository.PigmentRepository
 import com.dasurv.util.LipColorAnalyzer
@@ -65,7 +66,7 @@ class ClientTryOnViewModel @Inject constructor(
         .filterNotNull()
         .flatMapLatest { preferenceRepository.getPreferencesForClient(it) }
         .map { prefs -> prefs.map { "${it.pigmentName}|${it.pigmentBrand}" }.toSet() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptySet())
 
     private val _showFavoritesOnly = MutableStateFlow(false)
     val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly

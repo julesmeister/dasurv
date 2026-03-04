@@ -9,7 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dasurv.data.model.Pigment
@@ -29,26 +28,16 @@ internal fun CatalogCustomToggle(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(spacing.sm)
     ) {
-        FilledTonalButton(
-            onClick = { onSetCustom(false) },
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = if (!isCustom) M3PrimaryContainer else M3FieldBg,
-                contentColor = if (!isCustom) M3Primary else M3OnSurfaceVariant
-            ),
-            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
-        ) {
-            Text("From Catalog", maxLines = 1)
-        }
-        FilledTonalButton(
-            onClick = { onSetCustom(true) },
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = if (isCustom) M3PrimaryContainer else M3FieldBg,
-                contentColor = if (isCustom) M3Primary else M3OnSurfaceVariant
-            ),
-            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
-        ) {
-            Text("Custom", maxLines = 1)
-        }
+        DasurvFilterChip(
+            label = "From Catalog",
+            selected = !isCustom,
+            onClick = { onSetCustom(false) }
+        )
+        DasurvFilterChip(
+            label = "Custom",
+            selected = isCustom,
+            onClick = { onSetCustom(true) }
+        )
     }
 }
 
@@ -89,12 +78,7 @@ internal fun PigmentCatalogDropdown(
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "Pigment",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = M3OnSurfaceVariant,
-        )
+        Text(text = "Pigment", style = M3LabelStyle)
         Spacer(modifier = Modifier.height(6.dp))
         ExposedDropdownMenuBox(
             expanded = expanded,

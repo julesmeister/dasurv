@@ -20,8 +20,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -53,12 +56,7 @@ fun DasurvDropdownField(
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = M3OnSurfaceVariant,
-        )
+        Text(text = label, style = M3LabelStyle)
         Spacer(modifier = Modifier.height(6.dp))
         Box {
             Row(
@@ -74,7 +72,7 @@ fun DasurvDropdownField(
                 Text(
                     text = value.ifEmpty { placeholder },
                     fontSize = 16.sp,
-                    color = if (value.isEmpty()) M3OnSurfaceVariant.copy(alpha = 0.5f) else M3OnSurfaceVariant,
+                    color = if (value.isEmpty()) M3OnSurfaceVariant.copy(alpha = 0.5f) else M3InputText,
                     modifier = Modifier.weight(1f),
                 )
                 Icon(
@@ -240,5 +238,26 @@ fun DasurvQuantityStepper(
                 Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp), tint = accentColor)
             }
         }
+    }
+}
+
+@Composable
+fun DasurvFilterChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    accentColor: Color = M3Primary,
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = if (selected) M3PrimaryContainer else M3FieldBg,
+            contentColor = if (selected) accentColor else M3OnSurfaceVariant
+        ),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(label, maxLines = 1)
     }
 }

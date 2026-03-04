@@ -12,11 +12,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.ClientTransaction
+import com.dasurv.ui.component.ChargedPaidRow
+import com.dasurv.ui.component.DateNavigationBar
 import com.dasurv.ui.component.DasurvAddFab
 import com.dasurv.ui.component.DasurvBackButton
 import com.dasurv.ui.component.DasurvConfirmDialog
@@ -33,23 +36,37 @@ import com.dasurv.ui.component.M3RedContainer
 import com.dasurv.ui.component.M3SnackbarHost
 import com.dasurv.ui.component.M3SurfaceContainer
 import com.dasurv.ui.component.M3FieldBg
+import com.dasurv.ui.component.M3GreenColor
 import com.dasurv.ui.theme.DasurvTheme
 import com.dasurv.util.formatCurrency
+import com.dasurv.util.showDatePicker
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionListScreen(
     clientId: Long,
     onNavigateBack: () -> Unit,
-    onNavigateToAddTransaction: (Long) -> Unit,
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
+    var showAddTransactionDialog by remember { mutableStateOf(false) }
+
+    if (showAddTransactionDialog) {
+        TransactionFormDialog(
+            clientId = clientId,
+            onDismiss = { showAddTransactionDialog = false }
+        )
+    }
+
     LaunchedEffect(clientId) { viewModel.loadClient(clientId) }
 
+    val context = LocalContext.current
     val spacing = DasurvTheme.spacing
 
     val transactions by viewModel.transactions.collectAsStateWithLifecycle()
-    val summary by viewModel.summary.collectAsStateWithLifecycle()
+    val allTimeSummary by viewModel.allTimeSummary.collectAsStateWithLifecycle()
+    val formattedMonth by viewModel.formattedMonth.collectAsStateWithLifecycle()
+    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
     var transactionToDelete by remember { mutableStateOf<ClientTransaction?>(null) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -92,7 +109,7 @@ fun TransactionListScreen(
         },
         floatingActionButton = {
             DasurvAddFab(
-                onClick = { onNavigateToAddTransaction(clientId) },
+                onClick = { showAddTransactionDialog = true },
                 contentDescription = "Add Transaction"
             )
         }
@@ -102,7 +119,23 @@ fun TransactionListScreen(
             contentPadding = PaddingValues(vertical = spacing.lg),
             verticalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
-            // Balance summary header
+            // Date navigation bar
+            item {
+                DateNavigationBar(
+                    title = formattedMonth,
+                    subtitle = "${transactions.size} transaction${if (transactions.size != 1) "s" else ""}",
+                    accentColor = M3GreenColor,
+                    onPrevious = { viewModel.previousMonth() },
+                    onNext = { viewModel.nextMonth() },
+                    onCenterClick = {
+                        showDatePicker(context, selectedDate.time) { millis ->
+                            viewModel.setDate(Date(millis))
+                        }
+                    }
+                )
+            }
+
+            // Balance summary header (all-time)
             item {
                 M3ListCard {
                     Column(modifier = Modifier.padding(spacing.xl)) {
@@ -110,7 +143,7 @@ fun TransactionListScreen(
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(spacing.lg),
-                            color = if (summary.balance > 0.01)
+                            color = if (allTimeSummary.balance > 0.01)
                                 M3RedContainer
                             else M3PrimaryContainer
                         ) {
@@ -119,18 +152,18 @@ fun TransactionListScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    if (summary.balance > 0.01) "Outstanding Balance" else "Balance",
+                                    if (allTimeSummary.balance > 0.01) "Outstanding Balance" else "Balance",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = if (summary.balance > 0.01)
+                                    color = if (allTimeSummary.balance > 0.01)
                                         M3RedColor
                                     else M3Primary
                                 )
                                 Spacer(modifier = Modifier.height(spacing.xs))
                                 Text(
-                                    "$${summary.balance.formatCurrency()}",
+                                    "$${allTimeSummary.balance.formatCurrency()}",
                                     style = MaterialTheme.typography.headlineLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (summary.balance > 0.01)
+                                    color = if (allTimeSummary.balance > 0.01)
                                         M3RedColor
                                     else M3Primary
                                 )
@@ -139,58 +172,10 @@ fun TransactionListScreen(
 
                         Spacer(modifier = Modifier.height(spacing.md))
 
-                        // Charged / Paid stat pills
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
-                        ) {
-                            Surface(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(spacing.md),
-                                color = M3FieldBg
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(spacing.md),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        "Charged",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = M3OnSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        "$${summary.totalCharged.formatCurrency()}",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = M3OnSurface
-                                    )
-                                }
-                            }
-                            Surface(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(spacing.md),
-                                color = M3FieldBg
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(spacing.md),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        "Paid",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = M3OnSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        "$${summary.totalPaid.formatCurrency()}",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = M3OnSurface
-                                    )
-                                }
-                            }
-                        }
+                        ChargedPaidRow(
+                            charged = allTimeSummary.totalCharged,
+                            paid = allTimeSummary.totalPaid
+                        )
                     }
                 }
             }
@@ -199,14 +184,14 @@ fun TransactionListScreen(
                 item {
                     DasurvEmptyState(
                         icon = Icons.Default.Receipt,
-                        message = "No transactions yet"
+                        message = "No transactions in $formattedMonth"
                     )
                 }
             } else {
                 item {
                     Spacer(modifier = Modifier.height(spacing.xs))
                     Text(
-                        "All Transactions (${transactions.size})",
+                        "$formattedMonth (${transactions.size})",
                         style = MaterialTheme.typography.titleMedium,
                         color = M3OnSurface,
                         modifier = Modifier.padding(horizontal = spacing.lg)

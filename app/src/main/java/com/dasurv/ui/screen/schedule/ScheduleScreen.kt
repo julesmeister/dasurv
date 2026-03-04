@@ -12,9 +12,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +28,11 @@ import com.dasurv.data.model.AppointmentWithClient
 import com.dasurv.data.model.CalendarDay
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.ui.util.statusColor
+import com.dasurv.ui.util.statusContainerColor
+import com.dasurv.util.FMT_MONTH_YEAR
+import com.dasurv.util.FMT_TIME
+import com.dasurv.util.formatDurationMinutes
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,11 +40,20 @@ import java.util.*
 @Composable
 fun ScheduleScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToAddAppointment: () -> Unit,
-    onNavigateToAddAppointmentForDay: (Long) -> Unit,
     onNavigateToAppointmentDetail: (Long) -> Unit,
     viewModel: ScheduleViewModel = hiltViewModel()
 ) {
+    // null = hidden; non-null = preselected dateTime (0L means no preselection)
+    var appointmentDialogDateTime by remember { mutableStateOf<Long?>(null) }
+
+    if (appointmentDialogDateTime != null) {
+        AppointmentFormDialog(
+            appointmentId = null,
+            preselectedClientId = null,
+            preselectedDateTime = appointmentDialogDateTime?.takeIf { it != 0L },
+            onDismiss = { appointmentDialogDateTime = null }
+        )
+    }
     val spacing = DasurvTheme.spacing
     val calendarMonth by viewModel.calendarMonth.collectAsStateWithLifecycle()
     val selectedDay by viewModel.selectedDayOfMonth.collectAsStateWithLifecycle()
@@ -50,7 +62,7 @@ fun ScheduleScreen(
     val month by viewModel.currentMonth.collectAsStateWithLifecycle()
 
     val monthName = remember(year, month) {
-        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).run {
+        SimpleDateFormat(FMT_MONTH_YEAR, Locale.getDefault()).run {
             val cal = Calendar.getInstance().apply { set(year, month, 1) }
             format(cal.time)
         }
@@ -69,7 +81,7 @@ fun ScheduleScreen(
         },
         floatingActionButton = {
             DasurvAddFab(
-                onClick = onNavigateToAddAppointment,
+                onClick = { appointmentDialogDateTime = 0L },
                 contentDescription = "Add Appointment"
             )
         }
@@ -201,7 +213,7 @@ fun ScheduleScreen(
                                 set(year, month, selectedDay!!, 10, 0, 0)
                                 set(Calendar.MILLISECOND, 0)
                             }
-                            onNavigateToAddAppointmentForDay(cal.timeInMillis)
+                            appointmentDialogDateTime = cal.timeInMillis
                         }) {
                             Text(
                                 "+ Add",
@@ -301,21 +313,11 @@ private fun AppointmentListRow(
     awc: AppointmentWithClient,
     onClick: () -> Unit
 ) {
-    val statusColor = when (awc.appointment.status) {
-        AppointmentStatus.SCHEDULED -> M3Primary
-        AppointmentStatus.COMPLETED -> M3GreenColor
-        AppointmentStatus.CANCELLED -> M3OnSurfaceVariant
-        AppointmentStatus.NO_SHOW -> M3RedColor
-    }
-    val statusContainerColor = when (awc.appointment.status) {
-        AppointmentStatus.SCHEDULED -> M3PrimaryContainer
-        AppointmentStatus.COMPLETED -> M3GreenContainer
-        AppointmentStatus.CANCELLED -> M3FieldBg
-        AppointmentStatus.NO_SHOW -> M3RedContainer
-    }
+    val statusColor = awc.appointment.status.statusColor()
+    val statusContainerColor = awc.appointment.status.statusContainerColor()
 
-    val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
-    val durationText = formatDuration(awc.appointment.durationMinutes)
+    val timeFormat = remember { SimpleDateFormat(FMT_TIME, Locale.getDefault()) }
+    val durationText = formatDurationMinutes(awc.appointment.durationMinutes)
 
     Row(
         modifier = Modifier
@@ -360,10 +362,4 @@ private fun AppointmentListRow(
             )
         }
     }
-}
-
-private fun formatDuration(minutes: Int): String = when {
-    minutes < 60 -> "${minutes}m"
-    minutes % 60 == 0 -> "${minutes / 60}h"
-    else -> "${minutes / 60}h ${minutes % 60}m"
 }

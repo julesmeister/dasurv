@@ -18,6 +18,7 @@ import com.dasurv.data.repository.ClientRepository
 import com.dasurv.data.repository.LipPhotoRepository
 import com.dasurv.data.repository.PigmentRepository
 import com.dasurv.util.ColorMatcher
+import com.dasurv.util.DefaultSubscribePolicy
 import com.dasurv.util.LipColorAnalyzer
 import com.google.mlkit.vision.face.Face
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -117,7 +118,7 @@ class CaptureResultViewModel @Inject constructor(
             if (query.isBlank()) clientRepository.getAllClients()
             else clientRepository.searchClients("%$query%")
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     // Tracks the demo photo path for saveDemoAsClientPhoto
     private var demoPhotoPath: String? = null

@@ -86,12 +86,7 @@ fun DasurvTextField(
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = M3OnSurfaceVariant,
-        )
+        Text(text = label, style = M3LabelStyle)
         Spacer(modifier = Modifier.height(6.dp))
         BasicTextField(
             value = value,
@@ -104,7 +99,7 @@ fun DasurvTextField(
                 .then(if (minLines > 1) Modifier.heightIn(min = (minLines * 24 + 28).dp) else Modifier),
             textStyle = TextStyle(
                 fontSize = 16.sp,
-                color = M3OnSurfaceVariant,
+                color = M3InputText,
             ),
             singleLine = singleLine,
             keyboardOptions = mergedKeyboardOptions,
@@ -170,12 +165,7 @@ fun DasurvCurrencyField(
     )
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = M3OnSurfaceVariant,
-        )
+        Text(text = label, style = M3LabelStyle)
         Spacer(modifier = Modifier.height(6.dp))
         BasicTextField(
             value = value,
@@ -187,7 +177,7 @@ fun DasurvCurrencyField(
                 .border(1.5.dp, borderColor, RoundedCornerShape(14.dp)),
             textStyle = TextStyle(
                 fontSize = 16.sp,
-                color = M3OnSurfaceVariant,
+                color = M3InputText,
             ),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -273,7 +263,7 @@ fun DasurvSearchField(
             .border(1.5.dp, borderColor, RoundedCornerShape(50)),
         textStyle = TextStyle(
             fontSize = 15.sp,
-            color = M3OnSurfaceVariant,
+            color = M3InputText,
         ),
         singleLine = true,
         interactionSource = interactionSource,

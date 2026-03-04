@@ -1,8 +1,19 @@
 package com.dasurv.util
 
+const val FMT_DATE = "MMM dd, yyyy"
+const val FMT_TIME = "h:mm a"
+const val FMT_DATETIME = "MMM dd, yyyy h:mm a"
+const val FMT_MONTH_YEAR = "MMMM yyyy"
+
 fun Double.formatCurrency(): String = String.format("%.2f", this)
 fun Double.formatMl(): String = String.format("%.1f", this)
 fun Double.formatPrecise(): String = String.format("%.4f", this)
+
+fun formatDurationMinutes(minutes: Int): String = when {
+    minutes < 60 -> "${minutes}m"
+    minutes % 60 == 0 -> "${minutes / 60}h"
+    else -> "${minutes / 60}h ${minutes % 60}m"
+}
 
 /**
  * Formats a duration in seconds to a timer string (MM:SS or HH:MM:SS).

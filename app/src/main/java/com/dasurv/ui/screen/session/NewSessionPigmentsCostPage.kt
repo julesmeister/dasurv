@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -58,33 +59,45 @@ internal fun PigmentsCostPage(
             .padding(DasurvTheme.spacing.lg),
         verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.lg),
     ) {
+        // Pigment bottles section
         if (bottles.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.sm)) {
                 Text(
-                    "Pigment Bottles",
+                    "Select Pigments",
                     style = MaterialTheme.typography.labelLarge,
                     color = M3OnSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp),
                 )
 
-                DasurvFormCard {
-                    bottles.forEachIndexed { index, bottle ->
-                        BottleRow(
-                            bottle = bottle,
-                            isSelected = bottle.id in selectedBottleIds,
-                            entry = bottleEntries[bottle.id],
-                            onToggle = { onToggleBottle(bottle.id) },
-                            onSetMlUsed = { onSetMlUsed(bottle.id, it) },
-                            onSetLipArea = { onSetLipArea(bottle.id, it) },
-                        )
-                        if (index < bottles.lastIndex) {
-                            M3ListDivider()
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                ) {
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                        bottles.forEachIndexed { index, bottle ->
+                            BottleRow(
+                                bottle = bottle,
+                                isSelected = bottle.id in selectedBottleIds,
+                                entry = bottleEntries[bottle.id],
+                                onToggle = { onToggleBottle(bottle.id) },
+                                onSetMlUsed = { onSetMlUsed(bottle.id, it) },
+                                onSetLipArea = { onSetLipArea(bottle.id, it) },
+                            )
+                            if (index < bottles.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = M3Outline.copy(alpha = 0.5f),
+                                    thickness = 0.5.dp,
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
+        // Cost summary section
         if (costSummary.items.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.sm)) {
                 Text(
@@ -114,98 +127,127 @@ private fun BottleRow(
     val afterUse = (bottle.remainingMl - mlUsed).coerceAtLeast(0.0)
     val afterPct = if (bottle.bottleSizeMl > 0) afterUse / bottle.bottleSizeMl else 0.0
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = isSelected,
-            onCheckedChange = { onToggle() },
-            colors = CheckboxDefaults.colors(checkedColor = M3Primary),
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Box(
+    Column {
+        Row(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(bottleColor.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = { onToggle() },
+                colors = CheckboxDefaults.colors(checkedColor = M3Primary),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
             Box(
                 modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(bottleColor)
-            )
-        }
-        Spacer(modifier = Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                bottle.pigmentName,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = M3OnSurface,
-            )
-            Text(
-                "${bottle.pigmentBrand} · ${bottle.remainingMl.formatMl()} ml",
-                fontSize = 13.sp,
-                color = M3OnSurfaceVariant,
-            )
-        }
-    }
-
-    AnimatedVisibility(
-        visible = isSelected,
-        enter = expandVertically() + fadeIn(),
-    ) {
-        Column(modifier = Modifier.padding(start = 92.dp, end = 16.dp, bottom = 8.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(bottleColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center,
             ) {
-                var mlText by remember(bottle.id, entry?.mlUsed) {
-                    mutableStateOf(entry?.mlUsed?.let {
-                        if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
-                    } ?: "0.5")
-                }
-                DasurvTextField(
-                    value = mlText,
-                    onValueChange = { newVal ->
-                        mlText = newVal
-                        newVal.toDoubleOrNull()?.let { onSetMlUsed(it) }
-                    },
-                    label = "ml",
-                    modifier = Modifier.width(64.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    autoCapitalize = false,
-                )
-                val leftColor = when {
-                    afterPct > 0.5 -> M3GreenColor
-                    afterPct >= 0.2 -> M3AmberColor
-                    else -> M3RedColor
-                }
-                Text(
-                    "${afterUse.formatMl()} left",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = leftColor,
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(bottleColor)
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                UsageLipArea.entries.forEach { area ->
-                    val isAreaSelected = (entry?.lipArea ?: UsageLipArea.BOTH) == area
-                    DasurvFilterChip(
-                        label = when (area) {
-                            UsageLipArea.UPPER -> "Upper"
-                            UsageLipArea.LOWER -> "Lower"
-                            UsageLipArea.BOTH -> "Both"
-                        },
-                        selected = isAreaSelected,
-                        onClick = { onSetLipArea(area) },
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    bottle.pigmentName,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = M3OnSurface,
+                )
+                Text(
+                    "${bottle.pigmentBrand} · ${bottle.remainingMl.formatMl()} ml",
+                    fontSize = 13.sp,
+                    color = M3OnSurfaceVariant,
+                )
+            }
+        }
+
+        // Expanded usage details panel
+        AnimatedVisibility(
+            visible = isSelected,
+            enter = expandVertically() + fadeIn(),
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 56.dp, end = 12.dp, bottom = 10.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = M3FieldBg,
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    // ml input row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "Amount",
+                            fontSize = 13.sp,
+                            color = M3OnSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        var mlText by remember(bottle.id, entry?.mlUsed) {
+                            mutableStateOf(entry?.mlUsed?.let {
+                                if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString()
+                            } ?: "0.5")
+                        }
+                        DasurvTextField(
+                            value = mlText,
+                            onValueChange = { newVal ->
+                                mlText = newVal
+                                newVal.toDoubleOrNull()?.let { onSetMlUsed(it) }
+                            },
+                            label = "ml",
+                            modifier = Modifier.width(64.dp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            autoCapitalize = false,
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        val leftColor = when {
+                            afterPct > 0.5 -> M3GreenColor
+                            afterPct >= 0.2 -> M3AmberColor
+                            else -> M3RedColor
+                        }
+                        Text(
+                            "${afterUse.formatMl()} left",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = leftColor,
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HorizontalDivider(color = M3Outline.copy(alpha = 0.5f), thickness = 0.5.dp)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Lip area selector
+                    Text(
+                        "Lip Area",
+                        fontSize = 13.sp,
+                        color = M3OnSurfaceVariant,
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        UsageLipArea.entries.forEach { area ->
+                            val isAreaSelected = (entry?.lipArea ?: UsageLipArea.BOTH) == area
+                            DasurvFilterChip(
+                                label = when (area) {
+                                    UsageLipArea.UPPER -> "Upper"
+                                    UsageLipArea.LOWER -> "Lower"
+                                    UsageLipArea.BOTH -> "Both"
+                                },
+                                selected = isAreaSelected,
+                                onClick = { onSetLipArea(area) },
+                            )
+                        }
+                    }
                 }
             }
         }

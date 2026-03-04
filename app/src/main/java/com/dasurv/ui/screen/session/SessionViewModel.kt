@@ -19,6 +19,7 @@ import com.dasurv.data.repository.PigmentBottleRepository
 import com.dasurv.data.repository.SessionRepository
 import com.dasurv.data.repository.TransactionRepository
 import androidx.room.withTransaction
+import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -52,12 +53,12 @@ class SessionViewModel @Inject constructor(
     val sessionPigments: StateFlow<List<SessionPigment>> = _sessionId
         .filterNotNull()
         .flatMapLatest { sessionRepository.getPigmentsForSession(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     val sessionEquipmentList: StateFlow<List<SessionEquipment>> = _sessionId
         .filterNotNull()
         .flatMapLatest { sessionRepository.getEquipmentForSession(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     // Map of equipmentId -> quantity used (for new session form)
     private val _equipmentQuantities = MutableStateFlow<Map<Long, Double>>(emptyMap())
@@ -78,7 +79,7 @@ class SessionViewModel @Inject constructor(
     val sessionBottleUsages: StateFlow<List<PigmentBottleUsage>> = _sessionId
         .filterNotNull()
         .flatMapLatest { pigmentBottleRepository.getUsageForSession(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     fun loadSession(id: Long) {
         _sessionId.value = id

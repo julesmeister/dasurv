@@ -217,4 +217,53 @@ object DatabaseMigrations {
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_pigment_bottles_pigmentName_pigmentBrand` ON `pigment_bottles` (`pigmentName`, `pigmentBrand`)")
         }
     }
+
+    val MIGRATION_11_12 = object : Migration(11, 12) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `equipment_purchases` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `equipmentId` INTEGER NOT NULL,
+                    `quantity` INTEGER NOT NULL,
+                    `totalCost` REAL NOT NULL DEFAULT 0.0,
+                    `purchaseDate` INTEGER NOT NULL,
+                    `notes` TEXT NOT NULL DEFAULT '',
+                    `purchaseSource` TEXT NOT NULL DEFAULT '',
+                    `seller` TEXT NOT NULL DEFAULT '',
+                    FOREIGN KEY(`equipmentId`) REFERENCES `equipment`(`id`) ON DELETE CASCADE
+                )
+            """.trimIndent())
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_equipment_purchases_equipmentId` ON `equipment_purchases` (`equipmentId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_equipment_purchases_purchaseDate` ON `equipment_purchases` (`purchaseDate`)")
+            db.execSQL("ALTER TABLE `equipment` ADD COLUMN `purchaseSource` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `equipment` ADD COLUMN `seller` TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
+    val MIGRATION_12_13 = object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Re-apply potentially missing schema from corrupted dev builds
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `equipment_purchases` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `equipmentId` INTEGER NOT NULL,
+                    `quantity` INTEGER NOT NULL,
+                    `totalCost` REAL NOT NULL DEFAULT 0.0,
+                    `purchaseDate` INTEGER NOT NULL,
+                    `notes` TEXT NOT NULL DEFAULT '',
+                    `purchaseSource` TEXT NOT NULL DEFAULT '',
+                    `seller` TEXT NOT NULL DEFAULT '',
+                    FOREIGN KEY(`equipmentId`) REFERENCES `equipment`(`id`) ON DELETE CASCADE
+                )
+            """.trimIndent())
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_equipment_purchases_equipmentId` ON `equipment_purchases` (`equipmentId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_equipment_purchases_purchaseDate` ON `equipment_purchases` (`purchaseDate`)")
+
+            // Add columns if missing (ALTER TABLE will fail if they already exist, so catch)
+            try { db.execSQL("ALTER TABLE `equipment` ADD COLUMN `purchaseSource` TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
+            try { db.execSQL("ALTER TABLE `equipment` ADD COLUMN `seller` TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
+            try { db.execSQL("ALTER TABLE `equipment_purchases` ADD COLUMN `purchaseSource` TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
+            try { db.execSQL("ALTER TABLE `equipment_purchases` ADD COLUMN `seller` TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
+        }
+    }
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dasurv.ui.screen.session.SessionTimerState
+import com.dasurv.util.formatDurationTimer
 
 @Composable
 internal fun ExpandedTimer(
@@ -69,7 +70,7 @@ internal fun ExpandedTimer(
             ) {
                 Column {
                     Text(
-                        text = formatTime(state.totalElapsed),
+                        text = formatDurationTimer(state.totalElapsed),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = if (state.isPaused) MaterialTheme.colorScheme.onSurfaceVariant
@@ -192,7 +193,7 @@ internal fun ZoneRow(
             Text(label, style = MaterialTheme.typography.bodyMedium)
         }
         Text(
-            text = formatTime(elapsed),
+            text = formatDurationTimer(elapsed),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = if (isRunning) MaterialTheme.colorScheme.tertiary

@@ -6,6 +6,7 @@ import com.dasurv.data.local.entity.CaptureType
 import com.dasurv.data.local.entity.LipPhoto
 import com.dasurv.data.local.entity.LipPhotoPigment
 import com.dasurv.data.repository.LipPhotoRepository
+import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +32,7 @@ class LipPhotoGalleryViewModel @Inject constructor(
     val photos: StateFlow<List<LipPhoto>> = _clientId
         .filterNotNull()
         .flatMapLatest { lipPhotoRepository.getPhotosForClient(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     private val _pigmentsByPhoto = MutableStateFlow<Map<Long, List<LipPhotoPigment>>>(emptyMap())
     val pigmentsByPhoto: StateFlow<Map<Long, List<LipPhotoPigment>>> = _pigmentsByPhoto

@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.ui.util.parseHexSafe
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,11 +114,7 @@ fun ColorRecommendationScreen(
                                         .clip(CircleShape)
                                         .background(
                                             remember(rec.pigment.colorHex) {
-                                                try {
-                                                    Color(android.graphics.Color.parseColor(rec.pigment.colorHex))
-                                                } catch (e: Exception) {
-                                                    Color.Gray
-                                                }
+                                                parseHexSafe(rec.pigment.colorHex)
                                             }
                                         )
                                         .border(1.dp, M3Outline, CircleShape)

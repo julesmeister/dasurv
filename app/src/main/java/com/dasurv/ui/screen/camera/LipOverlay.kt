@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.dasurv.ui.theme.RoseTertiary
+import com.dasurv.ui.util.parseHexSafe
 import com.dasurv.util.ColorMatcher
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceContour
@@ -41,7 +42,7 @@ fun LipOverlay(
             val hex = if (naturalUpperLipHex != null) {
                 ColorMatcher.blendPigmentResultStatic(naturalUpperLipHex, upperLipPigmentHex)
             } else upperLipPigmentHex
-            parseHexColor(hex).copy(alpha = 0.50f)
+            parseHexSafe(hex).copy(alpha = 0.50f)
         } else null
     }
 
@@ -50,7 +51,7 @@ fun LipOverlay(
             val hex = if (naturalLowerLipHex != null) {
                 ColorMatcher.blendPigmentResultStatic(naturalLowerLipHex, lowerLipPigmentHex)
             } else lowerLipPigmentHex
-            parseHexColor(hex).copy(alpha = 0.50f)
+            parseHexSafe(hex).copy(alpha = 0.50f)
         } else null
     }
 
@@ -180,13 +181,5 @@ private fun addSmoothCurves(
         val cp2y = ty(p1) - (ty(next) - ty(p0)) / 6f
 
         path.cubicTo(cp1x, cp1y, cp2x, cp2y, tx(p1), ty(p1))
-    }
-}
-
-private fun parseHexColor(hex: String): Color {
-    return try {
-        Color(android.graphics.Color.parseColor(hex))
-    } catch (e: Exception) {
-        Color(0xFFFF69B4)
     }
 }

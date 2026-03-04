@@ -9,19 +9,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dasurv.data.local.entity.ClientTransaction
 import com.dasurv.data.local.entity.TransactionType
-import com.dasurv.ui.component.M3AmberColor
-import com.dasurv.ui.component.M3AmberContainer
+import com.dasurv.ui.util.color
+import com.dasurv.ui.util.containerColor
+import com.dasurv.ui.util.displayName
+import com.dasurv.ui.util.isDebit
 import com.dasurv.ui.component.M3OnSurface
 import com.dasurv.ui.component.M3OnSurfaceVariant
-import com.dasurv.ui.component.M3RedColor
-import com.dasurv.ui.component.M3RedContainer
 import com.dasurv.ui.component.M3FieldBg
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.util.FMT_DATE
 import com.dasurv.util.formatCurrency
 import java.text.SimpleDateFormat
 import java.util.*
@@ -33,25 +33,10 @@ internal fun TransactionRow(
     onDelete: () -> Unit
 ) {
     val spacing = DasurvTheme.spacing
-    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
-    val isCharge = transaction.type == TransactionType.CHARGE || transaction.type == TransactionType.REFUND
-
-    // Friendly display names
-    val typeLabel = when (transaction.type) {
-        TransactionType.CHARGE -> "Charge"
-        TransactionType.PAYMENT -> "Payment"
-        TransactionType.DEPOSIT -> "Deposit"
-        TransactionType.TIP -> "Tip"
-        TransactionType.REFUND -> "Refund"
-    }
-    val methodLabel = transaction.paymentMethod?.let {
-        when (it) {
-            com.dasurv.data.local.entity.PaymentMethod.CASH -> "Cash"
-            com.dasurv.data.local.entity.PaymentMethod.CARD -> "Card"
-            com.dasurv.data.local.entity.PaymentMethod.E_TRANSFER -> "E-transfer"
-            com.dasurv.data.local.entity.PaymentMethod.OTHER -> "Other"
-        }
-    }
+    val dateFormat = remember { SimpleDateFormat(FMT_DATE, Locale.getDefault()) }
+    val isCharge = transaction.type.isDebit()
+    val typeLabel = transaction.type.displayName()
+    val methodLabel = transaction.paymentMethod?.displayName()
 
     Row(
         modifier = Modifier
@@ -62,7 +47,7 @@ internal fun TransactionRow(
         // Type icon indicator
         Surface(
             shape = RoundedCornerShape(spacing.md),
-            color = if (isCharge) M3RedContainer else M3AmberContainer,
+            color = transaction.type.containerColor(),
             modifier = Modifier.size(40.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -70,7 +55,7 @@ internal fun TransactionRow(
                     text = if (isCharge) "+" else "-",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (isCharge) M3RedColor else M3AmberColor
+                    color = transaction.type.color()
                 )
             }
         }
@@ -121,7 +106,7 @@ internal fun TransactionRow(
                 text = "${if (transaction.amount > 0) "+" else ""}$${transaction.amount.formatCurrency()}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isCharge) M3RedColor else M3AmberColor
+                color = transaction.type.color()
             )
             Text(
                 text = "Bal: $${runningBalance.formatCurrency()}",

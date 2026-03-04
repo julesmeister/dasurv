@@ -21,6 +21,7 @@ import com.dasurv.data.local.entity.LipPhotoPigment
 import com.dasurv.data.local.entity.LipZone
 import com.dasurv.ui.component.ColorSwatch
 import com.dasurv.ui.component.DasurvConfirmDialog
+import com.dasurv.util.FMT_DATETIME
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,7 +38,7 @@ internal fun LipPhotoCard(
     onUpdateCaptureType: (CaptureType, String?) -> Unit,
     onDelete: () -> Unit
 ) {
-    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy h:mm a", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat(FMT_DATETIME, Locale.getDefault()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showNotesDialog by remember { mutableStateOf(false) }
     var showCaptureTypeMenu by remember { mutableStateOf(false) }

@@ -2,6 +2,7 @@ package com.dasurv.data.local.dao
 
 import androidx.room.*
 import com.dasurv.data.local.entity.Equipment
+import com.dasurv.data.local.entity.EquipmentPurchase
 import com.dasurv.data.local.entity.EquipmentUsage
 import kotlinx.coroutines.flow.Flow
 
@@ -50,4 +51,39 @@ interface EquipmentDao {
         val eq = getEquipmentById(usage.equipmentId) ?: return
         updateEquipment(eq.copy(stockQuantity = (eq.stockQuantity - usage.quantityUsed.toInt()).coerceAtLeast(0)))
     }
+
+    // Equipment purchases
+    @Query("SELECT * FROM equipment_purchases ORDER BY purchaseDate DESC")
+    fun getAllPurchases(): Flow<List<EquipmentPurchase>>
+
+    @Query("SELECT * FROM equipment_purchases WHERE purchaseDate BETWEEN :start AND :end ORDER BY purchaseDate DESC")
+    fun getPurchasesBetween(start: Long, end: Long): Flow<List<EquipmentPurchase>>
+
+    @Insert
+    suspend fun insertPurchase(purchase: EquipmentPurchase): Long
+
+    @Delete
+    suspend fun deletePurchase(purchase: EquipmentPurchase)
+
+    @Transaction
+    suspend fun insertPurchaseAndAddStock(purchase: EquipmentPurchase) {
+        insertPurchase(purchase)
+        val eq = getEquipmentById(purchase.equipmentId) ?: return
+        updateEquipment(eq.copy(stockQuantity = eq.stockQuantity + purchase.quantity))
+    }
+
+    // Autocomplete suggestions for purchase source / seller
+    @Query("""
+        SELECT DISTINCT purchaseSource FROM equipment WHERE purchaseSource != ''
+        UNION
+        SELECT DISTINCT purchaseSource FROM equipment_purchases WHERE purchaseSource != ''
+    """)
+    fun getDistinctPurchaseSources(): Flow<List<String>>
+
+    @Query("""
+        SELECT DISTINCT seller FROM equipment WHERE seller != ''
+        UNION
+        SELECT DISTINCT seller FROM equipment_purchases WHERE seller != ''
+    """)
+    fun getDistinctSellers(): Flow<List<String>>
 }

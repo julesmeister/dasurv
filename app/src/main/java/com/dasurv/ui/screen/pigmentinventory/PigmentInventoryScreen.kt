@@ -158,28 +158,18 @@ fun PigmentInventoryScreen(
                     horizontalArrangement = Arrangement.spacedBy(spacing.sm)
                 ) {
                     item {
-                        FilledTonalButton(
-                            onClick = { viewModel.setBrandFilter(null) },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = if (brandFilter == null) M3PrimaryContainer else M3FieldBg,
-                                contentColor = if (brandFilter == null) M3Primary else M3OnSurfaceVariant
-                            ),
-                            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
-                        ) {
-                            Text("All", maxLines = 1)
-                        }
+                        DasurvFilterChip(
+                            label = "All",
+                            selected = brandFilter == null,
+                            onClick = { viewModel.setBrandFilter(null) }
+                        )
                     }
                     items(brands) { brand ->
-                        FilledTonalButton(
-                            onClick = { viewModel.setBrandFilter(brand) },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = if (brandFilter == brand) M3PrimaryContainer else M3FieldBg,
-                                contentColor = if (brandFilter == brand) M3Primary else M3OnSurfaceVariant
-                            ),
-                            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
-                        ) {
-                            Text(brand, maxLines = 1)
-                        }
+                        DasurvFilterChip(
+                            label = brand,
+                            selected = brandFilter == brand,
+                            onClick = { viewModel.setBrandFilter(brand) }
+                        )
                     }
                 }
             }

@@ -13,6 +13,7 @@ import com.dasurv.data.repository.AppointmentRepository
 import com.dasurv.data.repository.ClientRepository
 import com.dasurv.data.repository.SessionRepository
 import com.dasurv.util.AppointmentAlarmScheduler
+import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -40,7 +41,7 @@ class ScheduleViewModel @Inject constructor(
     val selectedAppointment: StateFlow<Appointment?> = _selectedAppointment
 
     val clients: StateFlow<List<Client>> = clientRepository.getAllClients()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val monthAppointments: StateFlow<List<Appointment>> = combine(_currentYear, _currentMonth) { year, month ->
@@ -54,13 +55,13 @@ class ScheduleViewModel @Inject constructor(
         Pair(startTime, endTime)
     }.flatMapLatest { (start, end) ->
         appointmentRepository.getAppointmentsInRange(start, end)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }.stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     val calendarMonth: StateFlow<CalendarMonth> = combine(
         _currentYear, _currentMonth, monthAppointments
     ) { year, month, appointments ->
         buildCalendarMonth(year, month, appointments)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), buildCalendarMonth(
+    }.stateIn(viewModelScope, DefaultSubscribePolicy, buildCalendarMonth(
         _currentYear.value, _currentMonth.value, emptyList()
     ))
 
@@ -77,7 +78,7 @@ class ScheduleViewModel @Inject constructor(
         }.map { appt ->
             AppointmentWithClient(appt, clientMap[appt.clientId]?.name ?: "Unknown")
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }.stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     fun navigateMonth(delta: Int) {
         val cal = Calendar.getInstance().apply {

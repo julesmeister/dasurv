@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -29,12 +28,7 @@ fun DasurvClickableField(
     placeholder: String = ""
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = M3OnSurfaceVariant,
-        )
+        Text(text = label, style = M3LabelStyle)
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier

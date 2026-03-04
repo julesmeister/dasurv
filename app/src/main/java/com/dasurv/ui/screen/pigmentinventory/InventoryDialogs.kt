@@ -97,23 +97,15 @@ internal fun LogUsageDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                     UsageLipArea.entries.forEach { area ->
                         val isSelected = selectedLipArea == area
-                        FilledTonalButton(
-                            onClick = { selectedLipArea = area },
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = if (isSelected) M3PrimaryContainer else M3FieldBg,
-                                contentColor = if (isSelected) M3Primary else M3OnSurfaceVariant
-                            ),
-                            contentPadding = PaddingValues(horizontal = spacing.lg, vertical = spacing.sm)
-                        ) {
-                            Text(
-                                when (area) {
-                                    UsageLipArea.UPPER -> "Upper"
-                                    UsageLipArea.LOWER -> "Lower"
-                                    UsageLipArea.BOTH -> "Both"
-                                },
-                                maxLines = 1
-                            )
-                        }
+                        DasurvFilterChip(
+                            label = when (area) {
+                                UsageLipArea.UPPER -> "Upper"
+                                UsageLipArea.LOWER -> "Lower"
+                                UsageLipArea.BOTH -> "Both"
+                            },
+                            selected = isSelected,
+                            onClick = { selectedLipArea = area }
+                        )
                     }
                 }
 

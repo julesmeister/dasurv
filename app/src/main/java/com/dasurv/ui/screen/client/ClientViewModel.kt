@@ -8,6 +8,7 @@ import com.dasurv.data.repository.AppointmentRepository
 import com.dasurv.data.repository.ClientRepository
 import com.dasurv.data.repository.SessionRepository
 import com.dasurv.data.repository.TransactionRepository
+import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,7 +29,7 @@ class ClientViewModel @Inject constructor(
     val filteredClients = _searchQuery.flatMapLatest { query ->
         if (query.isBlank()) clientRepository.getAllClients()
         else clientRepository.searchClients(query)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }.stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     private val _selectedClient = MutableStateFlow<Client?>(null)
     val selectedClient: StateFlow<Client?> = _selectedClient

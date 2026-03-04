@@ -22,6 +22,7 @@ import com.dasurv.data.local.entity.LipZone
 import com.dasurv.ui.theme.GlassBrush
 import com.dasurv.ui.theme.RosePrimary
 import com.dasurv.ui.theme.RoseTertiary
+import com.dasurv.ui.util.parseHexSafe
 import com.dasurv.util.ColorMatcher
 
 @Composable
@@ -70,11 +71,7 @@ internal fun ArPigmentCard(
                     }
                     if (currentPigment != null) {
                         val swatchColor = remember(currentPigment.pigment.colorHex) {
-                            try {
-                                Color(android.graphics.Color.parseColor(currentPigment.pigment.colorHex))
-                            } catch (_: Exception) {
-                                Color.Gray
-                            }
+                            parseHexSafe(currentPigment.pigment.colorHex)
                         }
                         // Larger swatch
                         Box(

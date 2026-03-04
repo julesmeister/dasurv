@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import com.dasurv.ui.util.parseHexSafe
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -30,11 +31,7 @@ fun ColorSwatch(
     selected: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
-    val color = try {
-        Color(android.graphics.Color.parseColor(colorHex))
-    } catch (e: Exception) {
-        Color.Gray
-    }
+    val color = parseHexSafe(colorHex)
 
     // Spring-based animations (vivi-music style)
     val scale by animateFloatAsState(

@@ -19,6 +19,7 @@ import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.ui.util.parseHexSafe
 import com.dasurv.util.formatMl
 import com.dasurv.util.formatPrecise
 
@@ -56,7 +57,7 @@ internal fun LazyListScope.consumableItems(
                             " (${item.piecesPerPackage}/pkg)"
                         else "",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = M3OnSurfaceVariant
                 )
             }
             if (isSelected) {
@@ -97,11 +98,7 @@ internal fun LazyListScope.pigmentBottleItems(
     items(bottles, key = { it.id }) { bottle ->
         val isSelected = bottle.id in selectedBottleIds
         val bottleColor = remember(bottle.colorHex) {
-            try {
-                Color(android.graphics.Color.parseColor(bottle.colorHex))
-            } catch (e: Exception) {
-                Color.Gray
-            }
+            parseHexSafe(bottle.colorHex)
         }
 
         Column {
@@ -125,7 +122,7 @@ internal fun LazyListScope.pigmentBottleItems(
                     Text(
                         "${bottle.pigmentBrand} - ${bottle.remainingMl.formatMl()} ml left",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = M3OnSurfaceVariant
                     )
                 }
                 if (isSelected) {

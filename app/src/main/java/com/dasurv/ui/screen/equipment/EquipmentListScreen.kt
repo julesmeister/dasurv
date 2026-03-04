@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -27,10 +26,17 @@ import com.dasurv.util.formatCurrency
 @Composable
 fun EquipmentListScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToAddEquipment: () -> Unit,
-    onNavigateToEditEquipment: (Long) -> Unit,
     viewModel: EquipmentViewModel = hiltViewModel()
 ) {
+    // null = hidden, 0L = add new, >0 = edit existing
+    var equipmentDialogId by remember { mutableStateOf<Long?>(null) }
+
+    if (equipmentDialogId != null) {
+        EquipmentFormDialog(
+            equipmentId = equipmentDialogId?.takeIf { it != 0L },
+            onDismiss = { equipmentDialogId = null }
+        )
+    }
     val spacing = DasurvTheme.spacing
     val equipment by viewModel.equipment.collectAsStateWithLifecycle(initialValue = emptyList())
     val typeFilter by viewModel.typeFilter.collectAsStateWithLifecycle()
@@ -49,6 +55,13 @@ fun EquipmentListScreen(
     var showUsageDialog by remember { mutableStateOf<Equipment?>(null) }
     var showDeleteDialog by remember { mutableStateOf<Equipment?>(null) }
     var sheetItem by remember { mutableStateOf<Equipment?>(null) }
+    var showPurchaseHistory by remember { mutableStateOf(false) }
+    var showRecordPurchase by remember { mutableStateOf(false) }
+
+    val allPurchases by viewModel.allPurchases.collectAsStateWithLifecycle(initialValue = emptyList())
+    val purchaseDateRange by viewModel.purchaseDateRange.collectAsStateWithLifecycle()
+    val purchaseSources by viewModel.purchaseSources.collectAsStateWithLifecycle(initialValue = emptyList())
+    val sellers by viewModel.sellers.collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (showUsageDialog != null) {
         EquipmentLogUsageDialog(
@@ -88,11 +101,11 @@ fun EquipmentListScreen(
         ) {
             DasurvSheetOptionRow(
                 icon = Icons.Default.Edit,
-                iconBg = Color(0xFFEEF2FF),
-                iconTint = Color(0xFF4F46E5),
+                iconBg = M3IndigoContainer,
+                iconTint = M3IndigoColor,
                 label = "Edit",
                 subtitle = "Change equipment details",
-                onClick = { sheetItem = null; onNavigateToEditEquipment(item.id) },
+                onClick = { sheetItem = null; equipmentDialogId = item.id },
             )
             if (isConsumable && item.stockQuantity > 0) {
                 DasurvSheetOptionRow(
@@ -116,6 +129,32 @@ fun EquipmentListScreen(
         }
     }
 
+    if (showPurchaseHistory) {
+        EquipmentPurchaseHistoryDialog(
+            purchases = allPurchases,
+            equipmentList = equipment,
+            dateRange = purchaseDateRange,
+            onDateRangeChange = { start, end -> viewModel.setPurchaseDateRange(start, end) },
+            onDeletePurchase = { purchase -> viewModel.deletePurchase(purchase) {} },
+            onRecordPurchase = { showRecordPurchase = true },
+            onDismiss = { showPurchaseHistory = false }
+        )
+    }
+
+    if (showRecordPurchase) {
+        EquipmentRecordPurchaseDialog(
+            equipmentList = equipment,
+            purchaseSources = purchaseSources,
+            sellers = sellers,
+            onDismiss = { showRecordPurchase = false },
+            onConfirm = { equipmentId, qty, cost, date, notes, source, sellerName ->
+                viewModel.recordPurchase(equipmentId, qty, cost, date, notes, source, sellerName) {
+                    showRecordPurchase = false
+                }
+            }
+        )
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { M3SnackbarHost(snackbarHostState) },
@@ -123,12 +162,17 @@ fun EquipmentListScreen(
             TopAppBar(
                 title = { DasurvTopAppBarTitle("Equipment & Products") },
                 navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
+                actions = {
+                    IconButton(onClick = { showPurchaseHistory = true }) {
+                        Icon(Icons.Default.History, "Purchase History")
+                    }
+                },
                 scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
             DasurvAddFab(
-                onClick = onNavigateToAddEquipment,
+                onClick = { equipmentDialogId = 0L },
                 contentDescription = "Add Equipment"
             )
         },
@@ -146,25 +190,11 @@ fun EquipmentListScreen(
                 val filterOptions = listOf(null to "All", "consumable" to "Consumables", "studio" to "Studio")
                 filterOptions.forEach { (type, label) ->
                     val isSelected = typeFilter == type
-                    FilledTonalButton(
-                        onClick = { viewModel.setTypeFilter(type) },
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = if (isSelected)
-                                M3PrimaryContainer
-                            else
-                                M3FieldBg,
-                            contentColor = if (isSelected)
-                                M3Primary
-                            else
-                                M3OnSurfaceVariant
-                        ),
-                        contentPadding = PaddingValues(vertical = spacing.sm)
-                    ) {
-                        Text(
-                            text = label,
-                            maxLines = 1
-                        )
-                    }
+                    DasurvFilterChip(
+                        label = label,
+                        selected = isSelected,
+                        onClick = { viewModel.setTypeFilter(type) }
+                    )
                 }
             }
 
@@ -200,7 +230,7 @@ fun EquipmentListScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .combinedClickable(
-                                                onClick = { onNavigateToEditEquipment(item.id) },
+                                                onClick = { equipmentDialogId = item.id },
                                                 onLongClick = { sheetItem = item }
                                             )
                                     ) {

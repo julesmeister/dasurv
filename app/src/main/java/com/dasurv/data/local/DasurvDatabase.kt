@@ -20,6 +20,7 @@ import com.dasurv.data.local.entity.LipPhoto
 import com.dasurv.data.local.entity.LipPhotoPigment
 import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.data.local.entity.ClientTransaction
+import com.dasurv.data.local.entity.EquipmentPurchase
 import com.dasurv.data.local.entity.PigmentBottleUsage
 import com.dasurv.data.local.entity.Session
 import com.dasurv.data.local.entity.SessionEquipment
@@ -39,9 +40,10 @@ import com.dasurv.data.local.entity.SessionPigment
         ClientPigmentPreference::class,
         PigmentBottle::class,
         PigmentBottleUsage::class,
-        ClientTransaction::class
+        ClientTransaction::class,
+        EquipmentPurchase::class
     ],
-    version = 11,
+    version = 13,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

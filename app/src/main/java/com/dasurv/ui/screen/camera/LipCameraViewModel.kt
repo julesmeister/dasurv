@@ -9,6 +9,7 @@ import com.dasurv.data.model.FollowUpInterval
 import com.dasurv.data.model.LipColorAnalysis
 import com.dasurv.data.repository.ClientRepository
 import com.dasurv.util.ColorMatcher
+import com.dasurv.util.DefaultSubscribePolicy
 import com.dasurv.util.LipColorAnalyzer
 import com.google.mlkit.vision.face.Face
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -63,7 +64,7 @@ class LipCameraViewModel @Inject constructor(
             if (query.isBlank()) clientRepository.getAllClients()
             else clientRepository.searchClients("%$query%")
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
     // Capture settings
     private val _captureType = MutableStateFlow(CaptureType.BEFORE)

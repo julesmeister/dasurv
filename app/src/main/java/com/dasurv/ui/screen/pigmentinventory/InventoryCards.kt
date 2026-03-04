@@ -22,6 +22,7 @@ import com.dasurv.data.local.entity.Equipment
 import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.ui.util.parseHexSafe
 import com.dasurv.util.formatCurrency
 import com.dasurv.util.formatMl
 
@@ -41,13 +42,7 @@ internal fun StockItemCard(
     onBottleClick: (PigmentBottle) -> Unit,
     onLogUse: (PigmentBottle) -> Unit
 ) {
-    val color = remember(colorHex) {
-        try {
-            Color(android.graphics.Color.parseColor(colorHex))
-        } catch (e: Exception) {
-            Color.Gray
-        }
-    }
+    val color = remember(colorHex) { parseHexSafe(colorHex) }
     val spacing = DasurvTheme.spacing
     var showSheet by remember { mutableStateOf(false) }
 
@@ -62,8 +57,8 @@ internal fun StockItemCard(
         ) {
             DasurvSheetOptionRow(
                 icon = Icons.Default.Edit,
-                iconBg = Color(0xFFEEF2FF),
-                iconTint = Color(0xFF4F46E5),
+                iconBg = M3IndigoContainer,
+                iconTint = M3IndigoColor,
                 label = "Edit",
                 subtitle = "Change pigment details",
                 onClick = { showSheet = false; onEdit() },
@@ -223,7 +218,7 @@ internal fun BottleRow(
                     progress = { bottle.usagePercentage.coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth(),
                     color = if (bottle.usagePercentage < 0.2f)
-                        MaterialTheme.colorScheme.error
+                        M3RedColor
                     else M3Primary,
                     trackColor = M3Outline.copy(alpha = 0.3f)
                 )
@@ -263,13 +258,7 @@ internal fun StandaloneBottleCard(
     onClick: () -> Unit,
     onLogUse: () -> Unit
 ) {
-    val color = remember(bottle.colorHex) {
-        try {
-            Color(android.graphics.Color.parseColor(bottle.colorHex))
-        } catch (e: Exception) {
-            Color.Gray
-        }
-    }
+    val color = remember(bottle.colorHex) { parseHexSafe(bottle.colorHex) }
     val spacing = DasurvTheme.spacing
 
     M3ListCard(
@@ -305,7 +294,7 @@ internal fun StandaloneBottleCard(
                     progress = { bottle.usagePercentage.coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth(),
                     color = if (bottle.usagePercentage < 0.2f)
-                        MaterialTheme.colorScheme.error
+                        M3RedColor
                     else M3Primary,
                     trackColor = M3Outline.copy(alpha = 0.3f)
                 )

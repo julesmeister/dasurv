@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dasurv.util.formatDurationTimer
 
 @Composable
 internal fun SessionTimerControls(
@@ -107,7 +108,7 @@ private fun ActiveTimerCard(
             } else 1f
 
             Text(
-                text = formatTimerTime(timerState.totalElapsed),
+                text = formatDurationTimer(timerState.totalElapsed),
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
@@ -243,7 +244,7 @@ private fun ZoneToggle(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                formatTimerTime(elapsed),
+                formatDurationTimer(elapsed),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.SemiBold
@@ -259,5 +260,3 @@ private fun ZoneToggle(
         }
     }
 }
-
-internal fun formatTimerTime(seconds: Long): String = com.dasurv.util.formatDurationTimer(seconds)

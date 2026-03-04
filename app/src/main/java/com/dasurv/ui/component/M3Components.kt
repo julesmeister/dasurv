@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -41,16 +42,18 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 // M3 Expressive shared palette
-val M3Primary = Color(0xFF009688)
-val M3PrimaryContainer = Color(0xFFB2DFDB)
+val M3Primary = Color(0xFFD65D7A)
+val M3PrimaryContainer = Color(0xFFFFD9E2)
 val M3OnSurface = Color(0xFF1E293B)
 val M3OnSurfaceVariant = Color(0xFF64748B)
+val M3InputText = Color(0xFF374151)
 val M3SurfaceContainer = Color(0xFFF8FAFC)
 val M3GreenColor = Color(0xFF10B981)
 val M3GreenContainer = Color(0xFFD1FAE5)
@@ -66,6 +69,15 @@ val M3DialogBg = Color(0xFFF8FAFC)
 val M3DialogSurfaceBg = Color(0xFFFCFCFF)
 val M3ButtonBarBg = Color(0xFFF1F5F9)
 val M3PinkAccent = Color(0xFFEC4899)
+val M3IndigoColor = Color(0xFF4F46E5)
+val M3IndigoContainer = Color(0xFFEEF2FF)
+
+/** Reusable label style: 13sp Medium M3OnSurfaceVariant — for field labels, section headers, etc. */
+val M3LabelStyle = TextStyle(
+    fontSize = 13.sp,
+    fontWeight = FontWeight.Medium,
+    color = M3OnSurfaceVariant,
+)
 
 private val BackButtonBg = Color(0xFFF3F4F6)
 
@@ -149,8 +161,14 @@ fun DasurvLoadingBox(message: String = "Loading...") {
 fun DasurvEmptyState(
     icon: ImageVector,
     message: String,
+    modifier: Modifier = Modifier,
 ) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 320.dp),
+        contentAlignment = Alignment.Center,
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, null, modifier = Modifier.size(64.dp), tint = Color(0xFFCBD5E1))
             Spacer(modifier = Modifier.height(16.dp))

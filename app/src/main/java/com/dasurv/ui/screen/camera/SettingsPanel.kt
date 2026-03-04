@@ -27,6 +27,7 @@ import com.dasurv.data.model.FollowUpInterval
 import com.dasurv.ui.theme.GlassBrush
 import com.dasurv.ui.theme.RosePrimary
 import com.dasurv.ui.theme.RoseTertiary
+import com.dasurv.ui.util.parseHexSafe
 
 @Composable
 internal fun AnalysisPill(label: String, categoryName: String, colorHex: String) {
@@ -43,11 +44,7 @@ internal fun AnalysisPill(label: String, categoryName: String, colorHex: String)
         ) {
             // Color dot
             val dotColor = remember(colorHex) {
-                try {
-                    Color(android.graphics.Color.parseColor(colorHex))
-                } catch (_: Exception) {
-                    RoseTertiary
-                }
+                parseHexSafe(colorHex, RoseTertiary)
             }
             Box(
                 modifier = Modifier

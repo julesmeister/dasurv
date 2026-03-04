@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.dasurv.ui.screen.session.SessionTimerState
+import com.dasurv.util.formatDurationTimer
 import kotlin.math.roundToInt
 
 @Composable
@@ -63,12 +64,12 @@ fun FloatingSessionTimer(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Total: ${formatTime(state.totalElapsed)}", fontWeight = FontWeight.Medium)
+                    Text("Total: ${formatDurationTimer(state.totalElapsed)}", fontWeight = FontWeight.Medium)
                     if (state.upperElapsed > 0) {
-                        Text("Upper Lip: ${formatTime(state.upperElapsed)}")
+                        Text("Upper Lip: ${formatDurationTimer(state.upperElapsed)}")
                     }
                     if (state.lowerElapsed > 0) {
-                        Text("Lower Lip: ${formatTime(state.lowerElapsed)}")
+                        Text("Lower Lip: ${formatDurationTimer(state.lowerElapsed)}")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -149,7 +150,7 @@ private fun CollapsedTimer(
                 )
             }
             Text(
-                text = formatTime(state.totalElapsed),
+                text = formatDurationTimer(state.totalElapsed),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (state.isPaused) MaterialTheme.colorScheme.onSurfaceVariant
@@ -165,5 +166,3 @@ private fun CollapsedTimer(
         }
     }
 }
-
-internal fun formatTime(seconds: Long): String = com.dasurv.util.formatDurationTimer(seconds)
