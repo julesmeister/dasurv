@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Healing
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -50,22 +51,37 @@ internal fun ConsumablesPage(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(DasurvTheme.spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(DasurvTheme.spacing.sm),
+            .padding(top = DasurvTheme.spacing.md),
     ) {
-        Text(
-            "Select Items",
-            style = MaterialTheme.typography.labelLarge,
-            color = M3OnSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp),
-        )
+        // Section header
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Default.Healing, null,
+                modifier = Modifier.size(18.dp),
+                tint = M3CyanColor,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "Select Items",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = M3CyanColor,
+                letterSpacing = 0.5.sp,
+            )
+        }
 
         Card(
-            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            Column {
                 consumables.forEachIndexed { index, item ->
                     val isSelected = item.id in selectedIds
                     val qty = quantities[item.id] ?: 1.0
@@ -90,6 +106,8 @@ internal fun ConsumablesPage(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -140,15 +158,22 @@ private fun ConsumableRow(
                 )
             }
             if (!isSelected) {
-                Text(
-                    "${item.stockQuantity} in stock",
-                    fontSize = 12.sp,
-                    color = M3OnSurfaceVariant,
-                )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = M3OnSurfaceVariant.copy(alpha = 0.08f),
+                ) {
+                    Text(
+                        "${item.stockQuantity} in stock",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = M3OnSurfaceVariant,
+                    )
+                }
             }
         }
 
-        // Expanded stepper panel
+        // Expanded quantity panel
         AnimatedVisibility(
             visible = isSelected,
             enter = expandVertically() + fadeIn(),
@@ -162,19 +187,36 @@ private fun ConsumableRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 56.dp, end = 12.dp, bottom = 10.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 color = M3FieldBg,
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(M3CyanColor.copy(alpha = 0.10f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Default.Inventory2, null,
+                            modifier = Modifier.size(18.dp),
+                            tint = M3CyanColor,
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         "Quantity",
-                        fontSize = 13.sp,
-                        color = M3OnSurfaceVariant,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = M3OnSurface,
+                        modifier = Modifier.weight(1f),
                     )
-                    Spacer(modifier = Modifier.weight(1f))
                     DasurvQuantityStepper(
                         value = qtyInt,
                         onValueChange = onSetQuantity,
@@ -182,13 +224,19 @@ private fun ConsumableRow(
                         maxValue = item.stockQuantity.coerceAtLeast(1),
                         accentColor = M3CyanColor,
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        "$remaining left",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = leftColor,
-                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = leftColor.copy(alpha = 0.10f),
+                    ) {
+                        Text(
+                            "$remaining left",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = leftColor,
+                        )
+                    }
                 }
             }
         }
