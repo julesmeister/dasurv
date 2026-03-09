@@ -20,6 +20,12 @@ internal fun NavGraphBuilder.sessionRoutes(
         SessionDetailScreen(
             sessionId = sessionId,
             onNavigateBack = { navController.popBackStack() },
+            onNavigateToAddUpdate = { clientId, _ ->
+                navController.navigate(Routes.addClientUpdate(clientId))
+            },
+            onNavigateToEditUpdate = { clientId, updateId ->
+                navController.navigate(Routes.editClientUpdate(clientId, updateId))
+            },
             timerViewModel = timerViewModel
         )
     }

@@ -44,4 +44,10 @@ interface AppointmentDao {
 
     @Query("SELECT * FROM appointments WHERE procedureType LIKE '%' || :query || '%' OR notes LIKE '%' || :query || '%'")
     fun searchAppointments(query: String): Flow<List<Appointment>>
+
+    @Query("SELECT * FROM appointments WHERE scheduledDateTime >= :now ORDER BY scheduledDateTime ASC LIMIT 1")
+    suspend fun getNextAppointment(now: Long): Appointment?
+
+    @Query("SELECT * FROM appointments ORDER BY scheduledDateTime DESC LIMIT 1")
+    suspend fun getLatestAppointment(): Appointment?
 }

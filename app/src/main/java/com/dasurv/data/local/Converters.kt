@@ -8,8 +8,19 @@ import com.dasurv.data.local.entity.PaymentMethod
 import com.dasurv.data.local.entity.RecurrenceType
 import com.dasurv.data.local.entity.TransactionType
 import com.dasurv.data.local.entity.UsageLipArea
+import org.json.JSONArray
 
 class Converters {
+    @TypeConverter
+    fun fromStringList(list: List<String>): String = JSONArray(list).toString()
+
+    @TypeConverter
+    fun toStringList(value: String): List<String> {
+        if (value.isBlank()) return emptyList()
+        val array = JSONArray(value)
+        return (0 until array.length()).map { array.getString(it) }
+    }
+
     @TypeConverter
     fun fromAppointmentStatus(status: AppointmentStatus): String = status.name
 

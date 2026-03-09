@@ -1,31 +1,29 @@
 package com.dasurv.ui.screen.equipment
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.Equipment
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
-import com.dasurv.util.formatCurrency
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EquipmentListScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToPurchaseHistory: () -> Unit,
     viewModel: EquipmentViewModel = hiltViewModel()
 ) {
     // null = hidden, 0L = add new, >0 = edit existing
@@ -41,27 +39,29 @@ fun EquipmentListScreen(
     val equipment by viewModel.equipment.collectAsStateWithLifecycle(initialValue = emptyList())
     val typeFilter by viewModel.typeFilter.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
 
     // Filter out pigment-category items (managed in Pigment Inventory)
     val nonPigmentEquipment = remember(equipment) {
         equipment.filter { it.category != "pigment" }
     }
 
-    val filteredEquipment = remember(nonPigmentEquipment, typeFilter) {
-        if (typeFilter == null) nonPigmentEquipment else nonPigmentEquipment.filter { it.type == typeFilter }
+    var categoryFilter by remember { mutableStateOf<String?>(null) }
+
+    val filteredEquipment = remember(nonPigmentEquipment, typeFilter, categoryFilter) {
+        nonPigmentEquipment.filter { item ->
+            (typeFilter == null || item.type == typeFilter) &&
+            (categoryFilter == null || when (categoryFilter) {
+                "low_stock" -> isLowStock(item)
+                else -> item.category == categoryFilter
+            })
+        }
     }
 
     var showUsageDialog by remember { mutableStateOf<Equipment?>(null) }
     var showDeleteDialog by remember { mutableStateOf<Equipment?>(null) }
     var sheetItem by remember { mutableStateOf<Equipment?>(null) }
-    var showPurchaseHistory by remember { mutableStateOf(false) }
-    var showRecordPurchase by remember { mutableStateOf(false) }
-
-    val allPurchases by viewModel.allPurchases.collectAsStateWithLifecycle(initialValue = emptyList())
-    val purchaseDateRange by viewModel.purchaseDateRange.collectAsStateWithLifecycle()
-    val purchaseSources by viewModel.purchaseSources.collectAsStateWithLifecycle(initialValue = emptyList())
-    val sellers by viewModel.sellers.collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (showUsageDialog != null) {
         EquipmentLogUsageDialog(
@@ -129,32 +129,6 @@ fun EquipmentListScreen(
         }
     }
 
-    if (showPurchaseHistory) {
-        EquipmentPurchaseHistoryDialog(
-            purchases = allPurchases,
-            equipmentList = equipment,
-            dateRange = purchaseDateRange,
-            onDateRangeChange = { start, end -> viewModel.setPurchaseDateRange(start, end) },
-            onDeletePurchase = { purchase -> viewModel.deletePurchase(purchase) {} },
-            onRecordPurchase = { showRecordPurchase = true },
-            onDismiss = { showPurchaseHistory = false }
-        )
-    }
-
-    if (showRecordPurchase) {
-        EquipmentRecordPurchaseDialog(
-            equipmentList = equipment,
-            purchaseSources = purchaseSources,
-            sellers = sellers,
-            onDismiss = { showRecordPurchase = false },
-            onConfirm = { equipmentId, qty, cost, date, notes, source, sellerName ->
-                viewModel.recordPurchase(equipmentId, qty, cost, date, notes, source, sellerName) {
-                    showRecordPurchase = false
-                }
-            }
-        )
-    }
-
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { M3SnackbarHost(snackbarHostState) },
@@ -163,7 +137,7 @@ fun EquipmentListScreen(
                 title = { DasurvTopAppBarTitle("Equipment & Products") },
                 navigationIcon = { DasurvBackButton(onClick = onNavigateBack) },
                 actions = {
-                    IconButton(onClick = { showPurchaseHistory = true }) {
+                    IconButton(onClick = onNavigateToPurchaseHistory) {
                         Icon(Icons.Default.History, "Purchase History")
                     }
                 },
@@ -178,120 +152,89 @@ fun EquipmentListScreen(
         },
         containerColor = M3SurfaceContainer
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
+        val categories = remember(nonPigmentEquipment) {
+            nonPigmentEquipment.map { it.category }.filter { it.isNotBlank() }.distinct().sorted()
+        }
+        val hasLowStock = remember(nonPigmentEquipment) {
+            nonPigmentEquipment.any { isLowStock(it) }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding).background(M3SurfaceContainer)
+        ) {
             // Type filter chips
+            val typeItems = remember { listOf("consumable" to "Consumables", "studio" to "Studio") }
+            DasurvChipSelectorRow(
+                items = typeItems,
+                selectedKey = typeFilter,
+                onSelect = { viewModel.setTypeFilter(it) },
+                allLabel = "All",
+                accentColor = M3Primary,
+                containerColor = M3PrimaryContainer,
+            )
+            HorizontalDivider(color = M3Outline, thickness = 1.dp)
+
+            // Category filter chips
+            if (categories.isNotEmpty() || hasLowStock) {
+                val categoryItems = remember(categories, hasLowStock) {
+                    categories.map { it to it.replaceFirstChar { c -> c.uppercase() } } +
+                        if (hasLowStock) listOf("low_stock" to "Low Stock") else emptyList()
+                }
+                DasurvChipSelectorRow(
+                    items = categoryItems,
+                    selectedKey = categoryFilter,
+                    onSelect = { categoryFilter = it },
+                    allLabel = "All Categories",
+                    accentColor = M3CyanColor,
+                    containerColor = M3CyanContainer,
+                )
+                HorizontalDivider(color = M3Outline, thickness = 1.dp)
+            }
+
+            // Summary strip
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = spacing.lg, vertical = spacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+                    .background(Color.White)
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val filterOptions = listOf(null to "All", "consumable" to "Consumables", "studio" to "Studio")
-                filterOptions.forEach { (type, label) ->
-                    val isSelected = typeFilter == type
-                    DasurvFilterChip(
-                        label = label,
-                        selected = isSelected,
-                        onClick = { viewModel.setTypeFilter(type) }
+                Text(
+                    "${filteredEquipment.size} items",
+                    fontSize = 13.sp, color = M3OnSurfaceVariant
+                )
+                if (typeFilter != null || categoryFilter != null) {
+                    Text(
+                        "${nonPigmentEquipment.size} total",
+                        fontSize = 13.sp, color = M3OnSurfaceVariant
                     )
                 }
             }
+            HorizontalDivider(color = M3Outline, thickness = 1.dp)
 
-            Text(
-                "${filteredEquipment.size} items",
-                modifier = Modifier.padding(horizontal = spacing.lg),
-                style = MaterialTheme.typography.bodySmall,
-                color = M3OnSurfaceVariant
-            )
-
-            @OptIn(ExperimentalFoundationApi::class)
-            AnimatedContent(
-                targetState = filteredEquipment.isEmpty(),
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "equipment-list-state"
-            ) { isEmpty ->
-                if (isEmpty) {
+            // List or empty state
+            if (filteredEquipment.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     DasurvEmptyState(
                         icon = Icons.Default.Build,
-                        message = "No equipment added yet"
+                        message = if (typeFilter != null || categoryFilter != null)
+                            "No matching equipment" else "No equipment added yet"
                     )
-                } else {
-                    LazyColumn(
-                        contentPadding = PaddingValues(vertical = spacing.sm),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        item {
-                            M3ListCard {
-                                filteredEquipment.forEachIndexed { index, item ->
-                                    val isConsumable = item.type == "consumable"
-
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .combinedClickable(
-                                                onClick = { equipmentDialogId = item.id },
-                                                onLongClick = { sheetItem = item }
-                                            )
-                                    ) {
-                                        M3ListRow(
-                                            icon = if (isConsumable) Icons.Default.Healing else Icons.Default.Build,
-                                            iconTint = if (isConsumable) M3CyanColor else M3Primary,
-                                            iconBg = if (isConsumable) M3CyanContainer else M3PrimaryContainer,
-                                            label = item.name,
-                                            description = if (item.brand.isNotBlank()) item.brand else "",
-                                            trailing = {
-                                                if (isConsumable) {
-                                                    M3StatusBadge(
-                                                        text = stockBadgeText(item),
-                                                        color = stockBadgeColor(item),
-                                                        containerColor = stockBadgeContainer(item)
-                                                    )
-                                                }
-                                            }
-                                        )
-
-                                        // Badges row below the main row
-                                        Row(
-                                            modifier = Modifier.padding(start = 70.dp, end = 16.dp, bottom = 12.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            if (item.category.isNotBlank()) {
-                                                M3StatusBadge(
-                                                    text = item.category.replaceFirstChar { it.uppercase() },
-                                                    color = M3OnSurfaceVariant,
-                                                    containerColor = M3FieldBg
-                                                )
-                                            }
-                                            if (item.costPerUnit > 0) {
-                                                M3ValueBadge(
-                                                    text = "₱${item.costPerUnit.formatCurrency()}",
-                                                    color = M3Primary,
-                                                    containerColor = M3PrimaryContainer.copy(alpha = 0.5f)
-                                                )
-                                            }
-                                            if (isLowStock(item)) {
-                                                M3StatusBadge(
-                                                    text = "Low Stock",
-                                                    color = M3AmberColor,
-                                                    containerColor = M3AmberColor.copy(alpha = 0.1f)
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    if (index < filteredEquipment.lastIndex) {
-                                        M3ListDivider()
-                                    }
-                                }
-                            }
-                        }
-
-                        item { Spacer(modifier = Modifier.height(72.dp)) }
+                }
+            } else {
+                LazyColumn(contentPadding = PaddingValues(vertical = 4.dp)) {
+                    items(filteredEquipment.size, key = { filteredEquipment[it].id }) { index ->
+                        val item = filteredEquipment[index]
+                        EquipmentListItem(
+                            item = item,
+                            onClick = { equipmentDialogId = item.id },
+                            onLongClick = { sheetItem = item },
+                        )
                     }
                 }
             }
         }
     }
 }
+

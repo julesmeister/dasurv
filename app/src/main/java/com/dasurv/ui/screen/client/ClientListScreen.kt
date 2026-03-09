@@ -132,8 +132,9 @@ fun ClientListScreen(
                                         )
                                     }
                                     Text(
-                                        text = "${groupClients.size}",
-                                        fontSize = 12.sp,
+                                        text = "${groupClients.size} ${if (groupClients.size == 1) "client" else "clients"}",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
                                         color = M3OnSurfaceVariant
                                     )
                                 }

@@ -30,6 +30,8 @@ fun SessionTemplateManagementScreen(
     val spacing = DasurvTheme.spacing
     val templates by viewModel.allTemplates.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
     var showFormDialog by remember { mutableStateOf<Long?>(null) }
     var showDeleteDialog by remember { mutableStateOf<SessionTemplate?>(null) }
 
@@ -68,6 +70,7 @@ fun SessionTemplateManagementScreen(
                 contentDescription = "Add Template"
             )
         },
+        snackbarHost = { M3SnackbarHost(snackbarHostState) },
         containerColor = M3SurfaceContainer
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
@@ -110,7 +113,7 @@ fun SessionTemplateManagementScreen(
                                             iconTint = M3CyanColor,
                                             iconBg = M3CyanContainer,
                                             label = template.name,
-                                            description = template.procedure.ifBlank { "" }
+                                            description = template.procedure.ifBlank { "No procedure set" }
                                         )
                                     }
                                     if (index < templates.lastIndex) {

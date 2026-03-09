@@ -46,6 +46,12 @@ class AppointmentRepository @Inject constructor(
     fun searchAppointments(query: String): Flow<List<Appointment>> =
         appointmentDao.searchAppointments(query)
 
+    suspend fun getNextAppointment(now: Long): Appointment? =
+        appointmentDao.getNextAppointment(now)
+
+    suspend fun getLatestAppointment(): Appointment? =
+        appointmentDao.getLatestAppointment()
+
     /**
      * Creates a recurring appointment series. Inserts the parent appointment first,
      * then generates child appointments at intervals until the end date.

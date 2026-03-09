@@ -41,27 +41,7 @@ val Blue = Color(0xFF0EA5E9)
 val Orange = Color(0xFFF97316)
 val Pink = M3PinkAccent
 
-@Composable
-fun M3SectionHeader(
-    title: String,
-    accentColor: Color,
-    modifier: Modifier = Modifier,
-    actions: @Composable (() -> Unit)? = null,
-) {
-    if (actions != null) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 14.dp),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            actions()
-        }
-    } else {
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
+
 
 @Composable
 fun M3TonalActionButton(
@@ -189,7 +169,7 @@ fun ChargedPaidRow(charged: Double, paid: Double, modifier: Modifier = Modifier)
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "$${charged.formatCurrency()}",
+                    "₱${charged.formatCurrency()}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = M3OnSurface
@@ -212,7 +192,7 @@ fun ChargedPaidRow(charged: Double, paid: Double, modifier: Modifier = Modifier)
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "$${paid.formatCurrency()}",
+                    "₱${paid.formatCurrency()}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = M3OnSurface

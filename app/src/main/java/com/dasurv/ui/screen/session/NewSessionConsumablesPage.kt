@@ -48,16 +48,10 @@ internal fun ConsumablesPage(
         )
     }
     if (consumables.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                "No consumables in inventory",
-                color = M3OnSurfaceVariant,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
+        DasurvEmptyState(
+            icon = Icons.Default.Healing,
+            message = "No consumables in inventory",
+        )
         return
     }
 
@@ -69,7 +63,9 @@ internal fun ConsumablesPage(
     ) {
         // Section header
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = DasurvTheme.spacing.xl, vertical = DasurvTheme.spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -77,7 +73,7 @@ internal fun ConsumablesPage(
                 modifier = Modifier.size(18.dp),
                 tint = M3CyanColor,
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(DasurvTheme.spacing.sm))
             Text(
                 "Select Items",
                 fontSize = 14.sp,
@@ -93,15 +89,7 @@ internal fun ConsumablesPage(
             }
         }
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        ) {
-            Column {
+        M3ListCard {
                 consumables.forEachIndexed { index, item ->
                     val isSelected = item.id in selectedIds
                     val qty = quantities[item.id] ?: 1.0
@@ -118,16 +106,15 @@ internal fun ConsumablesPage(
                     )
                     if (index < consumables.lastIndex) {
                         HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
+                            modifier = Modifier.padding(horizontal = DasurvTheme.spacing.lg),
                             color = M3Outline.copy(alpha = 0.5f),
                             thickness = 0.5.dp,
                         )
                     }
                 }
-            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(DasurvTheme.spacing.lg))
     }
 }
 

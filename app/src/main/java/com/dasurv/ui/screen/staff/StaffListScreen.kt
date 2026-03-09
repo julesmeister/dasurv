@@ -40,6 +40,8 @@ fun StaffListScreen(
     val spacing = DasurvTheme.spacing
     val staffList by viewModel.allStaff.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
     var showDeleteDialog by remember { mutableStateOf<Staff?>(null) }
     var sheetItem by remember { mutableStateOf<Staff?>(null) }
 
@@ -100,6 +102,7 @@ fun StaffListScreen(
                 contentDescription = "Add Staff"
             )
         },
+        snackbarHost = { M3SnackbarHost(snackbarHostState) },
         containerColor = M3SurfaceContainer
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
@@ -148,7 +151,7 @@ fun StaffListScreen(
                                                     if (isNotEmpty()) append(" · ")
                                                     append(staff.email)
                                                 }
-                                            }.ifEmpty { "" },
+                                            }.ifEmpty { "No contact info" },
                                             trailing = {
                                                 M3StatusBadge(
                                                     text = if (staff.isActive) "Active" else "Inactive",

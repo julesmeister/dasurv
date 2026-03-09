@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EventNote
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,6 +22,7 @@ import com.dasurv.ui.component.DasurvTopAppBarTitle
 import com.dasurv.ui.component.M3Primary
 import com.dasurv.ui.component.M3SnackbarHost
 import com.dasurv.ui.component.M3SurfaceContainer
+import com.dasurv.ui.component.rememberSnackbarState
 import com.dasurv.ui.screen.client.ClientViewModel
 import com.dasurv.ui.screen.client.SessionsList
 import com.dasurv.ui.theme.DasurvTheme
@@ -70,7 +73,8 @@ fun SessionListScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -92,7 +96,7 @@ fun SessionListScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.padding(padding),
-            contentPadding = PaddingValues(vertical = spacing.lg),
+            contentPadding = PaddingValues(bottom = spacing.lg),
             verticalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             item {
@@ -124,7 +128,27 @@ fun SessionListScreen(
                 item {
                     DasurvEmptyState(
                         icon = Icons.Default.EventNote,
-                        message = "No sessions in $sessionMonthLabel"
+                        message = "No sessions in $sessionMonthLabel",
+                        action = {
+                            TextButton(onClick = {
+                                val latest = sessions.maxByOrNull { it.date }
+                                if (latest != null) sessionMonth = Date(latest.date)
+                                else viewModel.showSnackbar("No sessions yet")
+                            }) {
+                                Icon(
+                                    Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = M3Primary,
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    "Go to latest session",
+                                    color = M3Primary,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
+                        }
                     )
                 }
             } else {

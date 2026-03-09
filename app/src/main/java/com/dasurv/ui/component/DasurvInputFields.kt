@@ -56,6 +56,7 @@ fun DasurvTextField(
     readOnly: Boolean = false,
     enabled: Boolean = true,
     autoCapitalize: Boolean = true,
+    leadingIcon: @Composable (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
@@ -113,6 +114,10 @@ fun DasurvTextField(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    if (leadingIcon != null) {
+                        leadingIcon()
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                     Box(modifier = Modifier.weight(1f)) {
                         if (value.isEmpty() && placeholder.isNotEmpty()) {
                             Text(

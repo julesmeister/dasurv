@@ -27,6 +27,7 @@ object Routes {
     const val PIGMENT_CATALOGUE = "pigments"
     const val COLOR_RECOMMENDATION = "pigments/recommend"
     const val EQUIPMENT_LIST = "equipment"
+    const val EQUIPMENT_PURCHASE_HISTORY = "equipment/purchase-history"
     const val SESSION_DETAIL = "session/{sessionId}"
     const val SCHEDULE = "schedule"
     const val APPOINTMENT_DETAIL = "appointment/{appointmentId}"
@@ -35,9 +36,6 @@ object Routes {
     const val CAPTURE_RESULT = "capture-result/{photoId}"
     const val DEMO_RESULT = "demo-result?path={photoPath}"
     const val PIGMENT_INVENTORY = "pigment-inventory"
-    const val ADD_PIGMENT_STOCK = "pigment-inventory/add-stock"
-    const val ADD_PIGMENT_STOCK_FROM_CATALOG = "pigment-inventory/add-stock?name={name}&brand={brand}&colorHex={colorHex}"
-    const val EDIT_PIGMENT_STOCK = "pigment-inventory/edit-stock/{equipmentId}"
     const val EDIT_PIGMENT_BOTTLE = "pigment-inventory/edit/{bottleId}"
     const val PIGMENT_SUMMARY = "pigment-summary/{photoId}"
     const val CLIENT_SESSIONS = "client/{clientId}/sessions"
@@ -46,6 +44,9 @@ object Routes {
     const val SEARCH = "search"
     const val EXPORT = "export"
     const val SESSION_TEMPLATES = "session-templates"
+    const val ALL_TRANSACTIONS = "transactions"
+    const val ADD_CLIENT_UPDATE = "client/{clientId}/add-update"
+    const val EDIT_CLIENT_UPDATE = "client/{clientId}/edit-update/{updateId}"
 
     // Builder functions for parameterized routes
     fun cameraWithClient(clientId: Long) = "camera/$clientId"
@@ -56,17 +57,13 @@ object Routes {
     fun clientTryOn(clientId: Long) = "client/$clientId/try-on"
     fun captureResult(photoId: Long) = "capture-result/$photoId"
     fun demoResult(photoPath: String) = "demo-result?path=${java.net.URLEncoder.encode(photoPath, "UTF-8")}"
-    fun editPigmentStock(equipmentId: Long) = "pigment-inventory/edit-stock/$equipmentId"
     fun editPigmentBottle(bottleId: Long) = "pigment-inventory/edit/$bottleId"
     fun pigmentSummary(photoId: Long) = "pigment-summary/$photoId"
     fun clientSessions(clientId: Long) = "client/$clientId/sessions"
     fun clientTransactions(clientId: Long) = "client/$clientId/transactions"
-    fun addPigmentStockFromCatalog(name: String, brand: String, colorHex: String): String {
-        val encodedName = java.net.URLEncoder.encode(name, "UTF-8")
-        val encodedBrand = java.net.URLEncoder.encode(brand, "UTF-8")
-        val encodedColor = java.net.URLEncoder.encode(colorHex, "UTF-8")
-        return "pigment-inventory/add-stock?name=$encodedName&brand=$encodedBrand&colorHex=$encodedColor"
-    }
+    fun addClientUpdate(clientId: Long) = "client/$clientId/add-update"
+    fun editClientUpdate(clientId: Long, updateId: Long) = "client/$clientId/edit-update/$updateId"
+
 }
 
 private const val TRANSITION_DURATION = 300

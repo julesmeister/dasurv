@@ -19,9 +19,17 @@ object PhotoShareHelper {
      */
     fun sharePhoto(context: Context, photoUri: String, watermark: String? = null) {
         val bitmap = loadBitmap(photoUri) ?: return
-        val finalBitmap = if (watermark != null) applyWatermark(bitmap, watermark) else bitmap
-        val uri = saveToCacheAndGetUri(context, finalBitmap, "shared_photo.jpg")
-        launchShare(context, uri, "Share Photo")
+        try {
+            val finalBitmap = if (watermark != null) applyWatermark(bitmap, watermark) else bitmap
+            try {
+                val uri = saveToCacheAndGetUri(context, finalBitmap, "shared_photo.jpg")
+                launchShare(context, uri, "Share Photo")
+            } finally {
+                if (finalBitmap !== bitmap) finalBitmap.recycle()
+            }
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     /**
@@ -29,19 +37,32 @@ object PhotoShareHelper {
      */
     fun shareBeforeAfter(context: Context, beforeUri: String, afterUri: String, watermark: String? = null) {
         val before = loadBitmap(beforeUri) ?: return
-        val after = loadBitmap(afterUri) ?: return
+        val after = loadBitmap(afterUri) ?: run { before.recycle(); return }
 
-        val width = before.width + after.width
-        val height = maxOf(before.height, after.height)
-        val composite = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(composite)
-        canvas.drawColor(Color.WHITE)
-        canvas.drawBitmap(before, 0f, 0f, null)
-        canvas.drawBitmap(after, before.width.toFloat(), 0f, null)
+        try {
+            val width = before.width + after.width
+            val height = maxOf(before.height, after.height)
+            val composite = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            try {
+                val canvas = Canvas(composite)
+                canvas.drawColor(Color.WHITE)
+                canvas.drawBitmap(before, 0f, 0f, null)
+                canvas.drawBitmap(after, before.width.toFloat(), 0f, null)
 
-        val final = if (watermark != null) applyWatermark(composite, watermark) else composite
-        val uri = saveToCacheAndGetUri(context, final, "before_after.jpg")
-        launchShare(context, uri, "Share Before & After")
+                val finalBitmap = if (watermark != null) applyWatermark(composite, watermark) else composite
+                try {
+                    val uri = saveToCacheAndGetUri(context, finalBitmap, "before_after.jpg")
+                    launchShare(context, uri, "Share Before & After")
+                } finally {
+                    if (finalBitmap !== composite) finalBitmap.recycle()
+                }
+            } finally {
+                composite.recycle()
+            }
+        } finally {
+            before.recycle()
+            after.recycle()
+        }
     }
 
     private fun loadBitmap(path: String): Bitmap? {

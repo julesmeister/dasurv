@@ -8,7 +8,6 @@ import com.dasurv.data.local.entity.Session
 import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.data.model.CostItem
 import com.dasurv.data.model.CostSummary
-import com.dasurv.data.local.DasurvDatabase
 import com.dasurv.data.local.entity.SessionTemplate
 import com.dasurv.data.local.entity.SessionTemplateEquipment
 import com.dasurv.data.local.entity.Staff
@@ -17,7 +16,6 @@ import com.dasurv.data.repository.PigmentBottleRepository
 import com.dasurv.data.repository.SessionRepository
 import com.dasurv.data.repository.SessionTemplateRepository
 import com.dasurv.data.repository.StaffRepository
-import com.dasurv.data.repository.TransactionRepository
 import com.dasurv.util.DefaultSubscribePolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -33,11 +31,9 @@ data class PigmentBottleSessionEntry(
 
 @HiltViewModel
 class SessionViewModel @Inject constructor(
-    private val database: DasurvDatabase,
     private val sessionRepository: SessionRepository,
     private val equipmentRepository: EquipmentRepository,
     private val pigmentBottleRepository: PigmentBottleRepository,
-    private val transactionRepository: TransactionRepository,
     private val sessionTemplateRepository: SessionTemplateRepository,
     private val staffRepository: StaffRepository
 ) : ViewModel() {
@@ -59,6 +55,11 @@ class SessionViewModel @Inject constructor(
 
     private val _selectedBottleIds = MutableStateFlow<Set<Long>>(emptySet())
     val selectedBottleIds: StateFlow<Set<Long>> = _selectedBottleIds
+
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun clearSnackbar() { _snackbarMessage.value = null }
 
     private val _bottleEntries = MutableStateFlow<Map<Long, PigmentBottleSessionEntry>>(emptyMap())
     val bottleEntries: StateFlow<Map<Long, PigmentBottleSessionEntry>> = _bottleEntries
@@ -108,7 +109,7 @@ class SessionViewModel @Inject constructor(
                 quantity = qty,
                 unitCost = eq.costPerPiece,
                 perPieceInfo = if (eq.piecesPerPackage > 1)
-                    "$${eq.costPerPiece.formatPrecise()}/pc from $${eq.costPerUnit.formatCurrency()} pkg"
+                    "₱${eq.costPerPiece.formatPrecise()}/pc from ₱${eq.costPerUnit.formatCurrency()} pkg"
                 else ""
             )
         }
@@ -122,7 +123,7 @@ class SessionViewModel @Inject constructor(
                 category = "pigment",
                 quantity = entry.mlUsed,
                 unitCost = bottle.pricePerMl,
-                perPieceInfo = "$${bottle.pricePerMl.formatPrecise()}/ml"
+                perPieceInfo = "₱${bottle.pricePerMl.formatPrecise()}/ml"
             )
         }
 
@@ -134,16 +135,12 @@ class SessionViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val sessionId = sessionRepository.createSessionWithDependencies(
-                    database = database,
                     session = session,
                     selectedEquipmentIds = _selectedEquipmentIds.value,
                     equipmentQuantities = _equipmentQuantities.value,
                     equipmentList = equipmentList,
                     selectedBottleIds = _selectedBottleIds.value,
-                    bottleEntries = _bottleEntries.value,
-                    equipmentRepository = equipmentRepository,
-                    pigmentBottleRepository = pigmentBottleRepository,
-                    transactionRepository = transactionRepository
+                    bottleEntries = _bottleEntries.value
                 )
                 onSuccess(sessionId)
             } catch (e: Exception) {
@@ -183,6 +180,7 @@ class SessionViewModel @Inject constructor(
                     )
                 )
             }
+            _snackbarMessage.value = "Saved as template"
             onSuccess()
         }
     }

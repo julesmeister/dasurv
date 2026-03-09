@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.dasurv.ui.screen.home.HomeScreen
+import com.dasurv.ui.screen.transaction.AllTransactionsScreen
 
 internal fun NavGraphBuilder.homeRoutes(navController: NavController) {
     composable(Routes.HOME) {
@@ -16,8 +17,16 @@ internal fun NavGraphBuilder.homeRoutes(navController: NavController) {
             onNavigateToAppointmentDetail = { id -> navController.navigate(Routes.appointmentDetail(id)) },
             onNavigateToPigmentInventory = { navController.navigate(Routes.PIGMENT_INVENTORY) },
             onNavigateToStaff = { navController.navigate(Routes.STAFF_LIST) },
-            onNavigateToSearch = { navController.navigate(Routes.SEARCH) },
-            onNavigateToExport = { navController.navigate(Routes.EXPORT) }
+            onNavigateToExport = { navController.navigate(Routes.EXPORT) },
+            onNavigateToClient = { id -> navController.navigate(Routes.clientDetail(id)) },
+            onNavigateToSession = { id -> navController.navigate(Routes.sessionDetail(id)) },
+            onNavigateToTransactions = { navController.navigate(Routes.ALL_TRANSACTIONS) }
+        )
+    }
+
+    composable(Routes.ALL_TRANSACTIONS) {
+        AllTransactionsScreen(
+            onNavigateBack = { navController.popBackStack() }
         )
     }
 }

@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.dasurv.ui.screen.client.AddUpdateScreen
 import com.dasurv.ui.screen.client.ClientDetailScreen
 import com.dasurv.ui.screen.client.ClientListScreen
 import com.dasurv.ui.screen.session.SessionListScreen
@@ -32,7 +33,9 @@ internal fun NavGraphBuilder.clientRoutes(navController: NavController) {
             onNavigateToLipPhotoGallery = { id -> navController.navigate(Routes.lipPhotoGallery(id)) },
             onNavigateToTryOn = { id -> navController.navigate(Routes.clientTryOn(id)) },
             onNavigateToSessions = { id -> navController.navigate(Routes.clientSessions(id)) },
-            onNavigateToTransactions = { id -> navController.navigate(Routes.clientTransactions(id)) }
+            onNavigateToTransactions = { id -> navController.navigate(Routes.clientTransactions(id)) },
+            onNavigateToAddUpdate = { id -> navController.navigate(Routes.addClientUpdate(id)) },
+            onNavigateToEditUpdate = { cId, uId -> navController.navigate(Routes.editClientUpdate(cId, uId)) },
         )
     }
 
@@ -56,6 +59,33 @@ internal fun NavGraphBuilder.clientRoutes(navController: NavController) {
         TransactionListScreen(
             clientId = clientId,
             onNavigateBack = { navController.popBackStack() }
+        )
+    }
+
+    composable(
+        Routes.ADD_CLIENT_UPDATE,
+        arguments = listOf(navArgument("clientId") { type = NavType.LongType })
+    ) { backStackEntry ->
+        val clientId = backStackEntry.arguments?.getLong("clientId") ?: return@composable
+        AddUpdateScreen(
+            clientId = clientId,
+            onNavigateBack = { navController.popBackStack() },
+        )
+    }
+
+    composable(
+        Routes.EDIT_CLIENT_UPDATE,
+        arguments = listOf(
+            navArgument("clientId") { type = NavType.LongType },
+            navArgument("updateId") { type = NavType.LongType },
+        )
+    ) { backStackEntry ->
+        val clientId = backStackEntry.arguments?.getLong("clientId") ?: return@composable
+        val updateId = backStackEntry.arguments?.getLong("updateId") ?: return@composable
+        AddUpdateScreen(
+            clientId = clientId,
+            updateId = updateId,
+            onNavigateBack = { navController.popBackStack() },
         )
     }
 }

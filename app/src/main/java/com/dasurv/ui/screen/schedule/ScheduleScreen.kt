@@ -1,38 +1,28 @@
 package com.dasurv.ui.screen.schedule
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dasurv.data.local.entity.AppointmentStatus
-import com.dasurv.data.model.AppointmentWithClient
-import com.dasurv.data.model.CalendarDay
 import com.dasurv.ui.component.*
 import com.dasurv.ui.theme.DasurvTheme
-import com.dasurv.ui.util.statusColor
-import com.dasurv.ui.util.statusContainerColor
 import com.dasurv.util.FMT_MONTH_YEAR
-import com.dasurv.util.FMT_TIME
-import com.dasurv.util.formatDurationMinutes
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,6 +45,8 @@ fun ScheduleScreen(
         )
     }
     val spacing = DasurvTheme.spacing
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
     val calendarMonth by viewModel.calendarMonth.collectAsStateWithLifecycle()
     val selectedDay by viewModel.selectedDayOfMonth.collectAsStateWithLifecycle()
     val selectedDayAppointments by viewModel.selectedDayAppointments.collectAsStateWithLifecycle()
@@ -70,6 +62,7 @@ fun ScheduleScreen(
 
     Scaffold(
         containerColor = M3SurfaceContainer,
+        snackbarHost = { M3SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { DasurvTopAppBarTitle("Schedule") },
@@ -90,7 +83,7 @@ fun ScheduleScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(vertical = spacing.lg),
+            contentPadding = PaddingValues(bottom = spacing.lg),
             verticalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             // Calendar card: month navigation + grid
@@ -242,124 +235,64 @@ fun ScheduleScreen(
                     }
                 } else {
                     M3ListCard {
-                        Box(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 14.dp),
-                            contentAlignment = Alignment.Center
+                                .padding(horizontal = spacing.lg, vertical = spacing.xl),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(M3AmberColor.copy(alpha = 0.10f)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    if (selectedDay == null) Icons.Default.CalendarToday
+                                    else Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = M3AmberColor,
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(spacing.md))
                             Text(
                                 text = if (selectedDay == null) "Tap a day to see appointments"
                                 else "No appointments for this day",
-                                fontSize = 13.sp,
-                                color = M3OnSurfaceVariant
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = M3OnSurfaceVariant,
                             )
+                            Spacer(modifier = Modifier.height(spacing.sm))
+                            Surface(
+                                onClick = { viewModel.goToLatestAppointment() },
+                                shape = RoundedCornerShape(12.dp),
+                                color = M3Primary.copy(alpha = 0.10f),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        Icons.Default.Schedule,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = M3Primary,
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Go to latest appointment",
+                                        color = M3Primary,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun CalendarDayCell(
-    day: CalendarDay,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val bgColor = when {
-        isSelected -> M3PrimaryContainer
-        day.isToday -> M3PrimaryContainer.copy(alpha = 0.4f)
-        else -> Color.Transparent
-    }
-    val textColor = when {
-        !day.isCurrentMonth -> M3OnSurface.copy(alpha = 0.25f)
-        isSelected -> M3Primary
-        day.isToday -> M3Primary
-        else -> M3OnSurface
-    }
-
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(10.dp))
-            .background(bgColor)
-            .clickable(enabled = day.isCurrentMonth, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = day.dayOfMonth.toString(),
-                fontSize = 13.sp,
-                fontWeight = if (isSelected || day.isToday) FontWeight.Bold else FontWeight.Normal,
-                color = textColor
-            )
-            if (day.appointments.isNotEmpty() && day.isCurrentMonth) {
-                Box(
-                    modifier = Modifier
-                        .size(4.dp)
-                        .clip(CircleShape)
-                        .background(if (isSelected) M3Primary else M3AmberColor)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AppointmentListRow(
-    awc: AppointmentWithClient,
-    onClick: () -> Unit
-) {
-    val statusColor = awc.appointment.status.statusColor()
-    val statusContainerColor = awc.appointment.status.statusContainerColor()
-
-    val timeFormat = remember { SimpleDateFormat(FMT_TIME, Locale.getDefault()) }
-    val durationText = formatDurationMinutes(awc.appointment.durationMinutes)
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Time badge
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(statusContainerColor)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = timeFormat.format(Date(awc.appointment.scheduledDateTime)),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = statusColor
-            )
-        }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = awc.clientName,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = M3OnSurface
-            )
-            Text(
-                text = listOfNotNull(
-                    awc.appointment.procedureType.ifBlank { null },
-                    durationText,
-                    awc.appointment.status.name.lowercase().replaceFirstChar { it.uppercase() }
-                ).joinToString("  ·  "),
-                fontSize = 12.sp,
-                color = M3OnSurfaceVariant
-            )
         }
     }
 }

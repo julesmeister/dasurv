@@ -56,6 +56,24 @@ class TransactionRepository @Inject constructor(
     fun getTotalPaidInRange(clientId: Long, startMs: Long, endMs: Long): Flow<Double> =
         transactionDao.getTotalPaidInRange(clientId, startMs, endMs)
 
+    suspend fun getLatestTransactionForClient(clientId: Long): ClientTransaction? =
+        transactionDao.getLatestTransactionForClient(clientId)
+
+    fun getAllTransactionsInRange(startMs: Long, endMs: Long): Flow<List<ClientTransaction>> =
+        transactionDao.getAllTransactionsInRange(startMs, endMs)
+
+    fun getFinancialSummaryAll(): Flow<FinancialSummary> =
+        combine(
+            transactionDao.getTotalChargedAll(),
+            transactionDao.getTotalPaidAll(),
+            transactionDao.getBalanceAll()
+        ) { charged, paid, balance ->
+            FinancialSummary(totalCharged = charged, totalPaid = paid, balance = balance)
+        }
+
+    suspend fun getLatestTransaction(): ClientTransaction? =
+        transactionDao.getLatestTransaction()
+
     fun getFinancialSummaryInRange(clientId: Long, startMs: Long, endMs: Long): Flow<FinancialSummary> =
         combine(
             getTotalChargedInRange(clientId, startMs, endMs),

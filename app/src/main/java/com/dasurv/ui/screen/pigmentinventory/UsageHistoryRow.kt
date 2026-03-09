@@ -58,7 +58,7 @@ internal fun UsageHistoryRow(usage: PigmentBottleUsage) {
         }
         if (usage.costAtTimeOfUse > 0) {
             Text(
-                "$${usage.costAtTimeOfUse.formatCurrency()}",
+                "₱${usage.costAtTimeOfUse.formatCurrency()}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = M3Primary

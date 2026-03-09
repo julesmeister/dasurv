@@ -25,8 +25,6 @@ import com.dasurv.ui.theme.DasurvTheme
 @Composable
 fun PigmentInventoryScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToAddStock: () -> Unit,
-    onNavigateToEditStock: (Long) -> Unit,
     onNavigateToEditBottle: (Long) -> Unit,
     onNavigateToCatalogue: () -> Unit = {},
     viewModel: PigmentInventoryViewModel = hiltViewModel()
@@ -37,6 +35,8 @@ fun PigmentInventoryScreen(
     val brandFilter by viewModel.brandFilter.collectAsStateWithLifecycle()
     val allPigments = viewModel.allPigments
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
     val spacing = DasurvTheme.spacing
 
     // Group bottles by equipmentId
@@ -81,6 +81,10 @@ fun PigmentInventoryScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deleteEquipment by remember { mutableStateOf<Equipment?>(null) }
 
+    // Pigment stock form dialog
+    var showStockDialog by remember { mutableStateOf(false) }
+    var editingStockId by remember { mutableStateOf<Long?>(null) }
+
     // Expanded stock items (to show/hide their bottles)
     var expandedStockIds by remember { mutableStateOf(setOf<Long>()) }
 
@@ -123,6 +127,17 @@ fun PigmentInventoryScreen(
         )
     }
 
+    if (showStockDialog || editingStockId != null) {
+        PigmentStockFormDialog(
+            equipmentId = editingStockId,
+            onDismiss = {
+                showStockDialog = false
+                editingStockId = null
+            },
+            viewModel = viewModel,
+        )
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -139,10 +154,11 @@ fun PigmentInventoryScreen(
         },
         floatingActionButton = {
             DasurvAddFab(
-                onClick = onNavigateToAddStock,
+                onClick = { showStockDialog = true },
                 contentDescription = "Add Pigment"
             )
-        }
+        },
+        snackbarHost = { M3SnackbarHost(snackbarHostState) }
     ) { padding ->
         val isEmpty = filteredStock.isEmpty() && filteredStandalone.isEmpty()
 
@@ -176,7 +192,7 @@ fun PigmentInventoryScreen(
 
             // Stats summary tabs — always visible
             LazyRow(
-                modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.sm),
+                modifier = Modifier.padding(horizontal = spacing.md, vertical = spacing.md),
                 horizontalArrangement = Arrangement.spacedBy(spacing.sm)
             ) {
                 item {
@@ -184,7 +200,7 @@ fun PigmentInventoryScreen(
                         value = "${filteredStock.size}",
                         label = "Pigments",
                         icon = Icons.Default.Palette,
-                        color = M3Primary,
+                        color = M3PurpleColor,
                         isActive = false,
                         onClick = {}
                     )
@@ -204,7 +220,7 @@ fun PigmentInventoryScreen(
                         value = "$totalOpenBottles",
                         label = "Open Bottles",
                         icon = Icons.Default.Opacity,
-                        color = M3CyanColor,
+                        color = M3SkyBlueColor,
                         isActive = false,
                         onClick = {}
                     )
@@ -248,7 +264,7 @@ fun PigmentInventoryScreen(
                                         expandedStockIds + stockItem.id
                                     }
                                 },
-                                onEdit = { onNavigateToEditStock(stockItem.id) },
+                                onEdit = { editingStockId = stockItem.id },
                                 onOpenBottle = {
                                     viewModel.openBottle(stockItem) { bottleId ->
                                         onNavigateToEditBottle(bottleId)
@@ -275,11 +291,7 @@ fun PigmentInventoryScreen(
                         if (filteredStandalone.isNotEmpty()) {
                             item {
                                 Spacer(modifier = Modifier.height(spacing.sm))
-                                Text(
-                                    "Other Bottles",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = M3OnSurfaceVariant
-                                )
+                                M3SectionHeader("Other Bottles", M3OnSurfaceVariant)
                             }
                             items(filteredStandalone, key = { it.id }) { bottle ->
                                 StandaloneBottleCard(

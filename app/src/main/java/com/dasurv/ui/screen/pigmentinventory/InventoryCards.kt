@@ -135,8 +135,8 @@ internal fun StockItemCard(
 
             // Badges row
             Row(
-                modifier = Modifier.padding(start = 52.dp, top = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(start = 52.dp, top = spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (equipment.costPerUnit > 0) {
@@ -290,7 +290,7 @@ internal fun StandaloneBottleCard(
                     .clip(CircleShape)
                     .background(color)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(spacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     bottle.pigmentName,

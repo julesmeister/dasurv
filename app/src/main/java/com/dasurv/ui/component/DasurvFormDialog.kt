@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 
 @Composable
@@ -48,11 +49,15 @@ fun DasurvFormDialog(
     headerExtra: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = M3DialogSurfaceBg,
             tonalElevation = 6.dp,
+            modifier = Modifier.fillMaxWidth(0.92f),
         ) {
             Box {
                 Column(

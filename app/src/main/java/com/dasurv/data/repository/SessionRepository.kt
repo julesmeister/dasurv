@@ -19,7 +19,11 @@ import javax.inject.Singleton
 
 @Singleton
 class SessionRepository @Inject constructor(
-    private val sessionDao: SessionDao
+    private val sessionDao: SessionDao,
+    private val database: DasurvDatabase,
+    private val equipmentRepository: EquipmentRepository,
+    private val pigmentBottleRepository: PigmentBottleRepository,
+    private val transactionRepository: TransactionRepository
 ) {
     fun getSessionsForClient(clientId: Long): Flow<List<Session>> =
         sessionDao.getSessionsForClient(clientId)
@@ -61,16 +65,12 @@ class SessionRepository @Inject constructor(
     fun searchSessions(query: String): Flow<List<Session>> = sessionDao.searchSessions(query)
 
     suspend fun createSessionWithDependencies(
-        database: DasurvDatabase,
         session: Session,
         selectedEquipmentIds: Set<Long>,
         equipmentQuantities: Map<Long, Double>,
         equipmentList: List<Equipment>,
         selectedBottleIds: Set<Long>,
-        bottleEntries: Map<Long, PigmentBottleSessionEntry>,
-        equipmentRepository: EquipmentRepository,
-        pigmentBottleRepository: PigmentBottleRepository,
-        transactionRepository: TransactionRepository
+        bottleEntries: Map<Long, PigmentBottleSessionEntry>
     ): Long = database.withTransaction {
         val sid = insertSession(session)
 

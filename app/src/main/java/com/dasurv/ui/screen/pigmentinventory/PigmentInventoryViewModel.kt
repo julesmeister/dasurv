@@ -36,6 +36,11 @@ class PigmentInventoryViewModel @Inject constructor(
     val allPigments = pigmentRepository.getAllPigments()
     val pigmentStock = equipmentRepository.getEquipmentByCategory("pigment")
 
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun clearSnackbar() { _snackbarMessage.value = null }
+
     private val _brandFilter = MutableStateFlow<String?>(null)
     val brandFilter: StateFlow<String?> = _brandFilter
 
@@ -71,11 +76,13 @@ class PigmentInventoryViewModel @Inject constructor(
 
     fun saveBottle(bottle: PigmentBottle, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (bottle.id == 0L) {
+            val isNew = bottle.id == 0L
+            if (isNew) {
                 pigmentBottleRepository.insertBottle(bottle)
             } else {
                 pigmentBottleRepository.updateBottle(bottle)
             }
+            _snackbarMessage.value = if (isNew) "Bottle added" else "Bottle updated"
             onSuccess()
         }
     }
@@ -83,6 +90,7 @@ class PigmentInventoryViewModel @Inject constructor(
     fun deleteBottle(bottle: PigmentBottle, onSuccess: () -> Unit) {
         viewModelScope.launch {
             pigmentBottleRepository.deleteBottle(bottle)
+            _snackbarMessage.value = "Bottle deleted"
             onSuccess()
         }
     }
@@ -90,11 +98,13 @@ class PigmentInventoryViewModel @Inject constructor(
     // Stock management
     fun saveStock(equipment: Equipment, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (equipment.id == 0L) {
+            val isNew = equipment.id == 0L
+            if (isNew) {
                 equipmentRepository.insertEquipment(equipment)
             } else {
                 equipmentRepository.updateEquipment(equipment)
             }
+            _snackbarMessage.value = if (isNew) "Pigment stock added" else "Pigment stock updated"
             onSuccess()
         }
     }
@@ -102,6 +112,7 @@ class PigmentInventoryViewModel @Inject constructor(
     fun deleteStock(equipment: Equipment, onSuccess: () -> Unit) {
         viewModelScope.launch {
             equipmentRepository.deleteEquipment(equipment)
+            _snackbarMessage.value = "Pigment stock deleted"
             onSuccess()
         }
     }
@@ -111,6 +122,7 @@ class PigmentInventoryViewModel @Inject constructor(
             equipmentRepository.updateEquipment(
                 equipment.copy(stockQuantity = equipment.stockQuantity + additionalCount)
             )
+            _snackbarMessage.value = "Restocked +$additionalCount"
         }
     }
 
@@ -143,6 +155,7 @@ class PigmentInventoryViewModel @Inject constructor(
                 equipment.copy(stockQuantity = (equipment.stockQuantity - 1).coerceAtLeast(0))
             )
 
+            _snackbarMessage.value = "Bottle opened"
             onSuccess(bottleId)
         }
     }
@@ -176,6 +189,7 @@ class PigmentInventoryViewModel @Inject constructor(
             pigmentBottleRepository.updateBottle(
                 bottle.copy(remainingMl = (bottle.remainingMl - mlUsed).coerceAtLeast(0.0))
             )
+            _snackbarMessage.value = "Usage logged"
         }
     }
 }

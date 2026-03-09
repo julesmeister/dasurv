@@ -8,9 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,27 +55,15 @@ fun SearchScreen(
             )
 
             if (query.length < 2) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "Type at least 2 characters to search",
-                        color = M3OnSurfaceVariant,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+                DasurvEmptyState(
+                    icon = Icons.Default.Search,
+                    message = "Type at least 2 characters to search"
+                )
             } else if (results.isEmpty) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "No results found",
-                        color = M3OnSurfaceVariant,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+                DasurvEmptyState(
+                    icon = Icons.Default.SearchOff,
+                    message = "No results found"
+                )
             } else {
                 val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
 
@@ -87,15 +73,7 @@ fun SearchScreen(
                 ) {
                     // Clients
                     if (results.clients.isNotEmpty()) {
-                        item {
-                            Text(
-                                "Clients (${results.clients.size})",
-                                modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.xs),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = M3Primary
-                            )
-                        }
+                        item { M3SectionHeader("Clients (${results.clients.size})", M3Primary) }
                         item {
                             M3ListCard {
                                 results.clients.forEachIndexed { index, client ->
@@ -116,15 +94,7 @@ fun SearchScreen(
 
                     // Appointments
                     if (results.appointments.isNotEmpty()) {
-                        item {
-                            Text(
-                                "Appointments (${results.appointments.size})",
-                                modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.xs),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = M3AmberColor
-                            )
-                        }
+                        item { M3SectionHeader("Appointments (${results.appointments.size})", M3AmberColor) }
                         item {
                             M3ListCard {
                                 results.appointments.forEachIndexed { index, appt ->
@@ -145,15 +115,7 @@ fun SearchScreen(
 
                     // Sessions
                     if (results.sessions.isNotEmpty()) {
-                        item {
-                            Text(
-                                "Sessions (${results.sessions.size})",
-                                modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.xs),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = M3GreenColor
-                            )
-                        }
+                        item { M3SectionHeader("Sessions (${results.sessions.size})", M3GreenColor) }
                         item {
                             M3ListCard {
                                 results.sessions.forEachIndexed { index, session ->
@@ -174,15 +136,7 @@ fun SearchScreen(
 
                     // Equipment
                     if (results.equipment.isNotEmpty()) {
-                        item {
-                            Text(
-                                "Equipment (${results.equipment.size})",
-                                modifier = Modifier.padding(horizontal = spacing.lg, vertical = spacing.xs),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = M3CyanColor
-                            )
-                        }
+                        item { M3SectionHeader("Equipment (${results.equipment.size})", M3CyanColor) }
                         item {
                             M3ListCard {
                                 results.equipment.forEachIndexed { index, eq ->

@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dasurv.data.local.entity.Client
 import com.dasurv.data.model.FinancialSummary
+import com.dasurv.data.local.entity.ClientUpdate
 import com.dasurv.data.repository.AppointmentRepository
 import com.dasurv.data.repository.ClientRepository
+import com.dasurv.data.repository.ClientUpdateRepository
 import com.dasurv.data.repository.SessionRepository
 import com.dasurv.data.repository.TransactionRepository
 import com.dasurv.util.DefaultSubscribePolicy
@@ -19,7 +21,8 @@ class ClientViewModel @Inject constructor(
     private val clientRepository: ClientRepository,
     private val sessionRepository: SessionRepository,
     private val appointmentRepository: AppointmentRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val clientUpdateRepository: ClientUpdateRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -33,6 +36,12 @@ class ClientViewModel @Inject constructor(
 
     private val _selectedClient = MutableStateFlow<Client?>(null)
     val selectedClient: StateFlow<Client?> = _selectedClient
+
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun clearSnackbar() { _snackbarMessage.value = null }
+    fun showSnackbar(msg: String) { _snackbarMessage.value = msg }
 
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
@@ -53,12 +62,36 @@ class ClientViewModel @Inject constructor(
 
     fun saveClient(client: Client, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (client.id == 0L) {
+            val isNew = client.id == 0L
+            if (isNew) {
                 clientRepository.insertClient(client)
             } else {
                 clientRepository.updateClient(client)
             }
+            _snackbarMessage.value = if (isNew) "Client added" else "Client updated"
             onSuccess()
+        }
+    }
+
+    fun getUpdatesForClient(clientId: Long) = clientUpdateRepository.getUpdatesForClient(clientId)
+
+    fun saveUpdate(update: ClientUpdate, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            val isNew = update.id == 0L
+            if (isNew) {
+                clientUpdateRepository.insertUpdate(update)
+            } else {
+                clientUpdateRepository.updateUpdate(update)
+            }
+            _snackbarMessage.value = if (isNew) "Update added" else "Update saved"
+            onSuccess()
+        }
+    }
+
+    fun deleteUpdate(update: ClientUpdate) {
+        viewModelScope.launch {
+            clientUpdateRepository.deleteUpdate(update)
+            _snackbarMessage.value = "Update deleted"
         }
     }
 

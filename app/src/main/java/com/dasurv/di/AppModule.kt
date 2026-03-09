@@ -8,6 +8,7 @@ import com.dasurv.data.local.dao.AppointmentDao
 import com.dasurv.data.local.dao.ClientDao
 import com.dasurv.data.local.dao.EquipmentDao
 import com.dasurv.data.local.dao.ClientPigmentPreferenceDao
+import com.dasurv.data.local.dao.ClientUpdateDao
 import com.dasurv.data.local.dao.LipPhotoDao
 import com.dasurv.data.local.dao.PigmentBottleDao
 import com.dasurv.data.local.dao.SessionDao
@@ -46,7 +47,8 @@ object AppModule {
                 DatabaseMigrations.MIGRATION_10_11,
                 DatabaseMigrations.MIGRATION_11_12,
                 DatabaseMigrations.MIGRATION_12_13,
-                DatabaseMigrations.MIGRATION_13_14
+                DatabaseMigrations.MIGRATION_13_14,
+                DatabaseMigrations.MIGRATION_14_15
             )
             .fallbackToDestructiveMigration()
             .build()
@@ -85,4 +87,8 @@ object AppModule {
     @Provides
     fun provideSessionTemplateDao(database: DasurvDatabase): SessionTemplateDao =
         database.sessionTemplateDao()
+
+    @Provides
+    fun provideClientUpdateDao(database: DasurvDatabase): ClientUpdateDao =
+        database.clientUpdateDao()
 }

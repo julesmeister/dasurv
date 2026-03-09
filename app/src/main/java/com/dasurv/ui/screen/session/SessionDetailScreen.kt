@@ -5,34 +5,50 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dasurv.data.local.entity.UsageLipArea
 import com.dasurv.ui.component.ColorSwatch
 import com.dasurv.ui.component.DasurvBackButton
 import com.dasurv.ui.component.DasurvConfirmDialog
 import com.dasurv.ui.component.DasurvTopAppBarTitle
+import com.dasurv.ui.component.DetailActionButton
+import com.dasurv.ui.component.DetailDivider
+import com.dasurv.ui.component.DetailSectionHeader
+import com.dasurv.ui.component.DetailValueRow
+import com.dasurv.ui.component.M3AmberColor
+import com.dasurv.ui.component.M3CyanColor
+import com.dasurv.ui.component.M3GreenColor
 import com.dasurv.ui.component.M3ListCard
-import com.dasurv.ui.component.M3ListDivider
 import com.dasurv.ui.component.M3OnSurface
 import com.dasurv.ui.component.M3OnSurfaceVariant
+import com.dasurv.ui.component.M3PinkAccent
 import com.dasurv.ui.component.M3Primary
+import com.dasurv.ui.component.M3RedColor
 import com.dasurv.ui.component.M3SnackbarHost
-import com.dasurv.ui.component.M3FieldBg
-import com.dasurv.ui.theme.DasurvTheme
+import com.dasurv.ui.component.M3SurfaceContainer
+import com.dasurv.ui.component.rememberSnackbarState
 import com.dasurv.util.formatCurrency
 import com.dasurv.util.formatDurationTimer
-import com.dasurv.util.formatPrecise
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,6 +57,8 @@ import java.util.*
 fun SessionDetailScreen(
     sessionId: Long,
     onNavigateBack: () -> Unit,
+    onNavigateToAddUpdate: (clientId: Long, sessionId: Long) -> Unit = { _, _ -> },
+    onNavigateToEditUpdate: (clientId: Long, updateId: Long) -> Unit = { _, _ -> },
     timerViewModel: SessionTimerViewModel,
     viewModel: SessionDetailViewModel = hiltViewModel()
 ) {
@@ -52,10 +70,11 @@ fun SessionDetailScreen(
     val sessionBottleUsages by viewModel.sessionBottleUsages.collectAsStateWithLifecycle()
     val allBottles by viewModel.allBottles.collectAsStateWithLifecycle(initialValue = emptyList())
     val activeStaff by viewModel.activeStaff.collectAsStateWithLifecycle()
+    val sessionUpdates by viewModel.sessionUpdates.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val spacing = DasurvTheme.spacing
 
     if (showDeleteDialog && session != null) {
         DasurvConfirmDialog(
@@ -69,7 +88,7 @@ fun SessionDetailScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = M3FieldBg,
+        containerColor = M3SurfaceContainer,
         snackbarHost = { M3SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -99,282 +118,231 @@ fun SessionDetailScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(vertical = spacing.lg)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(spacing.md)
                 ) {
-                    // Date & procedure card
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // ── Session Info ──────────────────────────────────
+                    DetailSectionHeader(
+                        icon = Icons.Default.CalendarToday,
+                        title = "Session Info",
+                    )
+
                     M3ListCard {
-                        Column(modifier = Modifier.padding(spacing.lg)) {
-                            Text(
-                                dateFormat.format(Date(session!!.date)),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = M3OnSurface
+                        Column {
+                            DetailValueRow(
+                                icon = Icons.Default.CalendarToday,
+                                label = "Date",
+                                value = dateFormat.format(Date(session!!.date)),
+                                iconTint = M3Primary,
+                                iconBg = M3Primary.copy(alpha = 0.10f),
+                                valueBg = M3Primary.copy(alpha = 0.08f),
+                                valueColor = M3Primary,
                             )
                             if (session!!.procedure.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(spacing.xs))
-                                Text(
-                                    "Procedure: ${session!!.procedure}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = M3OnSurface
+                                DetailDivider()
+                                DetailValueRow(
+                                    icon = Icons.Default.MedicalServices,
+                                    label = "Procedure",
+                                    value = session!!.procedure,
                                 )
                             }
-                        }
-                    }
-
-                    // Staff card
-                    if (session!!.staffId != null) {
-                        val staffName = activeStaff.find { it.id == session!!.staffId }?.name
-                        if (staffName != null) {
-                            M3ListCard {
-                                Column(modifier = Modifier.padding(spacing.lg)) {
-                                    Text(
-                                        "Staff",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = M3OnSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.height(spacing.xs))
-                                    Text(
-                                        staffName,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = M3OnSurface
+                            if (session!!.staffId != null) {
+                                val staffName = activeStaff.find { it.id == session!!.staffId }?.name
+                                if (staffName != null) {
+                                    DetailDivider()
+                                    DetailValueRow(
+                                        icon = Icons.Default.Person,
+                                        label = "Staff",
+                                        value = staffName,
+                                        iconTint = M3AmberColor,
+                                        iconBg = M3AmberColor.copy(alpha = 0.10f),
+                                        valueBg = M3AmberColor.copy(alpha = 0.08f),
+                                        valueColor = M3AmberColor,
                                     )
                                 }
                             }
                         }
                     }
 
-                    // Lip color card
+                    // ── Lip Color Analysis ────────────────────────────
                     if (session!!.lipColorHex != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DetailSectionHeader(
+                            icon = Icons.Default.ColorLens,
+                            title = "Lip Color Analysis",
+                            accentColor = M3PinkAccent,
+                        )
+
                         M3ListCard {
                             Row(
-                                modifier = Modifier.padding(spacing.lg),
-                                verticalAlignment = Alignment.CenterVertically
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 ColorSwatch(
                                     colorHex = session!!.lipColorHex!!,
-                                    label = ""
+                                    label = "",
                                 )
-                                Spacer(modifier = Modifier.width(spacing.md))
+                                Spacer(modifier = Modifier.width(14.dp))
                                 Column {
                                     Text(
-                                        "Lip Color Analysis",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = M3OnSurface
-                                    )
-                                    Text(
                                         session!!.lipColorCategory ?: "Unknown",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = M3OnSurface
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = M3OnSurface,
                                     )
                                     Text(
                                         session!!.lipColorHex!!,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = M3OnSurfaceVariant
+                                        fontSize = 13.sp,
+                                        color = M3OnSurfaceVariant,
                                     )
                                 }
                             }
                         }
                     }
 
-                    // Equipment used in this session
+                    // ── Equipment Used ────────────────────────────────
                     if (sessionEquipment.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DetailSectionHeader(
+                            icon = Icons.Default.Build,
+                            title = "Equipment Used (${sessionEquipment.size})",
+                            accentColor = M3AmberColor,
+                        )
+                        SessionEquipmentCard(
+                            sessionEquipment = sessionEquipment,
+                            allEquipment = allEquipment,
+                        )
+                    }
+
+                    // ── Pigments Used ─────────────────────────────────
+                    if (sessionBottleUsages.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DetailSectionHeader(
+                            icon = Icons.Default.Palette,
+                            title = "Pigments Used (${sessionBottleUsages.size})",
+                            accentColor = M3PinkAccent,
+                        )
+                        SessionPigmentCard(
+                            sessionBottleUsages = sessionBottleUsages,
+                            allBottles = allBottles,
+                        )
+                    }
+
+                    // ── Cost & Duration ───────────────────────────────
+                    if (session!!.totalCost > 0 || session!!.durationSeconds > 0) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DetailSectionHeader(
+                            icon = Icons.Default.Payments,
+                            title = "Cost & Duration",
+                            accentColor = M3GreenColor,
+                        )
+
                         M3ListCard {
-                            Column(modifier = Modifier.padding(spacing.lg)) {
-                                Text(
-                                    "Equipment Used",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = M3OnSurface,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Spacer(modifier = Modifier.height(spacing.sm))
-                                sessionEquipment.forEach { se ->
-                                    val eqName = allEquipment.find { it.id == se.equipmentId }?.name ?: "Unknown"
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                eqName,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = M3OnSurface
-                                            )
-                                            Text(
-                                                "${se.quantityUsed.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() }} x $${se.costPerPiece.formatPrecise()}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = M3OnSurfaceVariant
-                                            )
-                                        }
-                                        Text(
-                                            "$${(se.quantityUsed * se.costPerPiece).formatCurrency()}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = M3OnSurface
+                            Column {
+                                if (session!!.totalCost > 0) {
+                                    DetailValueRow(
+                                        icon = Icons.Default.Payments,
+                                        label = "Total Cost",
+                                        value = "₱${session!!.totalCost.formatCurrency()}",
+                                        iconTint = M3GreenColor,
+                                        iconBg = M3GreenColor.copy(alpha = 0.10f),
+                                        valueBg = M3GreenColor.copy(alpha = 0.08f),
+                                        valueColor = M3GreenColor,
+                                    )
+                                }
+                                if (session!!.totalCost > 0 && session!!.durationSeconds > 0) {
+                                    DetailDivider()
+                                }
+                                if (session!!.durationSeconds > 0) {
+                                    DetailValueRow(
+                                        icon = Icons.Default.AccessTime,
+                                        label = "Total Duration",
+                                        value = formatDurationTimer(session!!.durationSeconds),
+                                    )
+                                    if (session!!.upperLipSeconds > 0) {
+                                        DetailDivider()
+                                        DetailValueRow(
+                                            icon = Icons.Default.AccessTime,
+                                            label = "Upper Lip",
+                                            value = formatDurationTimer(session!!.upperLipSeconds),
+                                            iconTint = M3OnSurfaceVariant,
+                                            iconBg = M3OnSurfaceVariant.copy(alpha = 0.08f),
+                                            valueBg = M3OnSurfaceVariant.copy(alpha = 0.06f),
+                                            valueColor = M3OnSurfaceVariant,
+                                        )
+                                    }
+                                    if (session!!.lowerLipSeconds > 0) {
+                                        DetailDivider()
+                                        DetailValueRow(
+                                            icon = Icons.Default.AccessTime,
+                                            label = "Lower Lip",
+                                            value = formatDurationTimer(session!!.lowerLipSeconds),
+                                            iconTint = M3OnSurfaceVariant,
+                                            iconBg = M3OnSurfaceVariant.copy(alpha = 0.08f),
+                                            valueBg = M3OnSurfaceVariant.copy(alpha = 0.06f),
+                                            valueColor = M3OnSurfaceVariant,
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(spacing.sm))
-                                M3ListDivider()
-                                Spacer(modifier = Modifier.height(spacing.sm))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        "Equipment Total",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = M3OnSurface
-                                    )
-                                    Text(
-                                        "$${sessionEquipment.sumOf { it.quantityUsed * it.costPerPiece }.formatCurrency()}",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = M3Primary
-                                    )
-                                }
                             }
                         }
                     }
 
-                    // Pigments used in this session
-                    if (sessionBottleUsages.isNotEmpty()) {
-                        M3ListCard {
-                            Column(modifier = Modifier.padding(spacing.lg)) {
-                                Text(
-                                    "Pigments Used",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = M3OnSurface,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Spacer(modifier = Modifier.height(spacing.sm))
-                                sessionBottleUsages.forEach { usage ->
-                                    val bottleName = allBottles.find { it.id == usage.bottleId }?.pigmentName ?: "Unknown"
-                                    val lipAreaText = when (usage.lipArea) {
-                                        UsageLipArea.UPPER -> "Upper Lip"
-                                        UsageLipArea.LOWER -> "Lower Lip"
-                                        UsageLipArea.BOTH -> "Both Lips"
-                                    }
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                bottleName,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = M3OnSurface
-                                            )
-                                            Text(
-                                                "${usage.mlUsed.formatCurrency()} ml - $lipAreaText",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = M3OnSurfaceVariant
-                                            )
-                                        }
-                                        if (usage.costAtTimeOfUse > 0) {
-                                            Text(
-                                                "$${usage.costAtTimeOfUse.formatCurrency()}",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = M3OnSurface
-                                            )
-                                        }
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(spacing.sm))
-                                M3ListDivider()
-                                Spacer(modifier = Modifier.height(spacing.sm))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        "Pigment Total",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = M3OnSurface
-                                    )
-                                    Text(
-                                        "$${sessionBottleUsages.sumOf { it.costAtTimeOfUse }.formatCurrency()}",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = M3Primary
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    // ── Tags / Updates ────────────────────────────────
+                    Spacer(modifier = Modifier.height(16.dp))
+                    DetailSectionHeader(
+                        icon = Icons.AutoMirrored.Filled.Label,
+                        title = "Tags & Updates (${sessionUpdates.size})",
+                        accentColor = M3CyanColor,
+                    )
 
-                    // Total cost card
-                    if (session!!.totalCost > 0) {
-                        M3ListCard {
-                            Column(modifier = Modifier.padding(spacing.lg)) {
-                                Text(
-                                    "Total Cost",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = M3OnSurfaceVariant
-                                )
-                                Text(
-                                    "$${session!!.totalCost.formatCurrency()}",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = M3Primary,
-                                    fontWeight = FontWeight.Bold
-                                )
+                    SessionUpdatesCard(
+                        sessionUpdates = sessionUpdates,
+                        onAddUpdate = {
+                            if (session != null) {
+                                onNavigateToAddUpdate(session!!.clientId, sessionId)
                             }
-                        }
-                    }
-
-                    // Duration card
-                    if (session!!.durationSeconds > 0) {
-                        M3ListCard {
-                            Column(modifier = Modifier.padding(spacing.lg)) {
-                                Text(
-                                    "Session Duration",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = M3OnSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(spacing.sm))
-                                Text(
-                                    "Total: ${formatDurationTimer(session!!.durationSeconds)}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = M3OnSurface
-                                )
-                                if (session!!.upperLipSeconds > 0) {
-                                    Text(
-                                        "Upper Lip: ${formatDurationTimer(session!!.upperLipSeconds)}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = M3OnSurface
-                                    )
-                                }
-                                if (session!!.lowerLipSeconds > 0) {
-                                    Text(
-                                        "Lower Lip: ${formatDurationTimer(session!!.lowerLipSeconds)}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = M3OnSurface
-                                    )
-                                }
+                        },
+                        onEditUpdate = { update ->
+                            if (session != null) {
+                                onNavigateToEditUpdate(session!!.clientId, update.id)
                             }
-                        }
-                    }
+                        },
+                        onDeleteUpdate = { update -> viewModel.deleteUpdate(update) },
+                    )
 
-                    // Notes card
+                    // ── Notes ─────────────────────────────────────────
                     if (session!!.notes.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DetailSectionHeader(
+                            icon = Icons.AutoMirrored.Filled.Notes,
+                            title = "Notes",
+                        )
+
                         M3ListCard {
-                            Column(modifier = Modifier.padding(spacing.lg)) {
-                                Text(
-                                    "Notes",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = M3OnSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(spacing.xs))
-                                Text(
-                                    session!!.notes,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = M3OnSurface
-                                )
-                            }
+                            Text(
+                                session!!.notes,
+                                modifier = Modifier.padding(16.dp),
+                                fontSize = 14.sp,
+                                color = M3OnSurface,
+                            )
                         }
                     }
+
+                    // ── Delete Action ─────────────────────────────────
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        DetailActionButton(
+                            label = "Delete Session",
+                            icon = Icons.Default.DeleteForever,
+                            color = M3RedColor,
+                            onClick = { showDeleteDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }

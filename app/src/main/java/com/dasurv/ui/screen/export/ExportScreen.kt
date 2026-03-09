@@ -2,6 +2,7 @@ package com.dasurv.ui.screen.export
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -54,61 +55,64 @@ fun ExportScreen(
         },
         containerColor = M3SurfaceContainer
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(spacing.lg),
+                .padding(padding),
+            contentPadding = PaddingValues(vertical = spacing.lg),
             verticalArrangement = Arrangement.spacedBy(spacing.md)
         ) {
-            Text(
-                "Export your data as CSV files",
-                style = MaterialTheme.typography.bodyMedium,
-                color = M3OnSurfaceVariant
-            )
+            item {
+                Text(
+                    "Export your data as CSV files",
+                    modifier = Modifier.padding(horizontal = spacing.lg),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = M3OnSurfaceVariant
+                )
+            }
 
-            Spacer(modifier = Modifier.height(spacing.sm))
-
-            ExportButton(
-                title = "Export Clients",
-                description = "Names, phone numbers, emails",
-                icon = Icons.Default.People,
-                color = M3Primary,
-                isExporting = exportState is ExportState.Exporting,
-                onClick = { viewModel.exportClients(context) }
-            )
-
-            ExportButton(
-                title = "Export Sessions",
-                description = "Dates, procedures, costs, durations",
-                icon = Icons.Default.EventAvailable,
-                color = M3GreenColor,
-                isExporting = exportState is ExportState.Exporting,
-                onClick = { viewModel.exportSessions(context) }
-            )
-
-            ExportButton(
-                title = "Export Transactions",
-                description = "Charges, payments, deposits",
-                icon = Icons.Default.Receipt,
-                color = M3AmberColor,
-                isExporting = exportState is ExportState.Exporting,
-                onClick = { viewModel.exportTransactions(context) }
-            )
+            item {
+                M3ListCard {
+                    ExportRow(
+                        title = "Export Clients",
+                        description = "Names, phone numbers, emails",
+                        icon = Icons.Default.People,
+                        color = M3Primary,
+                        isExporting = exportState is ExportState.Exporting,
+                        onClick = { viewModel.exportClients(context) }
+                    )
+                    M3ListDivider()
+                    ExportRow(
+                        title = "Export Sessions",
+                        description = "Dates, procedures, costs, durations",
+                        icon = Icons.Default.EventAvailable,
+                        color = M3GreenColor,
+                        isExporting = exportState is ExportState.Exporting,
+                        onClick = { viewModel.exportSessions(context) }
+                    )
+                    M3ListDivider()
+                    ExportRow(
+                        title = "Export Transactions",
+                        description = "Charges, payments, deposits",
+                        icon = Icons.Default.Receipt,
+                        color = M3AmberColor,
+                        isExporting = exportState is ExportState.Exporting,
+                        onClick = { viewModel.exportTransactions(context) }
+                    )
+                }
+            }
 
             if (exportState is ExportState.Error) {
-                Text(
-                    (exportState as ExportState.Error).message,
-                    color = M3RedColor,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                item {
+                    M3ErrorCard((exportState as ExportState.Error).message)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ExportButton(
+private fun ExportRow(
     title: String,
     description: String,
     icon: ImageVector,
@@ -116,51 +120,49 @@ private fun ExportButton(
     isExporting: Boolean,
     onClick: () -> Unit
 ) {
-    M3ListCard {
-        Surface(
-            onClick = onClick,
-            enabled = !isExporting,
-            color = Color.Transparent,
-            modifier = Modifier.fillMaxWidth()
+    Surface(
+        onClick = onClick,
+        enabled = !isExporting,
+        color = Color.Transparent,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(DasurvTheme.spacing.lg),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.size(32.dp)
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.width(DasurvTheme.spacing.lg))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = M3OnSurface
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = M3OnSurface
-                    )
-                    Text(
-                        description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = M3OnSurfaceVariant
-                    )
-                }
-                if (isExporting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = color
-                    )
-                } else {
-                    Icon(
-                        Icons.Default.FileDownload,
-                        contentDescription = "Export",
-                        tint = color,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = M3OnSurfaceVariant
+                )
+            }
+            if (isExporting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = color
+                )
+            } else {
+                Icon(
+                    Icons.Default.FileDownload,
+                    contentDescription = "Export",
+                    tint = color,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

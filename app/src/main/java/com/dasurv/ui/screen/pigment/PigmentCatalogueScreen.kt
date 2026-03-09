@@ -22,6 +22,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.model.Pigment
 import com.dasurv.data.model.PigmentBrand
 import com.dasurv.ui.component.*
+import com.dasurv.ui.screen.pigmentinventory.PigmentInventoryViewModel
+import com.dasurv.ui.screen.pigmentinventory.PigmentStockFormDialog
 import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,8 +32,8 @@ fun PigmentCatalogueScreen(
     onNavigateBack: () -> Unit,
     onNavigateToRecommendation: () -> Unit,
     onNavigateToPigmentInventory: () -> Unit = {},
-    onNavigateToAddStock: (name: String, brand: String, colorHex: String) -> Unit = { _, _, _ -> },
-    viewModel: PigmentViewModel = hiltViewModel()
+    viewModel: PigmentViewModel = hiltViewModel(),
+    inventoryViewModel: PigmentInventoryViewModel = hiltViewModel()
 ) {
     val pigments by viewModel.pigments.collectAsStateWithLifecycle()
     val selectedBrand by viewModel.selectedBrand.collectAsStateWithLifecycle()
@@ -39,16 +41,27 @@ fun PigmentCatalogueScreen(
     val spacing = DasurvTheme.spacing
 
     var selectedPigment by remember { mutableStateOf<Pigment?>(null) }
+    var addStockPigment by remember { mutableStateOf<Pigment?>(null) }
 
     if (selectedPigment != null) {
         PigmentDetailDialog(
             pigment = selectedPigment!!,
             onDismiss = { selectedPigment = null },
             onAddToInventory = {
-                val p = selectedPigment!!
+                addStockPigment = selectedPigment
                 selectedPigment = null
-                onNavigateToAddStock(p.name, p.brand.displayName, p.colorHex)
             }
+        )
+    }
+
+    if (addStockPigment != null) {
+        PigmentStockFormDialog(
+            equipmentId = null,
+            prefillName = addStockPigment!!.name,
+            prefillBrand = addStockPigment!!.brand.displayName,
+            prefillColorHex = addStockPigment!!.colorHex,
+            onDismiss = { addStockPigment = null },
+            viewModel = inventoryViewModel,
         )
     }
 

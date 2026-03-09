@@ -12,6 +12,7 @@ import com.dasurv.data.local.dao.PigmentBottleDao
 import com.dasurv.data.local.dao.SessionDao
 import com.dasurv.data.local.dao.SessionTemplateDao
 import com.dasurv.data.local.dao.StaffDao
+import com.dasurv.data.local.dao.ClientUpdateDao
 import com.dasurv.data.local.dao.TransactionDao
 import com.dasurv.data.local.entity.Appointment
 import com.dasurv.data.local.entity.Client
@@ -22,6 +23,7 @@ import com.dasurv.data.local.entity.LipPhoto
 import com.dasurv.data.local.entity.LipPhotoPigment
 import com.dasurv.data.local.entity.PigmentBottle
 import com.dasurv.data.local.entity.ClientTransaction
+import com.dasurv.data.local.entity.ClientUpdate
 import com.dasurv.data.local.entity.EquipmentPurchase
 import com.dasurv.data.local.entity.PigmentBottleUsage
 import com.dasurv.data.local.entity.Session
@@ -46,12 +48,13 @@ import com.dasurv.data.local.entity.Staff
         PigmentBottle::class,
         PigmentBottleUsage::class,
         ClientTransaction::class,
+        ClientUpdate::class,
         EquipmentPurchase::class,
         Staff::class,
         SessionTemplate::class,
         SessionTemplateEquipment::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -66,4 +69,5 @@ abstract class DasurvDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun staffDao(): StaffDao
     abstract fun sessionTemplateDao(): SessionTemplateDao
+    abstract fun clientUpdateDao(): ClientUpdateDao
 }

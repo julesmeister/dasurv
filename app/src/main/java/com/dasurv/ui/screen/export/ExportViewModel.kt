@@ -32,44 +32,21 @@ class ExportViewModel @Inject constructor(
     private val _exportState = MutableStateFlow<ExportState>(ExportState.Idle)
     val exportState: StateFlow<ExportState> = _exportState
 
-    fun exportClients(context: Context) {
+    private fun <T> runExport(type: String, context: Context, fetcher: suspend () -> List<T>, exporter: (Context, List<T>) -> Uri) {
         viewModelScope.launch {
             _exportState.value = ExportState.Exporting
             try {
-                val clients = clientRepository.getAllClients().first()
-                val uri = CsvExporter.exportClients(context, clients)
-                _exportState.value = ExportState.Done(uri, "Clients")
+                val uri = exporter(context, fetcher())
+                _exportState.value = ExportState.Done(uri, type)
             } catch (e: Exception) {
                 _exportState.value = ExportState.Error(e.message ?: "Export failed")
             }
         }
     }
 
-    fun exportSessions(context: Context) {
-        viewModelScope.launch {
-            _exportState.value = ExportState.Exporting
-            try {
-                val sessions = sessionRepository.getAllSessions().first()
-                val uri = CsvExporter.exportSessions(context, sessions)
-                _exportState.value = ExportState.Done(uri, "Sessions")
-            } catch (e: Exception) {
-                _exportState.value = ExportState.Error(e.message ?: "Export failed")
-            }
-        }
-    }
-
-    fun exportTransactions(context: Context) {
-        viewModelScope.launch {
-            _exportState.value = ExportState.Exporting
-            try {
-                val transactions = transactionRepository.getAllTransactions().first()
-                val uri = CsvExporter.exportTransactions(context, transactions)
-                _exportState.value = ExportState.Done(uri, "Transactions")
-            } catch (e: Exception) {
-                _exportState.value = ExportState.Error(e.message ?: "Export failed")
-            }
-        }
-    }
+    fun exportClients(context: Context) = runExport("Clients", context, { clientRepository.getAllClients().first() }, CsvExporter::exportClients)
+    fun exportSessions(context: Context) = runExport("Sessions", context, { sessionRepository.getAllSessions().first() }, CsvExporter::exportSessions)
+    fun exportTransactions(context: Context) = runExport("Transactions", context, { transactionRepository.getAllTransactions().first() }, CsvExporter::exportTransactions)
 
     fun resetState() {
         _exportState.value = ExportState.Idle

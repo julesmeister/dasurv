@@ -29,6 +29,11 @@ class LipPhotoGalleryViewModel @Inject constructor(
 
     private var clientId: Long = 0
 
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun clearSnackbar() { _snackbarMessage.value = null }
+
     private val _clientId = MutableStateFlow<Long?>(null)
 
     val photos: StateFlow<List<LipPhoto>> = _clientId
@@ -66,6 +71,7 @@ class LipPhotoGalleryViewModel @Inject constructor(
     fun updateNotes(photo: LipPhoto, notes: String) {
         viewModelScope.launch {
             lipPhotoRepository.updatePhoto(photo.copy(notes = notes))
+            _snackbarMessage.value = "Notes saved"
         }
     }
 
@@ -89,6 +95,7 @@ class LipPhotoGalleryViewModel @Inject constructor(
             lipPhotoRepository.deletePigmentsForPhoto(photo.id)
             lipPhotoRepository.deletePhoto(photo)
             try { File(photo.photoUri).delete() } catch (_: Exception) {}
+            _snackbarMessage.value = "Photo deleted"
         }
     }
 }

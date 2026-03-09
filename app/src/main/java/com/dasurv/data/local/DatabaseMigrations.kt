@@ -318,4 +318,25 @@ object DatabaseMigrations {
             db.execSQL("ALTER TABLE `sessions` ADD COLUMN `staffId` INTEGER DEFAULT NULL")
         }
     }
+
+    val MIGRATION_14_15 = object : Migration(14, 15) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `client_updates` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `clientId` INTEGER NOT NULL,
+                    `sessionId` INTEGER DEFAULT NULL,
+                    `date` INTEGER NOT NULL,
+                    `photoUri` TEXT DEFAULT NULL,
+                    `tags` TEXT NOT NULL DEFAULT '[]',
+                    `notes` TEXT NOT NULL DEFAULT '',
+                    `createdAt` INTEGER NOT NULL,
+                    FOREIGN KEY(`clientId`) REFERENCES `clients`(`id`) ON DELETE CASCADE
+                )
+            """.trimIndent())
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_client_updates_clientId` ON `client_updates` (`clientId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_client_updates_sessionId` ON `client_updates` (`sessionId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_client_updates_date` ON `client_updates` (`date`)")
+        }
+    }
 }

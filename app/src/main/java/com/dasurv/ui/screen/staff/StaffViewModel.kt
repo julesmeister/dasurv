@@ -23,6 +23,11 @@ class StaffViewModel @Inject constructor(
     private val _selectedStaff = MutableStateFlow<Staff?>(null)
     val selectedStaff: StateFlow<Staff?> = _selectedStaff
 
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun clearSnackbar() { _snackbarMessage.value = null }
+
     fun loadStaff(id: Long) {
         viewModelScope.launch {
             _selectedStaff.value = staffRepository.getStaffById(id)
@@ -35,11 +40,13 @@ class StaffViewModel @Inject constructor(
 
     fun saveStaff(staff: Staff, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (staff.id == 0L) {
+            val isNew = staff.id == 0L
+            if (isNew) {
                 staffRepository.insertStaff(staff)
             } else {
                 staffRepository.updateStaff(staff)
             }
+            _snackbarMessage.value = if (isNew) "Staff added" else "Staff updated"
             onSuccess()
         }
     }
@@ -47,6 +54,7 @@ class StaffViewModel @Inject constructor(
     fun deleteStaff(staff: Staff, onSuccess: () -> Unit) {
         viewModelScope.launch {
             staffRepository.deleteStaff(staff)
+            _snackbarMessage.value = "Staff deleted"
             onSuccess()
         }
     }

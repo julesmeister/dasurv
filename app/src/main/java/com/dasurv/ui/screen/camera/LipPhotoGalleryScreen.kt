@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dasurv.data.local.entity.CaptureType
+import com.dasurv.ui.component.M3SnackbarHost
+import com.dasurv.ui.component.rememberSnackbarState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,9 +33,12 @@ fun LipPhotoGalleryScreen(
     val expandedPhotoId by viewModel.expandedPhotoId.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
     val groupedPhotos = photos.groupBy { it.captureType }
 
     Scaffold(
+        snackbarHost = { M3SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Lip Photos") },

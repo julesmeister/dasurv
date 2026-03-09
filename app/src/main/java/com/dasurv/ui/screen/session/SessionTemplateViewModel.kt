@@ -24,6 +24,11 @@ class SessionTemplateViewModel @Inject constructor(
     private val _selectedTemplate = MutableStateFlow<SessionTemplate?>(null)
     val selectedTemplate: StateFlow<SessionTemplate?> = _selectedTemplate
 
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun clearSnackbar() { _snackbarMessage.value = null }
+
     fun loadTemplate(id: Long) {
         viewModelScope.launch {
             _selectedTemplate.value = templateRepository.getTemplateById(id)
@@ -40,7 +45,8 @@ class SessionTemplateViewModel @Inject constructor(
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
-            val id = if (template.id == 0L) {
+            val isNew = template.id == 0L
+            val id = if (isNew) {
                 templateRepository.insertTemplate(template)
             } else {
                 templateRepository.updateTemplate(template)
@@ -57,6 +63,7 @@ class SessionTemplateViewModel @Inject constructor(
                     )
                 )
             }
+            _snackbarMessage.value = if (isNew) "Template created" else "Template updated"
             onSuccess()
         }
     }
@@ -64,10 +71,8 @@ class SessionTemplateViewModel @Inject constructor(
     fun deleteTemplate(template: SessionTemplate, onSuccess: () -> Unit) {
         viewModelScope.launch {
             templateRepository.deleteTemplate(template)
+            _snackbarMessage.value = "Template deleted"
             onSuccess()
         }
     }
-
-    suspend fun getEquipmentForTemplate(templateId: Long): List<SessionTemplateEquipment> =
-        templateRepository.getEquipmentForTemplate(templateId)
 }

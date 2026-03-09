@@ -79,7 +79,7 @@ internal fun PigmentCatalogDropdown(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = "Pigment", style = M3LabelStyle)
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(spacing.sm))
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = it }
@@ -90,7 +90,7 @@ internal fun PigmentCatalogDropdown(
                     .clip(RoundedCornerShape(14.dp))
                     .background(M3FieldBg)
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .padding(horizontal = spacing.lg, vertical = spacing.md),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -106,7 +106,9 @@ internal fun PigmentCatalogDropdown(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 scrollState = rememberScrollState(),
-                shadowElevation = 2.dp
+                shape = RoundedCornerShape(16.dp),
+                shadowElevation = 2.dp,
+                containerColor = androidx.compose.ui.graphics.Color.White,
             ) {
                 allPigments.forEach { pigment ->
                     DropdownMenuItem(

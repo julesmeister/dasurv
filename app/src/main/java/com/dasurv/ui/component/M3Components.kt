@@ -34,6 +34,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +72,12 @@ val M3ButtonBarBg = Color(0xFFF1F5F9)
 val M3PinkAccent = Color(0xFFEC4899)
 val M3IndigoColor = Color(0xFF4F46E5)
 val M3IndigoContainer = Color(0xFFEEF2FF)
+val M3SkyBlueColor = Color(0xFF0EA5E9)
+val M3SkyBlueContainer = Color(0xFFE0F2FE)
+val M3PurpleColor = Color(0xFF8B5CF6)
+val M3PurpleContainer = Color(0xFFF3E8FF)
+val M3TealColor = Color(0xFF14B8A6)
+val M3TealContainer = Color(0xFFCCFBF1)
 
 /** Reusable label style: 13sp Medium M3OnSurfaceVariant — for field labels, section headers, etc. */
 val M3LabelStyle = TextStyle(
@@ -162,6 +169,7 @@ fun DasurvEmptyState(
     icon: ImageVector,
     message: String,
     modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
 ) {
     Box(
         modifier = modifier
@@ -173,6 +181,10 @@ fun DasurvEmptyState(
             Icon(icon, null, modifier = Modifier.size(64.dp), tint = Color(0xFFCBD5E1))
             Spacer(modifier = Modifier.height(16.dp))
             Text(message, color = M3OnSurfaceVariant, fontSize = 16.sp)
+            if (action != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                action()
+            }
         }
     }
 }
@@ -188,6 +200,26 @@ fun DasurvTopAppBarTitle(
             Text(subtitle, fontSize = 13.sp, color = M3OnSurfaceVariant, lineHeight = 16.sp)
         }
     }
+}
+
+/**
+ * Creates and remembers a [SnackbarHostState] that automatically shows [message]
+ * and calls [onClear] afterwards.  Replaces the LaunchedEffect boilerplate
+ * found in every screen.
+ */
+@Composable
+fun rememberSnackbarState(
+    message: String?,
+    onClear: () -> Unit,
+): SnackbarHostState {
+    val hostState = remember { SnackbarHostState() }
+    LaunchedEffect(message) {
+        message?.let {
+            hostState.showSnackbar(it)
+            onClear()
+        }
+    }
+    return hostState
 }
 
 @Composable

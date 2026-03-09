@@ -26,6 +26,11 @@ class EquipmentViewModel @Inject constructor(
     private val _selectedEquipment = MutableStateFlow<Equipment?>(null)
     val selectedEquipment: StateFlow<Equipment?> = _selectedEquipment
 
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun clearSnackbar() { _snackbarMessage.value = null }
+
     private val _typeFilter = MutableStateFlow<String?>(null)
     val typeFilter: StateFlow<String?> = _typeFilter
 
@@ -45,11 +50,13 @@ class EquipmentViewModel @Inject constructor(
 
     fun saveEquipment(equipment: Equipment, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            if (equipment.id == 0L) {
+            val isNew = equipment.id == 0L
+            if (isNew) {
                 equipmentRepository.insertEquipment(equipment)
             } else {
                 equipmentRepository.updateEquipment(equipment)
             }
+            _snackbarMessage.value = if (isNew) "Equipment added" else "Equipment updated"
             onSuccess()
         }
     }
@@ -57,6 +64,7 @@ class EquipmentViewModel @Inject constructor(
     fun deleteEquipment(equipment: Equipment, onSuccess: () -> Unit) {
         viewModelScope.launch {
             equipmentRepository.deleteEquipment(equipment)
+            _snackbarMessage.value = "Equipment deleted"
             onSuccess()
         }
     }
@@ -70,6 +78,7 @@ class EquipmentViewModel @Inject constructor(
                     notes = notes
                 )
             )
+            _snackbarMessage.value = "Usage logged"
             onSuccess()
         }
     }
@@ -129,6 +138,7 @@ class EquipmentViewModel @Inject constructor(
                     seller = seller
                 )
             )
+            _snackbarMessage.value = "Purchase recorded"
             onSuccess()
         }
     }
@@ -136,6 +146,7 @@ class EquipmentViewModel @Inject constructor(
     fun deletePurchase(purchase: EquipmentPurchase, onSuccess: () -> Unit) {
         viewModelScope.launch {
             equipmentRepository.deletePurchase(purchase)
+            _snackbarMessage.value = "Purchase deleted"
             onSuccess()
         }
     }

@@ -16,13 +16,24 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.ContactPhone
+import androidx.compose.material.icons.filled.Payments
 import com.dasurv.ui.component.DasurvAddFab
 import com.dasurv.ui.component.DasurvBackButton
 import com.dasurv.ui.component.DasurvTopAppBarTitle
+import com.dasurv.ui.component.DetailSectionHeader
+import com.dasurv.ui.component.M3AmberColor
+import com.dasurv.ui.component.M3CyanColor
+import com.dasurv.ui.component.M3GreenColor
+import com.dasurv.ui.component.M3IndigoColor
 import com.dasurv.ui.component.M3OnSurface
+import com.dasurv.ui.component.M3PinkAccent
 import com.dasurv.ui.component.M3Primary
 import com.dasurv.ui.component.M3SnackbarHost
 import com.dasurv.ui.component.M3SurfaceContainer
+import com.dasurv.ui.component.rememberSnackbarState
 import com.dasurv.ui.theme.DasurvTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +48,8 @@ fun ClientDetailScreen(
     onNavigateToTryOn: (Long) -> Unit = {},
     onNavigateToSessions: (Long) -> Unit = {},
     onNavigateToTransactions: (Long) -> Unit = {},
+    onNavigateToAddUpdate: (Long) -> Unit = {},
+    onNavigateToEditUpdate: (Long, Long) -> Unit = { _, _ -> },
     viewModel: ClientViewModel = hiltViewModel()
 ) {
     var showEditClientDialog by remember { mutableStateOf(false) }
@@ -68,6 +81,7 @@ fun ClientDetailScreen(
             onDismiss = { showNewSessionDialog = false }
         )
     }
+
     LaunchedEffect(clientId) { viewModel.loadClient(clientId) }
 
     val client by viewModel.selectedClient.collectAsStateWithLifecycle()
@@ -75,9 +89,14 @@ fun ClientDetailScreen(
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val financialSummary by viewModel.getFinancialSummary(clientId)
         .collectAsStateWithLifecycle(initialValue = FinancialSummary())
+    val clientUpdates by viewModel.getUpdatesForClient(clientId)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val clientSessions by viewModel.getSessionsForClient(clientId)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
     var showDeleteDialog by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarMsg by viewModel.snackbarMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = rememberSnackbarState(snackbarMsg, viewModel::clearSnackbar)
     val spacing = DasurvTheme.spacing
 
     if (showDeleteDialog && client != null) {
@@ -141,9 +160,24 @@ fun ClientDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(spacing.sm)
                 ) {
                     if (client!!.phone.isNotBlank() || client!!.email.isNotBlank() || client!!.notes.isNotBlank()) {
+                        item {
+                            DetailSectionHeader(
+                                icon = Icons.Default.ContactPhone,
+                                title = "CONTACT INFO",
+                                accentColor = M3CyanColor,
+                            )
+                        }
                         item { ClientContactCard(client!!) }
                     }
 
+                    item {
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        DetailSectionHeader(
+                            icon = Icons.Default.CameraAlt,
+                            title = "LIP PHOTOS",
+                            accentColor = M3PinkAccent,
+                        )
+                    }
                     item {
                         LipPhotosCard(
                             clientId = clientId,
@@ -154,6 +188,14 @@ fun ClientDetailScreen(
                     }
 
                     item {
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        DetailSectionHeader(
+                            icon = Icons.Default.CalendarMonth,
+                            title = "QUICK ACTIONS",
+                            accentColor = M3Primary,
+                        )
+                    }
+                    item {
                         BookAppointmentCard(
                             clientId = clientId,
                             onNavigateToBookAppointment = { _ -> showAppointmentDialog = true },
@@ -162,10 +204,30 @@ fun ClientDetailScreen(
                     }
 
                     item {
+                        Spacer(modifier = Modifier.height(spacing.xs))
+                        DetailSectionHeader(
+                            icon = Icons.Default.Payments,
+                            title = "FINANCIALS",
+                            accentColor = M3GreenColor,
+                        )
+                    }
+                    item {
                         FinancialSummaryCard(
                             financialSummary = financialSummary,
                             clientId = clientId,
                             onNavigateToTransactions = onNavigateToTransactions
+                        )
+                    }
+
+                    // Updates timeline
+                    item {
+                        Spacer(modifier = Modifier.height(spacing.sm))
+                        UpdatesTimelineSection(
+                            updates = clientUpdates,
+                            sessions = clientSessions,
+                            onAddUpdate = { onNavigateToAddUpdate(clientId) },
+                            onEditUpdate = { update -> onNavigateToEditUpdate(clientId, update.id) },
+                            onDeleteUpdate = { update -> viewModel.deleteUpdate(update) },
                         )
                     }
 
@@ -176,11 +238,10 @@ fun ClientDetailScreen(
                     if (scheduledAppointments.isNotEmpty()) {
                         item {
                             Spacer(modifier = Modifier.height(spacing.sm))
-                            Text(
-                                "Upcoming Appointments (${scheduledAppointments.size})",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = M3OnSurface,
-                                modifier = Modifier.padding(horizontal = spacing.lg)
+                            DetailSectionHeader(
+                                icon = Icons.Default.CalendarMonth,
+                                title = "UPCOMING APPOINTMENTS (${scheduledAppointments.size})",
+                                accentColor = M3AmberColor,
                             )
                         }
                         item {

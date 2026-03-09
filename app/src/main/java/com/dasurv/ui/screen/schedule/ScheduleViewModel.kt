@@ -47,6 +47,11 @@ class ScheduleViewModel @Inject constructor(
     private val _selectedAppointment = MutableStateFlow<Appointment?>(null)
     val selectedAppointment: StateFlow<Appointment?> = _selectedAppointment
 
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun clearSnackbar() { _snackbarMessage.value = null }
+
     val clients: StateFlow<List<Client>> = clientRepository.getAllClients()
         .stateIn(viewModelScope, DefaultSubscribePolicy, emptyList())
 
@@ -101,6 +106,22 @@ class ScheduleViewModel @Inject constructor(
         _selectedDayOfMonth.value = if (_selectedDayOfMonth.value == day) null else day
     }
 
+    fun goToLatestAppointment() {
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val appointment = appointmentRepository.getNextAppointment(now)
+                ?: appointmentRepository.getLatestAppointment()
+            if (appointment == null) {
+                _snackbarMessage.value = "No appointments yet"
+                return@launch
+            }
+            val cal = Calendar.getInstance().apply { timeInMillis = appointment.scheduledDateTime }
+            _currentYear.value = cal.get(Calendar.YEAR)
+            _currentMonth.value = cal.get(Calendar.MONTH)
+            _selectedDayOfMonth.value = cal.get(Calendar.DAY_OF_MONTH)
+        }
+    }
+
     fun loadAppointment(id: Long) {
         viewModelScope.launch {
             _selectedAppointment.value = appointmentRepository.getAppointmentById(id)
@@ -109,7 +130,8 @@ class ScheduleViewModel @Inject constructor(
 
     fun saveAppointment(appointment: Appointment, onSuccess: (Long) -> Unit) {
         viewModelScope.launch {
-            val id = if (appointment.id == 0L) {
+            val isNew = appointment.id == 0L
+            val id = if (isNew) {
                 appointmentRepository.insertAppointment(appointment)
             } else {
                 appointmentRepository.updateAppointment(appointment)
@@ -123,6 +145,7 @@ class ScheduleViewModel @Inject constructor(
             } else {
                 alarmScheduler.cancelReminder(id)
             }
+            _snackbarMessage.value = if (isNew) "Appointment created" else "Appointment updated"
             onSuccess(id)
         }
     }
@@ -136,6 +159,7 @@ class ScheduleViewModel @Inject constructor(
                     alarmScheduler.scheduleReminder(id, triggerAt)
                 }
             }
+            _snackbarMessage.value = "Recurring appointment created"
             onSuccess(id)
         }
     }
@@ -147,6 +171,7 @@ class ScheduleViewModel @Inject constructor(
             // Delete parent
             alarmScheduler.cancelReminder(appointment.id)
             appointmentRepository.deleteAppointment(appointment)
+            _snackbarMessage.value = "Series deleted"
             onSuccess()
         }
     }
@@ -155,6 +180,7 @@ class ScheduleViewModel @Inject constructor(
         viewModelScope.launch {
             alarmScheduler.cancelReminder(appointment.id)
             appointmentRepository.deleteAppointment(appointment)
+            _snackbarMessage.value = "Appointment deleted"
             onSuccess()
         }
     }
@@ -165,6 +191,7 @@ class ScheduleViewModel @Inject constructor(
             if (status != AppointmentStatus.SCHEDULED) {
                 alarmScheduler.cancelReminder(appointment.id)
             }
+            _snackbarMessage.value = "Status updated to ${status.name.lowercase().replaceFirstChar { it.uppercase() }}"
             onSuccess()
         }
     }
@@ -182,6 +209,7 @@ class ScheduleViewModel @Inject constructor(
                 appointment.copy(status = AppointmentStatus.COMPLETED, sessionId = sessionId)
             )
             alarmScheduler.cancelReminder(appointment.id)
+            _snackbarMessage.value = "Session started"
             onSessionCreated(sessionId)
         }
     }

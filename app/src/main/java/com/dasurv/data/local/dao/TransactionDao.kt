@@ -46,4 +46,23 @@ interface TransactionDao {
 
     @Query("SELECT COALESCE(SUM(ABS(amount)), 0.0) FROM client_transactions WHERE clientId = :clientId AND date >= :startMs AND date < :endMs AND type IN ('PAYMENT', 'DEPOSIT', 'TIP')")
     fun getTotalPaidInRange(clientId: Long, startMs: Long, endMs: Long): Flow<Double>
+
+    @Query("SELECT * FROM client_transactions WHERE clientId = :clientId ORDER BY date DESC LIMIT 1")
+    suspend fun getLatestTransactionForClient(clientId: Long): ClientTransaction?
+
+    // All-clients queries
+    @Query("SELECT * FROM client_transactions WHERE date >= :startMs AND date < :endMs ORDER BY date DESC")
+    fun getAllTransactionsInRange(startMs: Long, endMs: Long): Flow<List<ClientTransaction>>
+
+    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM client_transactions WHERE type = 'CHARGE'")
+    fun getTotalChargedAll(): Flow<Double>
+
+    @Query("SELECT COALESCE(SUM(ABS(amount)), 0.0) FROM client_transactions WHERE type IN ('PAYMENT', 'DEPOSIT', 'TIP')")
+    fun getTotalPaidAll(): Flow<Double>
+
+    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM client_transactions")
+    fun getBalanceAll(): Flow<Double>
+
+    @Query("SELECT * FROM client_transactions ORDER BY date DESC LIMIT 1")
+    suspend fun getLatestTransaction(): ClientTransaction?
 }
